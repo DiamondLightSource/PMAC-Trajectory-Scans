@@ -1,0 +1,65 @@
+; ********************************************
+; Parameters
+; ********************************************
+
+#DEFINE NUM_LOOPS P1
+#DEFINE X_COUNTER P2
+#DEFINE X_STEP P3
+#DEFINE Y_STEP P4
+#DEFINE Y_OS P5
+
+; ********************************************
+; Set-Up
+; ********************************************
+
+DEL GAT	
+; Coordinate System 1
+&1
+; Make sure all buffers are closed
+CLOSE
+; Assign motor 1 to the X-axis
+#1->X
+; Assign motor 2 to the Y-axis
+#2->Y
+
+; ********************************************
+; Program
+; ********************************************
+
+OPEN PROG 1
+CLEAR
+
+; Set move modes
+LINEAR
+ABS
+
+; Set move params
+TA50
+TS0
+F50000
+
+; Num loops
+NUM_LOOPS = 20
+; X counter and step-size
+X_COUNTER = 1
+X_STEP = 100
+; Y step-size and extra step-size
+Y_STEP = 1000
+Y_OS = 10
+
+WHILE(X_COUNTER < NUM_LOOPS)
+
+	Y(Y_STEP) ; Move across
+	Y(Y_STEP + Y_OS) ; Overshoot step
+	X_COUNTER = X_COUNTER + 1
+	X(X_COUNTER*X_STEP); Move up
+	Y(Y_STEP) ; Overshoot return
+	Y(0) ; Move back across
+	Y(-Y_OS) ; Overshoot step
+	X_COUNTER = X_COUNTER + 1
+	X(X_COUNTER*X_STEP) ; Move up
+	Y(0) ; Overshoot return
+	
+ENDWHILE
+
+CLOSE
