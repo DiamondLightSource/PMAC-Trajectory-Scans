@@ -1,0 +1,46 @@
+DEL GAT 		; Erase Buffer
+&1 			    ; Point to CS 1
+CLOSE  			; Close any buffers
+#1->10000X 		; Assign program units to encoder count
+				; 2000 cts/rev, 1 cm/rev, 5:1 gear red
+				; 2000*1*5 = 10000
+I192=0 			; Enable Blending
+
+OPEN PROG 1		; Open buffer for Program #1 entry
+CLEAR			; Erase any contents of buffer
+
+; Set Up
+LINEAR			; Set linear interpolation mode
+ABS			    ; Set absolute mode
+TM2000			; Set move-time
+
+; Macro Definitions
+
+; EPICS Required Variables
+; ON = $XXXX = TRUE
+; BufferLength = $XXXX = XX
+; CurrentBuffer = $AXXX
+; CurrentBufferIndex = $XXXX
+; Status = $XXXX ; (OK, WARNING, ERROR etc. I guess?)
+
+; Motion Program Specific Variables
+; BufferStartA = $XXXX
+; BufferStartB = $XXXX
+; Offset1 = XX, Offset2 = ...
+; PointerX = BufferStart + OffsetX, PointerY = ...
+
+; WHILE ON
+    ; CurrentBufferIndex = CurrentBuffer
+    ; WHILE CurrentBufferIndex - BufferStart < BufferLength
+        ; M(PointerX, PointerY, ...)
+        ; CurrentBufferIndex = CurrentBufferIndex + 1
+    ; END WHILE
+
+    ; IF CurrentBuffer = $AXXX
+        ; CurrentBuffer = $BXXX
+    ; ELSE
+        ; CurrentBuffer = $AXXX
+
+CLOSE
+
+; AX, AY, AZ, AU, AV, AW, AA, AB, AC, ATime, AUser, BX, BY, BZ, BU, BV, BW, BA, BB, BC, BTime, BUser
