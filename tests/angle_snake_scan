@@ -1,0 +1,81 @@
+; ********************************************
+; Parameters
+; ********************************************
+
+#DEFINE NUM_LOOPS P1
+#DEFINE COUNTER P2
+#DEFINE STEP P3
+#DEFINE SMALL_STEP P4
+#DEFINE OVER_STEP P5
+
+
+; ********************************************
+; Set-Up
+; ********************************************
+
+DEL GAT	
+; Coordinate System 1
+&1
+; Make sure all buffers are closed
+CLOSE
+; Assign motor 1 to the X-axis
+#1->X
+; Assign motor 2 to the Y-axis
+#2->Y
+
+; ********************************************
+; Program
+; ********************************************
+
+OPEN PROG 1
+CLEAR
+
+; Set move modes
+SPLINE1 TM100
+;LINEAR
+ABS
+
+; Set move params
+TA5
+TS0
+F10000
+
+NUM_LOOPS = 20
+COUNTER = 0
+STEP = 1000
+SMALL_STEP = 100
+OVER_STEP = 5
+
+COMMAND"GAT"
+WHILE(COUNTER < NUM_LOOPS)
+
+	;Y(Y_STEP + Y_OS) 							; Overshoot step
+	;Y(Y_STEP) 										; Overshoot return
+	;Y(-Y_OS) 											; Overshoot step
+	X(COUNTER*SMALL_STEP-STEP) Y(COUNTER*SMALL_STEP+STEP)
+	
+	X(COUNTER*SMALL_STEP-STEP-OVER_STEP) Y(COUNTER*SMALL_STEP+STEP+OVER_STEP)
+	X(COUNTER*SMALL_STEP-STEP-2*OVER_STEP) Y(COUNTER*SMALL_STEP+STEP+2*OVER_STEP)
+	COUNTER = COUNTER + 1
+	X(COUNTER*SMALL_STEP-STEP-2*OVER_STEP) Y(COUNTER*SMALL_STEP+STEP+2*OVER_STEP)
+	X(COUNTER*SMALL_STEP-STEP-OVER_STEP) Y(COUNTER*SMALL_STEP+STEP+OVER_STEP)
+	
+	X(COUNTER*SMALL_STEP-STEP) Y(COUNTER*SMALL_STEP+STEP)
+	X(COUNTER*SMALL_STEP) Y(COUNTER*SMALL_STEP)
+	
+	X(COUNTER*SMALL_STEP+OVER_STEP) Y(COUNTER*SMALL_STEP-OVER_STEP)
+	X(COUNTER*SMALL_STEP+2*OVER_STEP) Y(COUNTER*SMALL_STEP-2*OVER_STEP)
+	COUNTER = COUNTER + 1
+	X(COUNTER*SMALL_STEP+2*OVER_STEP) Y(COUNTER*SMALL_STEP-2*OVER_STEP)
+	X(COUNTER*SMALL_STEP+OVER_STEP) Y(COUNTER*SMALL_STEP-OVER_STEP)
+	
+	X(COUNTER*SMALL_STEP) Y(COUNTER*SMALL_STEP)
+	;Y(-Y_OS) 											; Overshoot return
+	;Y(0) 													; Overshoot return
+	
+ENDWHILE
+COMMAND"END GAT"
+
+X0 Y0
+
+CLOSE
