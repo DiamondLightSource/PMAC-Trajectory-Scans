@@ -1,0 +1,59 @@
+; ********************************************
+; Parameters
+; ********************************************
+
+#DEFINE NUM_LOOPS P1
+#DEFINE COUNTER P2
+#DEFINE AMP P3
+
+
+; ********************************************
+; Set-Up
+; ********************************************
+
+DEL GAT	
+; Coordinate System 1
+&1
+; Make sure all buffers are closed
+CLOSE
+; Assign motor 1 to the X-axis
+#1->X
+; Assign motor 2 to the Y-axis
+#2->Y
+
+; ********************************************
+; Program
+; ********************************************
+
+OPEN PROG 1
+CLEAR
+
+; Set move modes
+SPLINE1 TM5
+;LINEAR
+ABS
+
+; Set move params
+;TA5
+;TS0
+;F10000
+
+NUM_LOOPS = 20
+COUNTER = 0
+AMP = 1
+
+COMMAND"GAT"
+WHILE(COUNTER < NUM_LOOPS*361)
+
+	P10 = COUNTER*COS(COUNTER)
+	P11 = COUNTER*SIN(COUNTER)
+	X(AMP*P10) Y(AMP*P11)
+	
+	COUNTER = COUNTER + 1
+	
+ENDWHILE
+COMMAND"END GAT"
+
+X0 Y0
+
+CLOSE
