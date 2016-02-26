@@ -1,46 +1,114 @@
-DEL GAT 		; Erase Buffer
-&1 			    ; Point to CS 1
-CLOSE  			; Close any buffers
-#1->10000X 		; Assign program units to encoder count
-				; 2000 cts/rev, 1 cm/rev, 5:1 gear red
-				; 2000*1*5 = 10000
-I192=0 			; Enable Blending
+; *****************************************************************************************
+; Variables
+; *****************************************************************************************
 
-OPEN PROG 1		; Open buffer for Program #1 entry
-CLEAR			; Erase any contents of buffer
+#DEFINE RT_ADR P1
 
-; Set Up
-LINEAR			; Set linear interpolation mode
-ABS			    ; Set absolute mode
-TM2000			; Set move-time
+; EPICS required variables
+#DEFINE CURRENT_BUFFER  P(RT_ADR + 1)   ; A or B buffer address
+#DEFINE BUFFER_LENGTH   P(RT_ADR + 2)   ; Length of a single buffer e.g. AX, BX, ..., User
+#DEFINE CURRENT_INDEX   P(RT_ADR + 3)   ; Current index position in buffers
+#DEFINE STATUS          P(RT_ADR + 4)   ; Status of motion program for EPICS
+#DEFINE TOTAL_POINTS    P(RT_ADR + 5)   ; Total number of points scanned through
+#DEFINE CANCEL          P(RT_ADR + 6)   ; Cancel trigger for EPICS
+#DEFINE AXES            P(RT_ADR + 20)  ; An int specifying which axes to use (X,Y,Z,U...)
+                                        ; between 1 and 256
 
-; Macro Definitions
+; Motion program specific variables
+#DEFINE BUFFER_START_A  P(RT_ADR + 7)   ; Start index of first sub-buffer of buffer A (AX)
+#DEFINE BUFFER_START_B  P(RT_ADR + 8)   ; Start index of first sub-buffer of buffer B (BX)
+#DEFINE X_COORD         P(RT_ADR + 9)   ; Pointer to current buffer X index
+#DEFINE Y_COORD         P(RT_ADR + 10)  ; Pointer to current buffer Y index
+#DEFINE Z_COORD         P(RT_ADR + 11)  ; Pointer to current buffer Z index
+#DEFINE U_COORD         P(RT_ADR + 12)  ; Pointer to current buffer U index
+#DEFINE V_COORD         P(RT_ADR + 13)  ; Pointer to current buffer V index
+#DEFINE W_COORD         P(RT_ADR + 14)  ; Pointer to current buffer W index
+#DEFINE A_COORD         P(RT_ADR + 15)  ; Pointer to current buffer A index
+#DEFINE B_COORD         P(RT_ADR + 16)  ; Pointer to current buffer B index
+#DEFINE C_COORD         P(RT_ADR + 17)  ; Pointer to current buffer C index
+#DEFINE TIME_VAL        P(RT_ADR + 18)  ; Pointer to current buffer Time value
+#DEFINE USER_VAL        P(RT_ADR + 19)  ; Pointer to current buffer User value
 
-; EPICS Required Variables
-; ON = $XXXX = TRUE
-; BufferLength = $XXXX = XX
-; CurrentBuffer = $AXXX
-; CurrentBufferIndex = $XXXX
-; Status = $XXXX ; (OK, WARNING, ERROR etc. I guess?)
 
-; Motion Program Specific Variables
-; BufferStartA = $XXXX
-; BufferStartB = $XXXX
-; Offset1 = XX, Offset2 = ...
-; PointerX = BufferStart + OffsetX, PointerY = ...
+; *****************************************************************************************
+; Set-Up
+; *****************************************************************************************
 
-; WHILE ON
-    ; CurrentBufferIndex = CurrentBuffer
-    ; WHILE CurrentBufferIndex - BufferStart < BufferLength
-        ; M(PointerX, PointerY, ...)
-        ; CurrentBufferIndex = CurrentBufferIndex + 1
-    ; END WHILE
+DEL GAT
+; Coordinate System 1
+&1
+; Make sure all buffers are closed
+CLOSE
+; Assign motor 1 to the X-axis
+#1->X
 
-    ; IF CurrentBuffer = $AXXX
-        ; CurrentBuffer = $BXXX
-    ; ELSE
-        ; CurrentBuffer = $AXXX
+; *****************************************************************************************
+; Program
+; *****************************************************************************************
+
+OPEN PROG 1
+CLEAR
+
+LINEAR
+ABS
+TM2000
+
+; Set Initial Values
+
+BUFFER_START_A = $XXXX
+BUFFER_START_B = BUFFER_START_A + 11*BUFFER_LENGTH
+
+CURRENT_BUFFER = BUFFER_START_A
+BUFFER_LENGTH = 1000
+CURRENT_INDEX = 0
+STATUS = 0
+TOTAL_POINTS = 0
+CANCEL = 0
+
+; <<< Allow EPICS to assign any values here, so they won't be reset
+
+WHILE(CANCEL != 1) ; Run indefinitely, but allow EPICS to stop program
+
+    CURRENT_INDEX = 0
+    WHILE(CURRENT_INDEX < BUFFER_LENGTH)
+
+        X_COORD = CURRENT_INDEX
+        Y_COORD = $(
+        Z_COORD
+        U_COORD
+        V_COORD
+        W_COORD
+        A_COORD
+        B_COORD
+        C_COORD
+        TIME_VAL
+        USER_VAL
+        X(XCoord) Y(YCoord) ...
+
+        IF USER_VAL != 0
+            GOSUB(USER_VAL)
+        ENDIF
+
+        CURRENT_INDEX = CURRENT_INDEX + 1
+
+    END WHILE
+
+    IF CURRENT_BUFFER = BUFFER_START_A
+        CURRENT_BUFFER = BUFFER_START_B
+    ELSE
+        CURRENT_BUFFER = BUFFER_START_A
+
+ENDWHILE
 
 CLOSE
 
-; AX, AY, AZ, AU, AV, AW, AA, AB, AC, ATime, AUser, BX, BY, BZ, BU, BV, BW, BA, BB, BC, BTime, BUser
+; Buffers: AX, AY, AZ, AU, AV, AW, AA, AB, AC, ATime, AUser
+;          BX, BY, BZ, BU, BV, BW, BA, BB, BC, BTime, BUser
+
+; To-Do:
+;   * Do we need to change the program based on which axes are being used, or can we just call
+;       empty move calls on them? If so, how? We can distribute buffers like PMAC does for
+        axes, so the maximum number for each is allowed.
+;   * Can we specify delta times by changing TM before each move, is this resource heavy or
+;       or are there any other issues with this? If not, how do we use SPLINE2 to specify
+;       delta times? - X1000 TA50 is supposed to do it?
