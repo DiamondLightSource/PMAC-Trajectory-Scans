@@ -41,6 +41,8 @@
 #DEFINE NUM_AXES        P(RT_ADR + 31)  ; Number of axes being used - IF SPLITTING BUFFERS DYNAMICALLY?
 #DEFINE MOTOR_INDEX     P(RT_ADR + 32)  ; Current motor to assign
 
+; >>> Change read/writable variables to Q?
+
 
 ; *****************************************************************************************
 ; Set-Up
@@ -55,7 +57,7 @@ CLOSE
 ; Check which axes are required
 GOSUB1
 ; Assign required axes to motors
-GOSUB2                                  ; >>> Update to assign axes to different CSs
+GOSUB2                                  ; >>> Update to assign axes to different CSs?
 
 ; *****************************************************************************************
 ; Program
@@ -65,6 +67,7 @@ OPEN PROG 1
 CLEAR
 
 SPLINE1 TM10
+;SPLINE2
 ABS
 
 ; Set Initial Values
@@ -101,8 +104,12 @@ WHILE(CANCEL != 1) ; Run indefinitely, but allow EPICS to stop program
         TIME = Q($(CURRENT_INDEX+9*BUFFER_LENGTH))
         USER = Q($(CURRENT_INDEX+10*BUFFER_LENGTH))
 
+        ; Set move time
+        ; When SPLINE2 TM(TIME)
+        ; Move
         X(X_COORD) Y(Y_COORD) Z(Z_COORD) U(U_COORD) V(V_COORD) W(W_COORD) A(A_COORD) B(B_COORD) C(C_COORD)
 
+        ; Run any required subroutine
         IF(USER > 0)
             GOSUB(USER)
         ENDIF
@@ -111,6 +118,8 @@ WHILE(CANCEL != 1) ; Run indefinitely, but allow EPICS to stop program
         TOTAL_POINTS = TOTAL_POINTS + 1
 
     END WHILE
+
+    ; Might need second move call because of double endif statements - won't merge otherwise
 
     IF CURRENT_BUFFER = BUFFER_START_A
         CURRENT_BUFFER = BUFFER_START_B
