@@ -157,31 +157,32 @@ A_Axis = 0
 B_Axis = 0
 C_Axis = 0
 
-IF(Axes == 256)
-    C_Axis = 1
+IF(Axes > 256)
+    X_Axis = 1
+    Axes = Axes - 256
 IF(Axes > 128)
-    B_Axis = 1
+    Y_Axis = 1
     Axes = Axes - 128
 IF(Axes > 64)
-    A_Axis = 1
+    Z_Axis = 1
     Axes = Axes - 64
 IF(Axes > 32)
-    W_Axis = 1
+    U_Axis = 1
     Axes = Axes - 32
 IF(Axes > 16)
     V_Axis = 1
     Axes = Axes - 16
 IF(Axes > 8)
-    U_Axis = 1
+    W_Axis = 1
     Axes = Axes - 8
 IF(Axes > 4)
-    Z_Axis = 1
+    A_Axis = 1
     Axes = Axes - 4
 IF(Axes > 2)
-    Y_Axis = 1
+    B_Axis = 1
     Axes = Axes - 2
 IF(Axes > 0)
-    X_Axis = 1
+    C_Axis = 1
 
 Return
 
