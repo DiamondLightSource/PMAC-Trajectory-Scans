@@ -5,41 +5,62 @@
 #Define RootVar M4000
 
 ; EPICS required variables
-#Define CurrentBuffer  	M(RootVar + 1)   ; A or B buffer address
-#Define BufferLength   	M(RootVar + 2)   ; Length of a single buffer e.g. AX, BX, ..., User
-#Define BufferFill     	M(RootVar + 3)   ; The index that current buffers have been filled up to
-#Define CurrentIndex   	M(RootVar + 4)   ; Current index position in buffers
-#Define Status          M(RootVar + 5)   ; Status of motion program for EPICS
-#Define TotalPoints    	M(RootVar + 6)   ; Total number of points scanned through
-#Define Cancel          M(RootVar + 7)   ; Cancel trigger for EPICS
-#Define Axes            M(RootVar + 8)   ; An int specifying which axes to use (X,Y,Z,U...)
-                                         ; between 1 and 256
+#Define CurrentBuffer  		M(RootVar + 1)   	; A or B buffer address
+#Define BufferLength   		M(RootVar + 2)   	; Length of a single buffer e.g. AX, BX, ..., User
+#Define BufferFill     		M(RootVar + 3)   	; The index that current buffers have been filled up to
+#Define CurrentIndex   		M(RootVar + 4)   	; Current index position in buffers
+#Define Status          	M(RootVar + 5)   	; Status of motion program for EPICS
+#Define TotalPoints    		M(RootVar + 6)   	; Total number of points scanned through
+#Define Cancel          	M(RootVar + 7)   	; Cancel trigger for EPICS
+#Define Axes            	M(RootVar + 8)   	; An int specifying which axes to use (X,Y,Z,U...)
+                                         		; between 1 and 256
 
 ; Motion program specific variables
-#Define BufferStartA  	M(RootVar + 9)   ; Start index of first sub-buffer of buffer A (AX)
-#Define BufferStartB  	M(RootVar + 10)  ; Start index of first sub-buffer of buffer B (BX)
-#Define X_Coord         M(RootVar + 11)  ; Pointer to current buffer X index
-#Define Y_Coord         M(RootVar + 12)  ; Pointer to current buffer Y index
-#Define Z_Coord        	M(RootVar + 13)  ; Pointer to current buffer Z index
-#Define U_Coord         M(RootVar + 14)  ; Pointer to current buffer U index
-#Define V_Coord        	M(RootVar + 15)  ; Pointer to current buffer V index
-#Define W_Coord        	M(RootVar + 16)  ; Pointer to current buffer W index
-#Define A_Coord        	M(RootVar + 17)  ; Pointer to current buffer A index
-#Define B_Coord        	M(RootVar + 18)  ; Pointer to current buffer B index
-#Define C_Coord        	M(RootVar + 19)  ; Pointer to current buffer C index
-#Define Time            M(RootVar + 20)  ; Pointer to current buffer Time value
-#Define User            M(RootVar + 21)  ; Pointer to current buffer User value
-#Define X_Axis          M(RootVar + 22)  ; Specifiers for for what axes are to be used
-#Define Y_Axis          M(RootVar + 23)
-#Define Z_Axis          M(RootVar + 24)
-#Define U_Axis          M(RootVar + 25)
-#Define V_Axis          M(RootVar + 26)
-#Define W_Axis          M(RootVar + 27)
-#Define A_Axis          M(RootVar + 28)
-#Define B_Axis          M(RootVar + 29)
-#Define C_Axis          M(RootVar + 30)
-#Define NumAxes        	M(RootVar + 31)  ; Number of axes being used - IF SPLITTING BUFFERS DYNAMICALLY?
-#Define MotorIndex   		M(RootVar + 32)  ; Current motor to assign
+#Define BufferAdr_A 			M(RootVar + 9)   	; Start index of first sub-buffer of buffer A (AX)
+#Define BufferAdr_B 			M(RootVar + 10)  	; Start index of first sub-buffer of buffer B (BX)
+#Define X_Coord         	M(RootVar + 11)  	; Pointer to current buffer X index
+#Define Y_Coord         	M(RootVar + 12)  	; Pointer to current buffer Y index
+#Define Z_Coord        		M(RootVar + 13)  	; Pointer to current buffer Z index
+#Define U_Coord         	M(RootVar + 14)  	; Pointer to current buffer U index
+#Define V_Coord        		M(RootVar + 15)  	; Pointer to current buffer V index
+#Define W_Coord        		M(RootVar + 16)  	; Pointer to current buffer W index
+#Define A_Coord        		M(RootVar + 17)  	; Pointer to current buffer A index
+#Define B_Coord        		M(RootVar + 18)  	; Pointer to current buffer B index
+#Define C_Coord        		M(RootVar + 19)  	; Pointer to current buffer C index
+#Define Time            	M(RootVar + 20)  	; Pointer to current buffer Time value
+#Define User            	M(RootVar + 21)  	; Pointer to current buffer User value
+#Define X_Axis          	M(RootVar + 22)  	; Specifiers for for what axes are to be used
+#Define Y_Axis          	M(RootVar + 23)
+#Define Z_Axis          	M(RootVar + 24)
+#Define U_Axis          	M(RootVar + 25)
+#Define V_Axis          	M(RootVar + 26)
+#Define W_Axis          	M(RootVar + 27)
+#Define A_Axis          	M(RootVar + 28)
+#Define B_Axis          	M(RootVar + 29)
+#Define C_Axis          	M(RootVar + 30)
+
+#Define NumAxes        		M(RootVar + 31)  	; Number of axes being used - IF SPLITTING BUFFERS DYNAMICALLY?
+#Define MotorIndex   			M(RootVar + 32)  	; Current motor to assign
+#Define MoveTime					M(RootVar + 33)  	; Time of moves
+
+#Define X_Adr         		M(RootVar + 34)  	; Pointer to current buffer X index
+X_Adr->X:$30000,0,24												; Set to dummy to start with
+#Define Y_Adr         		M(RootVar + 35)  	; Pointer to current buffer Y index
+Y_Adr->X:$30000,0,24										 		; Set to dummy to start with
+#Define Z_Adr        			M(RootVar + 36)  	; Pointer to current buffer Z index
+Z_Adr->X:$30000,0,24										 		; Set to dummy to start with
+#Define U_Adr         		M(RootVar + 37)  	; Pointer to current buffer U index
+U_Adr->X:$30000,0,24										 		; Set to dummy to start with
+#Define V_Adr      				M(RootVar + 38)  	; Pointer to current buffer V index
+V_Adr->X:$30000,0,24										 		; Set to dummy to start with
+#Define W_Adr        			M(RootVar + 39)  	; Pointer to current buffer W index
+W_Adr->X:$30000,0,24										 		; Set to dummy to start with
+#Define A_Adr        			M(RootVar + 40)  	; Pointer to current buffer A index
+A_Adr->X:$30000,0,24										 		; Set to dummy to start with
+#Define B_Adr        			M(RootVar + 41)  	; Pointer to current buffer B index
+B_Adr->X:$30000,0,24										 		; Set to dummy to start with
+#Define C_Adr        			M(RootVar + 42)  	; Pointer to current buffer C index
+C_Adr->X:$30000,0,24										 		; Set to dummy to start with
 
 ; >>> Change read/writable variables to Q?
 
@@ -65,17 +86,16 @@ GoSub2                                  ; >>> Update to assign axes to different
 
 Open Prog 1 Clear
 
-Spline1 TM 10
-;Spline2
+MoveTime = 500
+PVT MoveTime
 Abs
 
 ; Set Initial Values
 BufferLength = XXXX
-BufferStartA = $XXXX
-BufferStartB = BufferStartA + 11*BufferLength
+BufferAdr_B = BufferAdr_A + 11*BufferLength
 
-CurrentBuffer = BufferStartA
-CurrentIndex = CurrentBuffer
+CurrentBufferAdr = BufferAdr_A
+CurrentIndex = 0
 Status = 0
 TotalPoints = 0
 Cancel = 0
@@ -87,24 +107,25 @@ While(Cancel != 1) ; Run indefinitely, but allow EPICS to stop program
 
     ; <<< EPICS to set BUFFER_FILL here
 
-    CurrentIndex = CurrentBuffer
+    CurrentIndex = 0
     While(CurrentIndex < BufferFill)
 
-        X_Coord = CurrentIndex                         ; FIX FOR WHEN SOME AXES NOT USED?
-        Y_Coord = M($(CurrentIndex + BufferLength))
-        Z_Coord = M($(CurrentIndex + 2*BufferLength))
-        U_Coord = M($(CurrentIndex + 3*BufferLength))
-        V_Coord = M($(CurrentIndex + 4*BufferLength))
-        W_Coord = M($(CurrentIndex + 5*BufferLength))
-        A_Coord = M($(CurrentIndex + 6*BufferLength))
-        B_Coord = M($(CurrentIndex + 7*BufferLength))
-        C_Coord = M($(CurrentIndex + 8*BufferLength))
-        Time = M($(CurrentIndex + 9*BufferLength))
-        User = M($(CurrentIndex + 10*BufferLength))
+				X_Adr = CurrentBufferAdr + CurrentIndex
+				Y_Adr = CurrentBufferAdr + CurrentIndex + BufferLength
+				Z_Adr = CurrentBufferAdr + CurrentIndex + 2*BufferLength
+				U_Adr = CurrentBufferAdr + CurrentIndex + 3*BufferLength
+				V_Adr = CurrentBufferAdr + CurrentIndex + 4*BufferLength
+				W_Adr = CurrentBufferAdr + CurrentIndex + 5*BufferLength
+				A_Adr = CurrentBufferAdr + CurrentIndex + 6*BufferLength
+				B_Adr = CurrentBufferAdr + CurrentIndex + 7*BufferLength
+				C_Adr = CurrentBufferAdr + CurrentIndex + 8*BufferLength
+				Time = 	CurrentBufferAdr + CurrentIndex + 9*BufferLength
+				User = 	CurrentBufferAdr + CurrentIndex + 10*BufferLength
 
-        ; Set move time
-        ; When SPLINE2 TM(TIME)
-        ; Move
+				FRAX(X,Y,Z,U,V,W,A,B,C)
+        XMoveTime = 
+        ; For All...
+
         X(X_Coord) Y(Y_Coord) Z(Z_Coord) U(U_Coord) V(V_Coord) W(W_Coord) A(A_Coord) B(B_Coord) C(C_Coord)
 
         ; Run any required subroutine
@@ -136,14 +157,11 @@ Close
 ;       empty move calls on them? MOVE CALLS ON UNASSIGNED AXES SEEMS TO WORK OK
 ;   * Can we distribute buffers like PMAC does for axes, so the maximum number for each is allowed?
 ;        Do we need to do this, or can we just have 1/11 each always?
-;   * Can we specify delta times by changing TM before each move, is this resource heavy or
-;       or are there any other issues with this? If not, how do we use SPLINE2 to specify
-;       delta times? - X1000 TA50 is supposed to do it?
 
 
 ; Subroutine 1 ************************************************************************************
 ; Convert <Axes> to binary values for each axis to decide which axes to use
-; *****************************************************************************************
+; *************************************************************************************************
 
 N1
 
@@ -188,7 +206,7 @@ Return
 
 ; Subroutine 2 ************************************************************************************
 ; Use <*_Axis> values to assign required axes to motors
-; *****************************************************************************************
+; *************************************************************************************************
 
 N2
 
@@ -221,4 +239,4 @@ IF(C_AXIS == 1)
     #(MOTOR_INDEX)->C
 
 RETURN
-; *****************************************************************************************
+; *************************************************************************************************
