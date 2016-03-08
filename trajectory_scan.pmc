@@ -2,10 +2,10 @@
 ; Variables
 ; *****************************************************************************************
 
-#Define RootVar M4000
+#Define RootVar 4000
 
 ; EPICS required variables
-#Define CurrentBuffer  		M(RootVar + 1)   	; A or B buffer address
+#Define CurrentBufferAdr  M(RootVar + 1)   	; A or B buffer address
 #Define BufferLength   		M(RootVar + 2)   	; Length of a single buffer e.g. AX, BX, ..., User
 #Define BufferFill     		M(RootVar + 3)   	; The index that current buffers have been filled up to
 #Define CurrentIndex   		M(RootVar + 4)   	; Current index position in buffers
@@ -43,26 +43,24 @@
 #Define MotorIndex   			M(RootVar + 32)  	; Current motor to assign
 #Define MoveTime					M(RootVar + 33)  	; Time of moves
 
-#Define X_Adr         		M(RootVar + 34)  	; Pointer to current buffer X index
-X_Adr->X:$30000,0,24												; Set to dummy to start with
-#Define Y_Adr         		M(RootVar + 35)  	; Pointer to current buffer Y index
-Y_Adr->X:$30000,0,24										 		; Set to dummy to start with
-#Define Z_Adr        			M(RootVar + 36)  	; Pointer to current buffer Z index
-Z_Adr->X:$30000,0,24										 		; Set to dummy to start with
-#Define U_Adr         		M(RootVar + 37)  	; Pointer to current buffer U index
-U_Adr->X:$30000,0,24										 		; Set to dummy to start with
-#Define V_Adr      				M(RootVar + 38)  	; Pointer to current buffer V index
-V_Adr->X:$30000,0,24										 		; Set to dummy to start with
-#Define W_Adr        			M(RootVar + 39)  	; Pointer to current buffer W index
-W_Adr->X:$30000,0,24										 		; Set to dummy to start with
-#Define A_Adr        			M(RootVar + 40)  	; Pointer to current buffer A index
-A_Adr->X:$30000,0,24										 		; Set to dummy to start with
-#Define B_Adr        			M(RootVar + 41)  	; Pointer to current buffer B index
-B_Adr->X:$30000,0,24										 		; Set to dummy to start with
-#Define C_Adr        			M(RootVar + 42)  	; Pointer to current buffer C index
-C_Adr->X:$30000,0,24										 		; Set to dummy to start with
-
-; >>> Change read/writable variables to Q?
+#Define X_Adr         		M4034  	; Pointer to current buffer X index
+X_Adr->X:$10400,0,24												; Set to dummy to start with
+#Define Y_Adr         		M4035  	; Pointer to current buffer Y index
+Y_Adr->X:$10400,0,24										 		; Set to dummy to start with
+#Define Z_Adr        			M4036  	; Pointer to current buffer Z index
+Z_Adr->X:$10400,0,24										 		; Set to dummy to start with
+#Define U_Adr         		M4037  	; Pointer to current buffer U index
+U_Adr->X:$10400,0,24										 		; Set to dummy to start with
+#Define V_Adr      				M4038  	; Pointer to current buffer V index
+V_Adr->X:$10400,0,24										 		; Set to dummy to start with
+#Define W_Adr        			M4039  	; Pointer to current buffer W index
+W_Adr->X:$10400,0,24										 		; Set to dummy to start with
+#Define A_Adr        			M4040  	; Pointer to current buffer A index
+A_Adr->X:$10400,0,24										 		; Set to dummy to start with
+#Define B_Adr        			M4041  	; Pointer to current buffer B index
+B_Adr->X:$10400,0,24										 		; Set to dummy to start with
+#Define C_Adr        			M4042  	; Pointer to current buffer C index
+C_Adr->X:$10400,0,24										 		; Set to dummy to start with
 
 
 ; *****************************************************************************************
@@ -75,23 +73,24 @@ Del Gat
 ; Make sure all buffers are closed
 Close
 
-; Check which axes are required
-GoSub1
-; Assign required axes to motors
-GoSub2                                  ; >>> Update to assign axes to different CSs?
-
 ; *****************************************************************************************
 ; Program
 ; *****************************************************************************************
 
-Open Prog 1 Clear
+Open Prog 1
+Clear
+
+; Check which axes are required
+GoSub1
+; Assign required axes to motors
+;GoSub2                                  ; >>> Update to assign axes to different CSs?
 
 MoveTime = 500
-PVT MoveTime
+PVT (MoveTime)
 Abs
 
 ; Set Initial Values
-BufferLength = XXXX
+BufferLength = 1000
 BufferAdr_B = BufferAdr_A + 11*BufferLength
 
 CurrentBufferAdr = BufferAdr_A
@@ -123,7 +122,7 @@ While(Cancel != 1) ; Run indefinitely, but allow EPICS to stop program
 				User = 	CurrentBufferAdr + CurrentIndex + 10*BufferLength
 
 				FRAX(X,Y,Z,U,V,W,A,B,C)
-        XMoveTime = 
+        ;XMoveTime = 10
         ; For All...
 
         X(X_Coord) Y(Y_Coord) Z(Z_Coord) U(U_Coord) V(V_Coord) W(W_Coord) A(A_Coord) B(B_Coord) C(C_Coord)
@@ -140,14 +139,13 @@ While(Cancel != 1) ; Run indefinitely, but allow EPICS to stop program
 
     ; Might need second move call because of double endif statements - won't merge otherwise
 
-    If CurrentBuffer = BufferStartA
-        CurrentBuffer = BufferStartB
+    If(CurrentBufferAdr = BufferAdr_A)
+        CurrentBufferAdr = BufferAdr_B
     Else
-        CurrentBuffer = BufferStartA
+        CurrentBufferAdr = BufferAdr_A
+    End If
 
 End While
-
-Close
 
 ; Buffers: AX, AY, AZ, AU, AV, AW, AA, AB, AC, ATime, AUser
 ;          BX, BY, BZ, BU, BV, BW, BA, BB, BC, BTime, BUser
@@ -165,78 +163,89 @@ Close
 
 N1
 
-X_Axis = 0
-Y_Axis = 0
-Z_Axis = 0
-U_Axis = 0
-V_Axis = 0
-W_Axis = 0
-A_Axis = 0
-B_Axis = 0
-C_Axis = 0
-
-IF(Axes > 256)
-    X_Axis = 1
-    Axes = Axes - 256
-IF(Axes > 128)
-    Y_Axis = 1
-    Axes = Axes - 128
-IF(Axes > 64)
-    Z_Axis = 1
-    Axes = Axes - 64
-IF(Axes > 32)
-    U_Axis = 1
-    Axes = Axes - 32
-IF(Axes > 16)
-    V_Axis = 1
-    Axes = Axes - 16
-IF(Axes > 8)
-    W_Axis = 1
-    Axes = Axes - 8
-IF(Axes > 4)
-    A_Axis = 1
-    Axes = Axes - 4
-IF(Axes > 2)
-    B_Axis = 1
-    Axes = Axes - 2
-IF(Axes > 0)
-    C_Axis = 1
-
+	X_Axis = 0
+	Y_Axis = 0
+	Z_Axis = 0
+	U_Axis = 0
+	V_Axis = 0
+	W_Axis = 0
+	A_Axis = 0
+	B_Axis = 0
+	C_Axis = 0
+	
+	If(Axes > 256)
+	    X_Axis = 1
+	    Axes = Axes - 256
+	End If
+	If(Axes > 128)
+	    Y_Axis = 1
+	    Axes = Axes - 128
+	End If
+	If(Axes > 64)
+	    Z_Axis = 1
+	    Axes = Axes - 64
+	End If
+	If(Axes > 32)
+	    U_Axis = 1
+	    Axes = Axes - 32
+	End If
+	If(Axes > 16)
+	    V_Axis = 1
+	    Axes = Axes - 16
+	End If
+	If(Axes > 8)
+	    W_Axis = 1
+	    Axes = Axes - 8
+	End If
+	If(Axes > 4)
+	    A_Axis = 1
+	    Axes = Axes - 4
+	End If
+	If(Axes > 2)
+	    B_Axis = 1
+	    Axes = Axes - 2
+	End If
+	If(Axes > 0)
+	    C_Axis = 1
+	End If
+	
 Return
+
+Close
 
 ; Subroutine 2 ************************************************************************************
 ; Use <*_Axis> values to assign required axes to motors
 ; *************************************************************************************************
 
-N2
+;N2
 
-MOTOR_INDEX = 1
-IF(X_AXIS == 1)
-    #(MOTOR_INDEX)->X
-    MOTOR_INDEX = MOTOR_INDEX + 1
-IF(Y_AXIS == 1)
-    #(MOTOR_INDEX)->Y
-    MOTOR_INDEX = MOTOR_INDEX + 1
-IF(Z_AXIS == 1)
-    #(MOTOR_INDEX)->Z
-    MOTOR_INDEX = MOTOR_INDEX + 1
-IF(U_AXIS == 1)
-    #(MOTOR_INDEX)->U
-    MOTOR_INDEX = MOTOR_INDEX + 1
-IF(V_AXIS == 1)
-    #(MOTOR_INDEX)->V
-    MOTOR_INDEX = MOTOR_INDEX + 1
-IF(W_AXIS == 1)
-    #(MOTOR_INDEX)->W
-    MOTOR_INDEX = MOTOR_INDEX + 1
-IF(A_AXIS == 1)
-    #(MOTOR_INDEX)->A
-    MOTOR_INDEX = MOTOR_INDEX + 1
-IF(B_AXIS == 1)
-    #(MOTOR_INDEX)->B
-    MOTOR_INDEX = MOTOR_INDEX + 1
-IF(C_AXIS == 1)
-    #(MOTOR_INDEX)->C
+	;MOTOR_INDEX = 1
+	;IF(X_AXIS == 1)
+	;    #(MOTOR_INDEX)->X
+	;    MOTOR_INDEX = MOTOR_INDEX + 1
+	;IF(Y_AXIS == 1)
+	;    #(MOTOR_INDEX)->Y
+	;    MOTOR_INDEX = MOTOR_INDEX + 1
+	;IF(Z_AXIS == 1)
+	;    #(MOTOR_INDEX)->Z
+	;    MOTOR_INDEX = MOTOR_INDEX + 1
+	;IF(U_AXIS == 1)
+	;    #(MOTOR_INDEX)->U
+	;    MOTOR_INDEX = MOTOR_INDEX + 1
+	;IF(V_AXIS == 1)
+	;    #(MOTOR_INDEX)->V
+	;    MOTOR_INDEX = MOTOR_INDEX + 1
+	;IF(W_AXIS == 1)
+	;    #(MOTOR_INDEX)->W
+	;    MOTOR_INDEX = MOTOR_INDEX + 1
+	;IF(A_AXIS == 1)
+	;    #(MOTOR_INDEX)->A
+	;    MOTOR_INDEX = MOTOR_INDEX + 1
+	;IF(B_AXIS == 1)
+	;    #(MOTOR_INDEX)->B
+	;    MOTOR_INDEX = MOTOR_INDEX + 1
+	;IF(C_AXIS == 1)
+	;    #(MOTOR_INDEX)->C
 
-RETURN
+;RETURN
 ; *************************************************************************************************
