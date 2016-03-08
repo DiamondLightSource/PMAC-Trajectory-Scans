@@ -44,23 +44,23 @@
 #Define MoveTime					M(RootVar + 33)  	; Time of moves
 
 #Define X_Adr         		M4034  	; Pointer to current buffer X index
-X_Adr->X:$10400,0,24												; Set to dummy to start with
+X_Adr->X:$30000,0,24												; Set to dummy to start with
 #Define Y_Adr         		M4035  	; Pointer to current buffer Y index
-Y_Adr->X:$10400,0,24										 		; Set to dummy to start with
+Y_Adr->X:$30000,0,24										 		; Set to dummy to start with
 #Define Z_Adr        			M4036  	; Pointer to current buffer Z index
-Z_Adr->X:$10400,0,24										 		; Set to dummy to start with
+Z_Adr->X:$30000,0,24										 		; Set to dummy to start with
 #Define U_Adr         		M4037  	; Pointer to current buffer U index
-U_Adr->X:$10400,0,24										 		; Set to dummy to start with
+U_Adr->X:$30000,0,24										 		; Set to dummy to start with
 #Define V_Adr      				M4038  	; Pointer to current buffer V index
-V_Adr->X:$10400,0,24										 		; Set to dummy to start with
+V_Adr->X:$30000,0,24										 		; Set to dummy to start with
 #Define W_Adr        			M4039  	; Pointer to current buffer W index
-W_Adr->X:$10400,0,24										 		; Set to dummy to start with
+W_Adr->X:$30000,0,24										 		; Set to dummy to start with
 #Define A_Adr        			M4040  	; Pointer to current buffer A index
-A_Adr->X:$10400,0,24										 		; Set to dummy to start with
+A_Adr->X:$30000,0,24										 		; Set to dummy to start with
 #Define B_Adr        			M4041  	; Pointer to current buffer B index
-B_Adr->X:$10400,0,24										 		; Set to dummy to start with
+B_Adr->X:$30000,0,24										 		; Set to dummy to start with
 #Define C_Adr        			M4042  	; Pointer to current buffer C index
-C_Adr->X:$10400,0,24										 		; Set to dummy to start with
+C_Adr->X:$30000,0,24										 		; Set to dummy to start with
 
 
 ; *****************************************************************************************
@@ -91,6 +91,7 @@ Abs
 
 ; Set Initial Values
 BufferLength = 1000
+BufferAdr_A = $30000
 BufferAdr_B = BufferAdr_A + 11*BufferLength
 
 CurrentBufferAdr = BufferAdr_A
