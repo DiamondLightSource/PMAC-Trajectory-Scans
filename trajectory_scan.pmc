@@ -102,6 +102,16 @@ Del Gat
 ; Make sure all buffers are closed
 Close
 
+#1->X
+#2->Y
+#3->Z
+#4->U
+#5->V
+#6->W
+#7->A
+#8->B
+#9->C
+
 ; *****************************************************************************************
 ; Program
 ; *****************************************************************************************
@@ -309,40 +319,3 @@ N3
 Return
 
 Close
-
-; Subroutine 2 ************************************************************************************
-; Use <*_Axis> values to assign required axes to motors
-; *************************************************************************************************
-
-;N2
-
-	;MOTOR_INDEX = 1
-	;IF(X_AXIS == 1)
-	;    #(MOTOR_INDEX)->X
-	;    MOTOR_INDEX = MOTOR_INDEX + 1
-	;IF(Y_AXIS == 1)
-	;    #(MOTOR_INDEX)->Y
-	;    MOTOR_INDEX = MOTOR_INDEX + 1
-	;IF(Z_AXIS == 1)
-	;    #(MOTOR_INDEX)->Z
-	;    MOTOR_INDEX = MOTOR_INDEX + 1
-	;IF(U_AXIS == 1)
-	;    #(MOTOR_INDEX)->U
-	;    MOTOR_INDEX = MOTOR_INDEX + 1
-	;IF(V_AXIS == 1)
-	;    #(MOTOR_INDEX)->V
-	;    MOTOR_INDEX = MOTOR_INDEX + 1
-	;IF(W_AXIS == 1)
-	;    #(MOTOR_INDEX)->W
-	;    MOTOR_INDEX = MOTOR_INDEX + 1
-	;IF(A_AXIS == 1)
-	;    #(MOTOR_INDEX)->A
-	;    MOTOR_INDEX = MOTOR_INDEX + 1
-	;IF(B_AXIS == 1)
-	;    #(MOTOR_INDEX)->B
-	;    MOTOR_INDEX = MOTOR_INDEX + 1
-	;IF(C_AXIS == 1)
-	;    #(MOTOR_INDEX)->C
-
-;RETURN
-; *************************************************************************************************
