@@ -37,9 +37,9 @@ DEL GAT
 ; Make sure all buffers are closed
 CLOSE
 ; Assign motor 1 to the X-axis
-#1->X
+#1->50X
 ; Assign motor 2 to the Y-axis
-#2->Y
+#2->50Y
 
 ; ********************************************
 ; Program
@@ -49,15 +49,15 @@ OPEN PROG 1
 CLEAR
 
 ; Set move modes
-Move_Time = 0.001
+Move_Time = 0.05
 PVT (Move_Time*1000)
 ABS
 
-NUM_LOOPS = 100
+NUM_LOOPS = 5
 COUNTER = 0
 STEP = 1000
-SMALL_STEP = 10
-OVER_STEP = 5
+SMALL_STEP = 5
+OVER_STEP = 25
 
 ANGLE = 0
 X_STEP = STEP*COS(ANGLE)
@@ -79,7 +79,7 @@ CMD"Del Gat"	; Deletes the gather buffer
 CMD"Def Gat"	; Allocates all the available memory as gather buffer
 Dwell 0		; Force CMD lines to execute
 CMD"Gat"	; Starts gathering of the data
-WHILE(COUNTER < NUM_LOOPS)
+WHILE(COUNTER < NUM_LOOPS*5)
 	
 	While(Sub_Counter < Num_Steps)
 		GoSub1
@@ -96,19 +96,6 @@ WHILE(COUNTER < NUM_LOOPS)
 	GoSub2
 	X(X_Move):(X_Vel) Y(Y_Move):(Y_Vel)
 	
-	GoSub1
-	Next_X_Move = COUNTER*X_SMALL_STEP-X_STEP-2*X_OS
-	Next_Y_Move = COUNTER*Y_SMALL_STEP+Y_STEP+2*Y_OS
-	GoSub2
-	X(X_Move):(X_Vel) Y(Y_Move):(Y_Vel)
-	
-	COUNTER = COUNTER + 1
-	GoSub1
-	Next_X_Move = COUNTER*X_SMALL_STEP-X_STEP-3*X_OS
-	Next_Y_Move = COUNTER*Y_SMALL_STEP+Y_STEP+3*Y_OS
-	GoSub2
-	X(X_Move):(X_Vel) Y(Y_Move):(Y_Vel)
-	
 	COUNTER = COUNTER + 1
 	GoSub1
 	Next_X_Move = COUNTER*X_SMALL_STEP-X_STEP-2*X_OS
@@ -116,6 +103,14 @@ WHILE(COUNTER < NUM_LOOPS)
 	GoSub2
 	X(X_Move):(X_Vel) Y(Y_Move):(Y_Vel)
 	
+	COUNTER = COUNTER + 2
+	GoSub1
+	Next_X_Move = COUNTER*X_SMALL_STEP-X_STEP-2*X_OS
+	Next_Y_Move = COUNTER*Y_SMALL_STEP+Y_STEP+2*Y_OS
+	GoSub2
+	X(X_Move):(X_Vel) Y(Y_Move):(Y_Vel)
+	
+	COUNTER = COUNTER + 1
 	GoSub1
 	Next_X_Move = COUNTER*X_SMALL_STEP-X_STEP-X_OS
 	Next_Y_Move = COUNTER*Y_SMALL_STEP+Y_STEP+Y_OS
@@ -137,19 +132,6 @@ WHILE(COUNTER < NUM_LOOPS)
 	GoSub2
 	X(X_Move):(X_Vel) Y(Y_Move):(Y_Vel)
 	
-	GoSub1
-	Next_X_Move = COUNTER*X_SMALL_STEP+2*X_OS
-	Next_Y_Move = COUNTER*Y_SMALL_STEP-2*Y_OS
-	GoSub2
-	X(X_Move):(X_Vel) Y(Y_Move):(Y_Vel)
-	
-	COUNTER = COUNTER + 1
-	GoSub1
-	Next_X_Move = COUNTER*X_SMALL_STEP+3*X_OS
-	Next_Y_Move = COUNTER*Y_SMALL_STEP-3*Y_OS
-	GoSub2
-	X(X_Move):(X_Vel) Y(Y_Move):(Y_Vel)
-	
 	COUNTER = COUNTER + 1
 	GoSub1
 	Next_X_Move = COUNTER*X_SMALL_STEP+2*X_OS
@@ -157,6 +139,14 @@ WHILE(COUNTER < NUM_LOOPS)
 	GoSub2
 	X(X_Move):(X_Vel) Y(Y_Move):(Y_Vel)
 	
+	COUNTER = COUNTER + 2
+	GoSub1
+	Next_X_Move = COUNTER*X_SMALL_STEP+2*X_OS
+	Next_Y_Move = COUNTER*Y_SMALL_STEP-2*Y_OS
+	GoSub2
+	X(X_Move):(X_Vel) Y(Y_Move):(Y_Vel)
+	
+	COUNTER = COUNTER + 1
 	GoSub1
 	Next_X_Move = COUNTER*X_SMALL_STEP+X_OS
 	Next_Y_Move = COUNTER*Y_SMALL_STEP-Y_OS
