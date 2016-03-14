@@ -112,6 +112,11 @@ Close
 #8->B
 #9->C
 
+; Set Initial Values
+BufferLength = 1000
+BufferAdr_A = $30000
+BufferAdr_B = BufferAdr_A + 11*BufferLength
+
 ; *****************************************************************************************
 ; Program
 ; *****************************************************************************************
@@ -127,11 +132,8 @@ GoSub1
 MoveTime = 500
 PVT (MoveTime)
 Abs
+FRAX(X,Y,Z,U,V,W,A,B,C)
 
-; Set Initial Values
-BufferLength = 1000
-BufferAdr_A = $30000
-BufferAdr_B = BufferAdr_A + 11*BufferLength
 
 CurrentBufferAdr = BufferAdr_A
 CurrentIndex = 0
@@ -152,7 +154,7 @@ Prev_C = 0 C_Coord = 0
 
 ; <<< Allow EPICS to assign any values here, so they won't be reset - Or just don't set variables that EPICS will set?
 
-While(Cancel != 1) ; Run indefinitely, but allow EPICS to stop program
+While(Cancel != 1 and BufferFill > 0) ; Run indefinitely, but allow EPICS to stop program
 
     ; <<< EPICS to set BUFFER_FILL here
 
@@ -162,24 +164,12 @@ While(Cancel != 1) ; Run indefinitely, but allow EPICS to stop program
 		    GoSub2	; Shift values through Next_* -> *_Coord -> Prev_*
 		    
 		    ; Increment Addresses
-				X_Adr = CurrentBufferAdr + CurrentIndex
-				Y_Adr = CurrentBufferAdr + CurrentIndex + BufferLength
-				Z_Adr = CurrentBufferAdr + CurrentIndex + 2*BufferLength
-				U_Adr = CurrentBufferAdr + CurrentIndex + 3*BufferLength
-				V_Adr = CurrentBufferAdr + CurrentIndex + 4*BufferLength
-				W_Adr = CurrentBufferAdr + CurrentIndex + 5*BufferLength
-				A_Adr = CurrentBufferAdr + CurrentIndex + 6*BufferLength
-				B_Adr = CurrentBufferAdr + CurrentIndex + 7*BufferLength
-				C_Adr = CurrentBufferAdr + CurrentIndex + 8*BufferLength
-				Time = 	CurrentBufferAdr + CurrentIndex + 9*BufferLength
-				User = 	CurrentBufferAdr + CurrentIndex + 10*BufferLength
-
-		    GoSub3	; Calculate velocities
+		    GoSub4
 		    
-				FRAX(X,Y,Z,U,V,W,A,B,C)			; <<< Can this be before While loops?
+				; Calculate velocities
+		    GoSub3
 
-				; >>> Set to Q Variables before move call to shorten command
-				
+				; Set to Q Variables before move call to shorten command
 				Q1 = X_Coord
 				Q2 = X_Vel
 				Q3 = Y_Coord
@@ -201,7 +191,7 @@ While(Cancel != 1) ; Run indefinitely, but allow EPICS to stop program
 
         X(Q1):(Q2) Y(Q3):(Q4) Z(Q5):(Q6) U(Q7):(Q8) V(Q9):(Q10) W(Q11):(Q12) A(Q13):(Q14) B(Q15):(Q16) C(Q17):(Q18)
 
-        ; Run any required subroutine
+        ; Run any required subroutine >>> Do we need to be able to run more than one?
         If(User > 0)
             GoSub(User)
         End If
@@ -221,14 +211,10 @@ While(Cancel != 1) ; Run indefinitely, but allow EPICS to stop program
 
 End While
 
+Status == 1
+
 ; Buffers: AX, AY, AZ, AU, AV, AW, AA, AB, AC, ATime, AUser
 ;          BX, BY, BZ, BU, BV, BW, BA, BB, BC, BTime, BUser
-
-; To-Do:
-;   * Do we need to change the program based on which axes are being used, or can we just call
-;       empty move calls on them? MOVE CALLS ON UNASSIGNED AXES SEEMS TO WORK OK
-;   * Can we distribute buffers like PMAC does for axes, so the maximum number for each is allowed?
-;        Do we need to do this, or can we just have 1/11 each always?
 
 
 ; Subroutine 1 ************************************************************************************
@@ -236,86 +222,127 @@ End While
 ; *************************************************************************************************
 
 N1
-
-	X_Axis = 0
-	Y_Axis = 0
-	Z_Axis = 0
-	U_Axis = 0
-	V_Axis = 0
-	W_Axis = 0
-	A_Axis = 0
-	B_Axis = 0
-	C_Axis = 0
-	
-	If(Axes > 256)
-	    X_Axis = 1
-	    Axes = Axes - 256
-	End If
-	If(Axes > 128)
-	    Y_Axis = 1
-	    Axes = Axes - 128
-	End If
-	If(Axes > 64)
-	    Z_Axis = 1
-	    Axes = Axes - 64
-	End If
-	If(Axes > 32)
-	    U_Axis = 1
-	    Axes = Axes - 32
-	End If
-	If(Axes > 16)
-	    V_Axis = 1
-	    Axes = Axes - 16
-	End If
-	If(Axes > 8)
-	    W_Axis = 1
-	    Axes = Axes - 8
-	End If
-	If(Axes > 4)
-	    A_Axis = 1
-	    Axes = Axes - 4
-	End If
-	If(Axes > 2)
-	    B_Axis = 1
-	    Axes = Axes - 2
-	End If
-	If(Axes > 0)
-	    C_Axis = 1
-	End If
-	
+		X_Axis = 0
+		Y_Axis = 0
+		Z_Axis = 0
+		U_Axis = 0
+		V_Axis = 0
+		W_Axis = 0
+		A_Axis = 0
+		B_Axis = 0
+		C_Axis = 0
+		
+		If(Axes > 256)
+		    X_Axis = 1
+		    Axes = Axes - 256
+		End If
+		If(Axes > 128)
+		    Y_Axis = 1
+		    Axes = Axes - 128
+		End If
+		If(Axes > 64)
+		    Z_Axis = 1
+		    Axes = Axes - 64
+		End If
+		If(Axes > 32)
+		    U_Axis = 1
+		    Axes = Axes - 32
+		End If
+		If(Axes > 16)
+		    V_Axis = 1
+		    Axes = Axes - 16
+		End If
+		If(Axes > 8)
+		    W_Axis = 1
+		    Axes = Axes - 8
+		End If
+		If(Axes > 4)
+		    A_Axis = 1
+		    Axes = Axes - 4
+		End If
+		If(Axes > 2)
+		    B_Axis = 1
+		    Axes = Axes - 2
+		End If
+		If(Axes > 0)
+		    C_Axis = 1
+		End If
 Return
+
+; Subroutine 2 ************************************************************************************
+; Shift coordinate buffer through Next -> Coord -> Prev
+; *************************************************************************************************
 
 N2
-	Prev_X = X_Coord
-	X_Coord = Next_X
-	Prev_Y = Y_Coord
-	Y_Coord = Next_Y
-	Prev_Z = Z_Coord
-	Z_Coord = Next_Z
-	Prev_U = U_Coord
-	U_Coord = Next_U
-	Prev_V = V_Coord
-	V_Coord = Next_V
-	Prev_W = W_Coord
-	W_Coord = Next_W
-	Prev_A = A_Coord
-	A_Coord = Next_A
-	Prev_B = B_Coord
-	B_Coord = Next_B
-	Prev_C = C_Coord
-	C_Coord = Next_C
+		Prev_X = X_Coord
+		X_Coord = Next_X
+		Prev_Y = Y_Coord
+		Y_Coord = Next_Y
+		Prev_Z = Z_Coord
+		Z_Coord = Next_Z
+		Prev_U = U_Coord
+		U_Coord = Next_U
+		Prev_V = V_Coord
+		V_Coord = Next_V
+		Prev_W = W_Coord
+		W_Coord = Next_W
+		Prev_A = A_Coord
+		A_Coord = Next_A
+		Prev_B = B_Coord
+		B_Coord = Next_B
+		Prev_C = C_Coord
+		C_Coord = Next_C
 Return
 
+; Subroutine 3 ************************************************************************************
+; Calculate velocities for next move
+; *************************************************************************************************
+
 N3
-	X_Vel = (Next_X - Prev_X)/(2*MoveTime)
-	Y_Vel = (Next_Y - Prev_Y)/(2*MoveTime)
-	Z_Vel = (Next_Z - Prev_Z)/(2*MoveTime)
-	U_Vel = (Next_U - Prev_U)/(2*MoveTime)
-	V_Vel = (Next_V - Prev_V)/(2*MoveTime)
-	W_Vel = (Next_W - Prev_W)/(2*MoveTime)
-	A_Vel = (Next_A - Prev_A)/(2*MoveTime)
-	B_Vel = (Next_B - Prev_B)/(2*MoveTime)
-	C_Vel = (Next_C - Prev_C)/(2*MoveTime)
+		X_Vel = (Next_X - Prev_X)/(2*MoveTime)
+		Y_Vel = (Next_Y - Prev_Y)/(2*MoveTime)
+		Z_Vel = (Next_Z - Prev_Z)/(2*MoveTime)
+		U_Vel = (Next_U - Prev_U)/(2*MoveTime)
+		V_Vel = (Next_V - Prev_V)/(2*MoveTime)
+		W_Vel = (Next_W - Prev_W)/(2*MoveTime)
+		A_Vel = (Next_A - Prev_A)/(2*MoveTime)
+		B_Vel = (Next_B - Prev_B)/(2*MoveTime)
+		C_Vel = (Next_C - Prev_C)/(2*MoveTime)
+		
+		; >>> Need previous times to calculate velocities
 Return
+
+
+N4
+		If(X_Axis = 1) 
+    		X_Adr = CurrentBufferAdr + CurrentIndex 
+    End If
+    If(Y_Axis = 1)
+    		Y_Adr = CurrentBufferAdr + CurrentIndex + BufferLength
+    End If
+    If(Z_Axis = 1)
+    		Z_Adr = CurrentBufferAdr + CurrentIndex + 2*BufferLength
+    End If
+    If(U_Axis = 1)
+    		U_Adr = CurrentBufferAdr + CurrentIndex + 3*BufferLength
+    End If
+    If(V_Axis = 1)
+    		V_Adr = CurrentBufferAdr + CurrentIndex + 4*BufferLength
+    End If
+    If(W_Axis = 1)
+    		W_Adr = CurrentBufferAdr + CurrentIndex + 5*BufferLength
+    End If
+    If(A_Axis = 1)
+    		A_Adr = CurrentBufferAdr + CurrentIndex + 6*BufferLength
+    End If
+    If(B_Axis = 1)
+    		B_Adr = CurrentBufferAdr + CurrentIndex + 7*BufferLength
+    End If
+    If(C_Axis = 1)
+    		C_Adr = CurrentBufferAdr + CurrentIndex + 8*BufferLength
+    End If
+    
+		Time = 	CurrentBufferAdr + CurrentIndex + 9*BufferLength
+		User = 	CurrentBufferAdr + CurrentIndex + 10*BufferLength
 
 Close
