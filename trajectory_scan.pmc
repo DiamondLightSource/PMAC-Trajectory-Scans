@@ -12,8 +12,7 @@
 #Define Status          	M(RootVar + 5)   	; Status of motion program for EPICS
 #Define TotalPoints    		M(RootVar + 6)   	; Total number of points scanned through
 #Define Cancel          	M(RootVar + 7)   	; Cancel trigger for EPICS
-#Define Axes            	M(RootVar + 8)   	; An int specifying which axes to use (X,Y,Z,U...)
-                                         		; between 1 and 256
+#Define Axes            	M(RootVar + 8)   	; An int between 1 and 256 specifying which axes to use
 #Define BufferAdr_A 			M(RootVar + 9)   	; Start index of first sub-buffer of buffer A (AX)
 #Define BufferAdr_B 			M(RootVar + 10)  	; Start index of first sub-buffer of buffer B (BX)
 
@@ -27,70 +26,74 @@
 #Define Next_A        		M(RootVar + 17)  	; Pointer to next buffer A index
 #Define Next_B        		M(RootVar + 18)  	; Pointer to next buffer B index
 #Define Next_C        		M(RootVar + 19)  	; Pointer to next buffer C index
-#Define Time            	M(RootVar + 20)  	; Pointer to next buffer Time value
-#Define User            	M(RootVar + 21)  	; Pointer to next buffer User value
+#Define Next_Time        	M(RootVar + 20)  	; Pointer to next buffer Time value
 
-#Define X_Axis          	M(RootVar + 22)  	; Specifiers for what axes are to be used
-#Define Y_Axis          	M(RootVar + 23)
-#Define Z_Axis          	M(RootVar + 24)
-#Define U_Axis          	M(RootVar + 25)
-#Define V_Axis          	M(RootVar + 26)
-#Define W_Axis          	M(RootVar + 27)
-#Define A_Axis          	M(RootVar + 28)
-#Define B_Axis          	M(RootVar + 29)
-#Define C_Axis          	M(RootVar + 30)
+#Define X_Axis          	M(RootVar + 21)  	; Specifiers for what axes are to be used
+#Define Y_Axis          	M(RootVar + 22)
+#Define Z_Axis          	M(RootVar + 23)
+#Define U_Axis          	M(RootVar + 24)
+#Define V_Axis          	M(RootVar + 25)
+#Define W_Axis          	M(RootVar + 26)
+#Define A_Axis          	M(RootVar + 27)
+#Define B_Axis          	M(RootVar + 28)
+#Define C_Axis          	M(RootVar + 29)
 
-#Define NumAxes        		M(RootVar + 31)  	; Number of axes being used - IF SPLITTING BUFFERS DYNAMICALLY?
-#Define MotorIndex   			M(RootVar + 32)  	; Current motor to assign - IF SETTING MOTORS DYNAMICALLY
-#Define MoveTime					M(RootVar + 33)  	; Time of moves
+#Define NumAxes        		M(RootVar + 30)  	; Number of axes being used - IF SPLITTING BUFFERS DYNAMICALLY?
+#Define MotorIndex   			M(RootVar + 31)  	; Current motor to assign - IF SETTING MOTORS DYNAMICALLY
+#Define XXXXX							M(RootVar + 32)  	; Blank
 
-#Define X_Adr         		M4034  	; Pointer to current buffer X index
+#Define X_Adr         		M4033  	; Pointer to current buffer X index
 X_Adr->X:$4FAB,0,24								; Pointer to M4011 - Next_X
-#Define Y_Adr         		M4035  	; Pointer to current buffer Y index
+#Define Y_Adr         		M4034  	; Pointer to current buffer Y index
 Y_Adr->X:$4FAC,0,24								; Pointer to M4012 - Next_Y
-#Define Z_Adr        			M4036  	; Pointer to current buffer Z index
+#Define Z_Adr        			M4035  	; Pointer to current buffer Z index
 Z_Adr->X:$4FAD,0,24								; Pointer to M4013 - Next_Z
-#Define U_Adr         		M4037  	; Pointer to current buffer U index
+#Define U_Adr         		M4036  	; Pointer to current buffer U index
 U_Adr->X:$4FAE,0,24								; Pointer to M4014 - Next_U
-#Define V_Adr      				M4038  	; Pointer to current buffer V index
+#Define V_Adr      				M4037  	; Pointer to current buffer V index
 V_Adr->X:$4FAF,0,24								; Pointer to M4015 - Next_V
-#Define W_Adr        			M4039  	; Pointer to current buffer W index
+#Define W_Adr        			M4038  	; Pointer to current buffer W index
 W_Adr->X:$4FB0,0,24								; Pointer to M4016 - Next_W
-#Define A_Adr        			M4040  	; Pointer to current buffer A index
+#Define A_Adr        			M4039 	; Pointer to current buffer A index
 A_Adr->X:$4FB1,0,24								; Pointer to M4017 - Next_A
-#Define B_Adr        			M4041  	; Pointer to current buffer B index
+#Define B_Adr        			M4040  	; Pointer to current buffer B index
 B_Adr->X:$4FB2,0,24								; Pointer to M4018 - Next_B
-#Define C_Adr        			M4042  	; Pointer to current buffer C index
+#Define C_Adr        			M4041  	; Pointer to current buffer C index
 C_Adr->X:$4FB3,0,24								; Pointer to M4019 - Next_C
+#Define Time_Adr        	M4042  	; Pointer to current buffer Time index
+Time_Adr->X:$4FB4,0,24						; Pointer to M4019 - Next_Time
+#Define User_Adr        	M4043  	; Pointer to current buffer User index
+User_Adr->X:$4FB5,0,24						; Pointer to M4019 - Next_User
 
-#Define Prev_X 						M(RootVar + 43)
-#Define X_Coord						M(RootVar + 44)
-#Define Prev_Y 						M(RootVar + 45)
-#Define Y_Coord						M(RootVar + 46)
-#Define Prev_Z 						M(RootVar + 47)
-#Define Z_Coord						M(RootVar + 48)
-#Define Prev_U 						M(RootVar + 49)
-#Define U_Coord						M(RootVar + 50)
-#Define Prev_V 						M(RootVar + 51)
-#Define V_Coord						M(RootVar + 52)
-#Define Prev_W 						M(RootVar + 53)
-#Define W_Coord						M(RootVar + 54)
-#Define Prev_A 						M(RootVar + 55)
-#Define A_Coord						M(RootVar + 56)
-#Define Prev_B 						M(RootVar + 57)
-#Define B_Coord						M(RootVar + 58)
-#Define Prev_C 						M(RootVar + 59)
-#Define C_Coord						M(RootVar + 60)
+#Define Prev_X 						M(RootVar + 44)
+#Define X_Coord						M(RootVar + 45)
+#Define Prev_Y 						M(RootVar + 46)
+#Define Y_Coord						M(RootVar + 47)
+#Define Prev_Z 						M(RootVar + 48)
+#Define Z_Coord						M(RootVar + 49)
+#Define Prev_U 						M(RootVar + 50)
+#Define U_Coord						M(RootVar + 51)
+#Define Prev_V 						M(RootVar + 52)
+#Define V_Coord						M(RootVar + 53)
+#Define Prev_W 						M(RootVar + 54)
+#Define W_Coord						M(RootVar + 55)
+#Define Prev_A 						M(RootVar + 56)
+#Define A_Coord						M(RootVar + 57)
+#Define Prev_B 						M(RootVar + 58)
+#Define B_Coord						M(RootVar + 59)
+#Define Prev_C 						M(RootVar + 60)
+#Define C_Coord						M(RootVar + 61)
+#Define Time							M(RootVar + 62)
 
-#Define X_Vel							M(RootVar + 61)
-#Define Y_Vel							M(RootVar + 62)
-#Define Z_Vel							M(RootVar + 63)
-#Define U_Vel							M(RootVar + 64)
-#Define V_Vel							M(RootVar + 65)
-#Define W_Vel							M(RootVar + 66)
-#Define A_Vel							M(RootVar + 67)
-#Define B_Vel							M(RootVar + 68)
-#Define C_Vel							M(RootVar + 69)
+#Define X_Vel							M(RootVar + 63)
+#Define Y_Vel							M(RootVar + 64)
+#Define Z_Vel							M(RootVar + 65)
+#Define U_Vel							M(RootVar + 66)
+#Define V_Vel							M(RootVar + 67)
+#Define W_Vel							M(RootVar + 68)
+#Define A_Vel							M(RootVar + 69)
+#Define B_Vel							M(RootVar + 70)
+#Define C_Vel							M(RootVar + 71)
 
 ; *****************************************************************************************
 ; Set-Up
@@ -126,11 +129,7 @@ Clear
 
 ; Check which axes are required
 GoSub1
-; Assign required axes to motors
-;GoSub2                                  ; >>> Update to assign axes to different CSs?
 
-MoveTime = 500
-PVT (MoveTime)
 Abs
 FRAX(X,Y,Z,U,V,W,A,B,C)
 
@@ -167,29 +166,18 @@ While(Cancel != 1 and BufferFill > 0) ; Run indefinitely, but allow EPICS to sto
 		    GoSub4
 		    
 				; Calculate velocities
-		    GoSub3
-
-				; Set to Q Variables before move call to shorten command
-				Q1 = X_Coord
-				Q2 = X_Vel
-				Q3 = Y_Coord
-				Q4 = Y_Vel
-				Q5 = Z_Coord
-				Q6 = Z_Vel
-				Q7 = U_Coord
-				Q8 = U_Vel
-				Q9 = V_Coord
-				Q10 = V_Vel
-				Q11 = W_Coord
-				Q12 = W_Vel
-				Q13 = A_Coord
-				Q14 = A_Vel
-				Q15 = B_Coord
-				Q16 = B_Vel
-				Q17 = C_Coord
-				Q18 = C_Vel
-
-        X(Q1):(Q2) Y(Q3):(Q4) Z(Q5):(Q6) U(Q7):(Q8) V(Q9):(Q10) W(Q11):(Q12) A(Q13):(Q14) B(Q15):(Q16) C(Q17):(Q18)
+		    If(1 < 2)
+		    	GoSub3	; Prev -> Current
+				EndIf
+				If(1 = 1)
+					GoSub4	; Prev -> Next
+				EndIf
+				If(1 < 2)
+					GoSub5	; Current -> Next
+				EndIf
+				
+				; Move axes
+				GoSub7
 
         ; Run any required subroutine >>> Do we need to be able to run more than one?
         If(User > 0)
@@ -292,28 +280,57 @@ N2
 		B_Coord = Next_B
 		Prev_C = C_Coord
 		C_Coord = Next_C
+		Time = NextTime
 Return
 
-; Subroutine 3 ************************************************************************************
-; Calculate velocities for next move
+; Subroutines 3-5 *********************************************************************************
+; Calculate velocities for next move - 3: Prev->Current, 4: Prev->Next, 5: Current->Next
 ; *************************************************************************************************
 
 N3
-		X_Vel = (Next_X - Prev_X)/(2*MoveTime)
-		Y_Vel = (Next_Y - Prev_Y)/(2*MoveTime)
-		Z_Vel = (Next_Z - Prev_Z)/(2*MoveTime)
-		U_Vel = (Next_U - Prev_U)/(2*MoveTime)
-		V_Vel = (Next_V - Prev_V)/(2*MoveTime)
-		W_Vel = (Next_W - Prev_W)/(2*MoveTime)
-		A_Vel = (Next_A - Prev_A)/(2*MoveTime)
-		B_Vel = (Next_B - Prev_B)/(2*MoveTime)
-		C_Vel = (Next_C - Prev_C)/(2*MoveTime)
-		
-		; >>> Need previous times to calculate velocities
+		PVT (Time)
+		X_Vel = (X_Coord - Prev_X)/Time
+		Y_Vel = (Y_Coord - Prev_Y)/Time
+		Z_Vel = (Z_Coord - Prev_Z)/Time
+		U_Vel = (U_Coord - Prev_U)/Time
+		V_Vel = (V_Coord - Prev_V)/Time
+		W_Vel = (W_Coord - Prev_W)/Time
+		A_Vel = (A_Coord - Prev_A)/Time
+		B_Vel = (B_Coord - Prev_B)/Time
+		C_Vel = (C_Coord - Prev_C)/Time
 Return
 
-
 N4
+		PVT (Time + NextTime)
+		X_Vel = (Next_X - Prev_X)/(Time + NextTime)
+		Y_Vel = (Next_Y - Prev_Y)/(Time + NextTime)
+		Z_Vel = (Next_Z - Prev_Z)/(Time + NextTime)
+		U_Vel = (Next_U - Prev_U)/(Time + NextTime)
+		V_Vel = (Next_V - Prev_V)/(Time + NextTime)
+		W_Vel = (Next_W - Prev_W)/(Time + NextTime)
+		A_Vel = (Next_A - Prev_A)/(Time + NextTime)
+		B_Vel = (Next_B - Prev_B)/(Time + NextTime)
+		C_Vel = (Next_C - Prev_C)/(Time + NextTime)
+Return
+
+N5
+		PVT (NextTime)
+		X_Vel = (Next_X - X_Coord)/NextTime
+		Y_Vel = (Next_Y - Y_Coord)/NextTime
+		Z_Vel = (Next_Z - Z_Coord)/NextTime
+		U_Vel = (Next_U - U_Coord)/NextTime
+		V_Vel = (Next_V - V_Coord)/NextTime
+		W_Vel = (Next_W - W_Coord)/NextTime
+		A_Vel = (Next_A - A_Coord)/NextTime
+		B_Vel = (Next_B - B_Coord)/NextTime
+		C_Vel = (Next_C - C_Coord)/NextTime
+Return
+
+; Subroutine 6 ************************************************************************************
+; Increment coordinate pointers (CurrentIndex is incremented in main)
+; *************************************************************************************************
+
+N6
 		If(X_Axis = 1) 
     		X_Adr = CurrentBufferAdr + CurrentIndex 
     End If
@@ -344,5 +361,34 @@ N4
     
 		Time = 	CurrentBufferAdr + CurrentIndex + 9*BufferLength
 		User = 	CurrentBufferAdr + CurrentIndex + 10*BufferLength
+Return
+
+; Subroutine 7 ************************************************************************************
+; Move axes
+; *************************************************************************************************
+
+N7
+		; Set to Q Variables before move call to shorten command
+		Q1 = X_Coord
+		Q2 = X_Vel
+		Q3 = Y_Coord
+		Q4 = Y_Vel
+		Q5 = Z_Coord
+		Q6 = Z_Vel
+		Q7 = U_Coord
+		Q8 = U_Vel
+		Q9 = V_Coord
+		Q10 = V_Vel
+		Q11 = W_Coord
+		Q12 = W_Vel
+		Q13 = A_Coord
+		Q14 = A_Vel
+		Q15 = B_Coord
+		Q16 = B_Vel
+		Q17 = C_Coord
+		Q18 = C_Vel
+
+    X(Q1):(Q2) Y(Q3):(Q4) Z(Q5):(Q6) U(Q7):(Q8) V(Q9):(Q10) W(Q11):(Q12) A(Q13):(Q14) B(Q15):(Q16) C(Q17):(Q18)
+Return
 
 Close
