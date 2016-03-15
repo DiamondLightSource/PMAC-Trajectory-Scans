@@ -1,0 +1,101 @@
+#DEFINE ACC_TIME P1
+
+DEL GAT	
+; Coordinate System 1
+&1
+; Make sure all buffers are closed
+CLOSE
+; Assign motor 1 to the X-axis
+#1->100X
+
+OPEN PROG 1
+CLEAR
+
+; Set move modes
+SPLINE2
+;LINEAR
+ABS
+
+I42=0
+I192=0
+
+;ACC_TIME = 1
+;TA(ACC_TIME)
+;TS0
+
+CMD"END GAT"
+CMD"DEL GAT"
+CMD"DEF GAT"
+CMD"GAT"
+Dwell 0
+
+TM 200
+X 5
+
+TM 200
+X 10
+
+TM 400
+X 20
+
+TM 200
+X 25
+
+TM 200
+X 30
+
+TM 400
+X 40
+
+TM 200
+X 45
+
+TM 200
+X 50
+
+;TM100
+;X5
+;Dwell 0
+;TM100
+;X10
+;Dwell 0
+;TM200
+;X20
+;Dwell 0
+;TM200
+;X30
+;Dwell 0
+;TM100
+;X35
+;Dwell 0
+;TM100
+;X40
+;Dwell 0
+;TM400
+;X60
+;Dwell 0
+;TM100
+;X65
+;Dwell 0
+;TM100
+;X70
+;Dwell 0
+;TM100
+;X75
+
+Dwell 0
+CMD"END GAT"
+
+Dwell 0
+TM 1000
+X 0
+
+;TM(10000-ACC_TIME) X1000
+;TM(100-ACC_TIME) X2000
+;TM(10000-ACC_TIME) X3000
+;TM(100-ACC_TIME) X4000
+;TM(10000-ACC_TIME) X5000
+;TM(100-ACC_TIME) X6000
+;COMMAND"END GAT"
+
+CLOSE

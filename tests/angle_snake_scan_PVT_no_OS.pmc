@@ -51,7 +51,7 @@ CLEAR
 
 ; Set move modes
 MoveTime = 0.025
-TurnTime = 0.05
+TurnTime = 0.1
 PVT (MoveTime*1000)
 ABS
 

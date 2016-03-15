@@ -20,12 +20,10 @@
 #Define Y_Move P16
 #Define Prev_X_Move P17
 #Define Prev_Y_Move P18
-#Define Next_X_Move P19
-#Define Next_Y_Move P20
-#Define MoveTime P21
+
+#Define Move_Time P21
 #Define Sub_Counter P22
 #Define Num_Steps P23
-#Define TurnTime P24
 
 
 ; ********************************************
@@ -50,29 +48,28 @@ OPEN PROG 1
 CLEAR
 
 ; Set move modes
-MoveTime = 0.025
-TurnTime = 0.05
-PVT (MoveTime*1000)
+Move_Time = 0.05
+PVT (Move_Time*1000)
 ABS
 
-NUM_LOOPS = 3
+NUM_LOOPS = 5
 COUNTER = 0
 STEP = 1000
 SMALL_STEP = 5
-OVER_STEP = 25
+OVER_STEP = 5
 
 ANGLE = 0
 X_STEP = STEP*COS(ANGLE)
 X_OS = OVER_STEP*COS(ANGLE)
 X_SMALL_STEP = SMALL_STEP*SIN(ANGLE)
-X_Move = 0 Prev_X_Move = 0
-Next_X_Move = COUNTER*X_SMALL_STEP
+Prev_X_Move = 0
+X_Move = COUNTER*X_SMALL_STEP
 
 Y_STEP = STEP*SIN(ANGLE)
 Y_OS = OVER_STEP*SIN(ANGLE)
 Y_SMALL_STEP = SMALL_STEP*COS(ANGLE)
-Y_Move = 0 Prev_Y_Move = 0
-Next_Y_Move = COUNTER*Y_SMALL_STEP
+Prev_Y_Move = 0
+Y_Move = COUNTER*Y_SMALL_STEP
 Sub_Counter = 0
 Num_Steps = 100
 
@@ -81,69 +78,85 @@ CMD"Del Gat"	; Deletes the gather buffer
 CMD"Def Gat"	; Allocates all the available memory as gather buffer
 Dwell 0		; Force CMD lines to execute
 CMD"Gat"	; Starts gathering of the data
-WHILE(COUNTER < NUM_LOOPS)
-		
+WHILE(COUNTER < NUM_LOOPS*5)
+	
 	While(Sub_Counter < Num_Steps)
 		GoSub1
-		Next_X_Move = COUNTER*X_SMALL_STEP-X_STEP*(Sub_Counter/Num_Steps)
-		Next_Y_Move = COUNTER*Y_SMALL_STEP+Y_STEP*(Sub_Counter/Num_Steps)
-		GoSub3
+		X_Move = COUNTER*X_SMALL_STEP-X_STEP*(Sub_Counter/Num_Steps)
+		Y_Move = COUNTER*Y_SMALL_STEP+Y_STEP*(Sub_Counter/Num_Steps)
+		GoSub2
 		X(X_Move):(X_Vel) Y(Y_Move):(Y_Vel)
 		Sub_Counter = Sub_Counter + 1
 	End While
 	
 	GoSub1
-	Next_X_Move = COUNTER*X_SMALL_STEP-X_STEP*(Sub_Counter/Num_Steps)
-	Next_Y_Move = COUNTER*Y_SMALL_STEP+Y_STEP*(Sub_Counter/Num_Steps)
-	GoSub3
+	X_Move = COUNTER*X_SMALL_STEP-X_STEP-X_OS
+	Y_Move = COUNTER*Y_SMALL_STEP+Y_STEP+Y_OS
+	GoSub2
 	X(X_Move):(X_Vel) Y(Y_Move):(Y_Vel)
 	
 	COUNTER = COUNTER + 1
-	
 	GoSub1
-	Next_X_Move = COUNTER*X_SMALL_STEP-X_STEP*(Sub_Counter/Num_Steps)
-	Next_Y_Move = COUNTER*Y_SMALL_STEP+Y_STEP*(Sub_Counter/Num_Steps)
+	X_Move = COUNTER*X_SMALL_STEP-X_STEP-2*X_OS
+	Y_Move = COUNTER*Y_SMALL_STEP+Y_STEP+2*Y_OS
 	GoSub2
 	X(X_Move):(X_Vel) Y(Y_Move):(Y_Vel)
-	Sub_Counter = Sub_Counter - 1
 	
+	COUNTER = COUNTER + 2
 	GoSub1
-	Next_X_Move = COUNTER*X_SMALL_STEP-X_STEP*(Sub_Counter/Num_Steps)
-	Next_Y_Move = COUNTER*Y_SMALL_STEP+Y_STEP*(Sub_Counter/Num_Steps)
-	GoSub4
+	X_Move = COUNTER*X_SMALL_STEP-X_STEP-2*X_OS
+	Y_Move = COUNTER*Y_SMALL_STEP+Y_STEP+2*Y_OS
+	GoSub2
 	X(X_Move):(X_Vel) Y(Y_Move):(Y_Vel)
-	Sub_Counter = Sub_Counter - 1
+	
+	COUNTER = COUNTER + 1
+	GoSub1
+	X_Move = COUNTER*X_SMALL_STEP-X_STEP-X_OS
+	Y_Move = COUNTER*Y_SMALL_STEP+Y_STEP+Y_OS
+	GoSub2
+	X(X_Move):(X_Vel) Y(Y_Move):(Y_Vel)
 	
 	While(Sub_Counter > 0)
 		GoSub1
-		Next_X_Move = COUNTER*X_SMALL_STEP-X_STEP*(Sub_Counter/Num_Steps)
-		Next_Y_Move = COUNTER*Y_SMALL_STEP+Y_STEP*(Sub_Counter/Num_Steps)
-		GoSub3
+		X_Move = COUNTER*X_SMALL_STEP-X_STEP*(Sub_Counter/Num_Steps)
+		Y_Move = COUNTER*Y_SMALL_STEP+Y_STEP*(Sub_Counter/Num_Steps)
+		GoSub2
 		X(X_Move):(X_Vel) Y(Y_Move):(Y_Vel)
 		Sub_Counter = Sub_Counter - 1
 	End While
 	
 	GoSub1
-	Next_X_Move = COUNTER*X_SMALL_STEP-X_STEP*(Sub_Counter/Num_Steps)
-	Next_Y_Move = COUNTER*Y_SMALL_STEP+Y_STEP*(Sub_Counter/Num_Steps)
-	GoSub3
+	X_Move = COUNTER*X_SMALL_STEP+X_OS
+	Y_Move = COUNTER*Y_SMALL_STEP-Y_OS
+	GoSub2
 	X(X_Move):(X_Vel) Y(Y_Move):(Y_Vel)
 	
 	COUNTER = COUNTER + 1
-	
 	GoSub1
-	Next_X_Move = COUNTER*X_SMALL_STEP-X_STEP*(Sub_Counter/Num_Steps)
-	Next_Y_Move = COUNTER*Y_SMALL_STEP+Y_STEP*(Sub_Counter/Num_Steps)
+	X_Move = COUNTER*X_SMALL_STEP+2*X_OS
+	Y_Move = COUNTER*Y_SMALL_STEP-2*Y_OS
 	GoSub2
 	X(X_Move):(X_Vel) Y(Y_Move):(Y_Vel)
-	Sub_Counter = Sub_Counter + 1
+	
+	COUNTER = COUNTER + 2
+	GoSub1
+	X_Move = COUNTER*X_SMALL_STEP+2*X_OS
+	Y_Move = COUNTER*Y_SMALL_STEP-2*Y_OS
+	GoSub2
+	X(X_Move):(X_Vel) Y(Y_Move):(Y_Vel)
+	
+	COUNTER = COUNTER + 1
+	GoSub1
+	X_Move = COUNTER*X_SMALL_STEP+X_OS
+	Y_Move = COUNTER*Y_SMALL_STEP-Y_OS
+	GoSub2
+	X(X_Move):(X_Vel) Y(Y_Move):(Y_Vel)
 	
 	GoSub1
-	Next_X_Move = COUNTER*X_SMALL_STEP-X_STEP*(Sub_Counter/Num_Steps)
-	Next_Y_Move = COUNTER*Y_SMALL_STEP+Y_STEP*(Sub_Counter/Num_Steps)
-	GoSub4
+	X_Move = COUNTER*X_SMALL_STEP
+	Y_Move = COUNTER*Y_SMALL_STEP
+	GoSub2
 	X(X_Move):(X_Vel) Y(Y_Move):(Y_Vel)
-	Sub_Counter = Sub_Counter + 1
 	
 ENDWHILE
 Dwell 0		; Force CMD lines to execute
@@ -155,26 +168,11 @@ X0 Y0
 N1
 	Prev_X_Move = X_Move
 	Prev_Y_Move = Y_Move
-	X_Move = Next_X_Move
-	Y_Move = Next_Y_Move
 Return
 
 N2
-	PVT (TurnTime*1000)
-	X_Vel = (X_Move - Prev_X_Move)/TurnTime
-	Y_Vel = (Y_Move - Prev_Y_Move)/TurnTime
-Return
-
-N3
-	PVT (MoveTime*1000)
-	X_Vel = (Next_X_Move-Prev_X_Move)/(2*MoveTime)
-	Y_Vel = (Next_Y_Move-Prev_Y_Move)/(2*MoveTime)
-Return
-
-N4
-	PVT (TurnTime*1000)
-	X_Vel = (Next_X_Move - X_Move)/TurnTime
-	Y_Vel = (Next_Y_Move - Y_Move)/TurnTime
+	X_Vel = (X_Move-Prev_X_Move)/(Move_Time)
+	Y_Vel = (Y_Move-Prev_Y_Move)/(Move_Time)
 Return
 
 CLOSE

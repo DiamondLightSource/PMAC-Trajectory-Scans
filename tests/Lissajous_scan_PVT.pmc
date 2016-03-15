@@ -1,0 +1,94 @@
+; ********************************************
+; Parameters
+; ********************************************
+
+#DEFINE NUM_LOOPS P1
+#DEFINE COUNTER P2
+#DEFINE X_AMP P3
+#DEFINE Y_AMP P4
+#DEFINE PHASE_DIFF P5
+#DEFINE ANG_FREQ P6
+#Define X_Vel P13
+#Define Y_Vel P14
+#Define X_Move P15
+#Define Y_Move P16
+#Define Prev_X_Move P17
+#Define Prev_Y_Move P18
+#Define Next_X_Move P19
+#Define Next_Y_Move P20
+#Define Move_Time P21
+
+
+; ********************************************
+; Set-Up
+; ********************************************
+
+DEL GAT	
+; Coordinate System 1
+&1
+; Make sure all buffers are closed
+CLOSE
+; Assign motor 1 to the X-axis
+#1->X
+; Assign motor 2 to the Y-axis
+#2->Y
+
+; ********************************************
+; Program
+; ********************************************
+
+OPEN PROG 1
+CLEAR
+
+; Set move modes
+Move_Time = 0.01
+PVT (Move_Time*1000)
+ABS
+
+NUM_LOOPS = 50
+COUNTER = 0
+X_AMP = 1000
+Y_AMP = 1000
+ANG_FREQ = 3.14159/2 + 0.2
+
+X_Move = 0 Prev_X_Move = 0
+Next_X_Move = X_AMP*SIN(ANG_FREQ*COUNTER+PHASE_DIFF)
+
+Y_Move = 0 Prev_Y_Move = 0
+Next_Y_Move = Y_AMP*SIN(COUNTER)
+
+CMD"End Gat"	; Stop gathering
+CMD"Del Gat"	; Deletes the gather buffer
+CMD"Def Gat"	; Allocates all the available memory as gather buffer
+Dwell 0		; Force CMD lines to execute
+CMD"Gat"	; Starts gathering of the data
+WHILE(COUNTER < NUM_LOOPS*361)
+
+	GoSub1
+	Next_X_Move = X_AMP*SIN(ANG_FREQ*COUNTER+PHASE_DIFF)
+	Next_Y_Move = Y_AMP*SIN(COUNTER)
+	GoSub2
+	X(X_Move):(X_Vel) Y(Y_Move):(Y_Vel)
+	
+	COUNTER = COUNTER + 1
+	
+ENDWHILE
+Dwell 0		; Force CMD lines to execute
+CMD"End Gat"	; Send On-line command to stop data gathering
+Dwell 0		; Force CMD lines to execute
+
+X0 Y0
+
+N1
+	Prev_X_Move = X_Move
+	Prev_Y_Move = Y_Move
+	X_Move = Next_X_Move
+	Y_Move = Next_Y_Move
+Return
+
+N2
+	X_Vel = (Next_X_Move-Prev_X_Move)/(2*Move_Time)
+	Y_Vel = (Next_Y_Move-Prev_Y_Move)/(2*Move_Time)
+Return
+
+CLOSE

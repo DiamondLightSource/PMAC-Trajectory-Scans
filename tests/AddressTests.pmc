@@ -1,0 +1,47 @@
+#Define RootAdr M4000
+RootAdr = $10400
+
+#Define XCoord M4001
+XCoord->X:$10400,0,24
+#Define XCoordAdr M4002
+XCoordAdr->Y:$004FA1,0,24							; Address of M4001
+
+#Define YCoord M4003
+YCoord->X:$10405,0,24
+#Define YCoordAdr M4004
+YCoordAdr->Y:$004FA3,0,24							; Address of M4003
+
+#Define ZCoord M4005
+ZCoord->X:$1040A,0,24
+#Define ZCoordAdr M4006
+ZCoordAdr->Y:$004FA5,0,24							; Address of M4005
+
+#Define UCoord M4007
+UCoord->X:$1040F,0,24
+#Define UCoordAdr M4008
+UCoordAdr->Y:$004FA7,0,24							; Address of M4007
+
+Del Gat
+&1
+Close
+#1->X
+
+Open Prog 1 Clear
+
+P1000 = 0
+
+XCoordAdr = RootAdr
+YCoordAdr = RootAdr + 5
+ZCoordAdr = RootAdr + 10
+UCoordAdr = RootAdr + 15
+
+While(P1000 < 5)
+	Dwell500
+	XCoordAdr == XCoordAdr + 1
+	YCoordAdr == YCoordAdr + 1
+	ZCoordAdr == ZCoordAdr + 1
+	UCoordAdr == UCoordAdr + 1
+	P1000 = P1000 + 1
+EndWhile
+
+Close

@@ -1,0 +1,49 @@
+#DEFINE ACC_TIME P1
+
+DEL GAT	
+; Make sure all buffers are closed
+CLOSE
+; Coordinate System 1
+&1
+; Assign motor 1 to the X-axis
+#1->X
+
+OPEN PROG 1 CLEAR
+
+; Set move modes
+PVT 5000
+ABS
+
+P2 = 0
+P3 = 0
+
+CMD"END GAT"
+CMD"DEL GAT"
+CMD"DEF GAT"
+CMD"GAT"
+Dwell 0
+
+While(P2 < 100)
+
+	P3 = P3 + 1	
+	PVT 1
+	X (P3):5000
+	
+	PVT 1
+	X (P3):5000
+	
+	P3 = P3 + 2	
+	PVT 2
+	X (P3):5000
+	
+	P2 = P2 + 1
+	
+End While
+
+Dwell 0
+CMD"END GAT"
+
+Dwell 1000
+X 0
+
+CLOSE

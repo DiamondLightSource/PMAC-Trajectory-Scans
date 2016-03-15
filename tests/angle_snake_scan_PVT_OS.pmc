@@ -50,8 +50,8 @@ OPEN PROG 1
 CLEAR
 
 ; Set move modes
-MoveTime = 0.025
-TurnTime = 0.05
+MoveTime = 0.05
+TurnTime = 0.25
 PVT (MoveTime*1000)
 ABS
 
@@ -93,19 +93,18 @@ WHILE(COUNTER < NUM_LOOPS)
 	End While
 	
 	GoSub1
-	Next_X_Move = COUNTER*X_SMALL_STEP-X_STEP*(Sub_Counter/Num_Steps)
-	Next_Y_Move = COUNTER*Y_SMALL_STEP+Y_STEP*(Sub_Counter/Num_Steps)
+	Next_X_Move = COUNTER*X_SMALL_STEP-X_STEP-X_OS
+	Next_Y_Move = COUNTER*Y_SMALL_STEP+Y_STEP+Y_OS
 	GoSub3
 	X(X_Move):(X_Vel) Y(Y_Move):(Y_Vel)
 	
 	COUNTER = COUNTER + 1
 	
 	GoSub1
-	Next_X_Move = COUNTER*X_SMALL_STEP-X_STEP*(Sub_Counter/Num_Steps)
-	Next_Y_Move = COUNTER*Y_SMALL_STEP+Y_STEP*(Sub_Counter/Num_Steps)
+	Next_X_Move = COUNTER*X_SMALL_STEP-X_STEP-X_OS
+	Next_Y_Move = COUNTER*Y_SMALL_STEP+Y_STEP+Y_OS
 	GoSub2
 	X(X_Move):(X_Vel) Y(Y_Move):(Y_Vel)
-	Sub_Counter = Sub_Counter - 1
 	
 	GoSub1
 	Next_X_Move = COUNTER*X_SMALL_STEP-X_STEP*(Sub_Counter/Num_Steps)
@@ -124,19 +123,18 @@ WHILE(COUNTER < NUM_LOOPS)
 	End While
 	
 	GoSub1
-	Next_X_Move = COUNTER*X_SMALL_STEP-X_STEP*(Sub_Counter/Num_Steps)
-	Next_Y_Move = COUNTER*Y_SMALL_STEP+Y_STEP*(Sub_Counter/Num_Steps)
+	Next_X_Move = COUNTER*X_SMALL_STEP+X_OS
+	Next_Y_Move = COUNTER*Y_SMALL_STEP-Y_OS
 	GoSub3
 	X(X_Move):(X_Vel) Y(Y_Move):(Y_Vel)
 	
 	COUNTER = COUNTER + 1
 	
 	GoSub1
-	Next_X_Move = COUNTER*X_SMALL_STEP-X_STEP*(Sub_Counter/Num_Steps)
-	Next_Y_Move = COUNTER*Y_SMALL_STEP+Y_STEP*(Sub_Counter/Num_Steps)
+	Next_X_Move = COUNTER*X_SMALL_STEP+X_OS
+	Next_Y_Move = COUNTER*Y_SMALL_STEP-Y_OS
 	GoSub2
 	X(X_Move):(X_Vel) Y(Y_Move):(Y_Vel)
-	Sub_Counter = Sub_Counter + 1
 	
 	GoSub1
 	Next_X_Move = COUNTER*X_SMALL_STEP-X_STEP*(Sub_Counter/Num_Steps)

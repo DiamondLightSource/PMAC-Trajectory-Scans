@@ -1,0 +1,66 @@
+; ********************************************
+; Parameters
+; ********************************************
+
+#DEFINE NUM_LOOPS P1
+#DEFINE COUNTER P2
+#DEFINE AMP P3
+#Define CounterStep P4
+
+
+; ********************************************
+; Set-Up
+; ********************************************
+
+DEL GAT	
+; Coordinate System 1
+&1
+; Make sure all buffers are closed
+CLOSE
+; Assign motor 1 to the X-axis
+#1->100X
+; Assign motor 2 to the Y-axis
+#2->100Y
+
+; ********************************************
+; Program
+; ********************************************
+
+OPEN PROG 1
+CLEAR
+
+; Set move modes
+PVT 250
+ABS
+
+NUM_LOOPS = 3
+COUNTER = 0
+AMP = 1
+CounterStep = 20
+
+Command "End Gather"
+Command "Del Gather"
+Command "Def Gather"
+Command "Gather"
+Dwell 0
+
+WHILE(COUNTER < NUM_LOOPS*361)
+
+	P10 = COUNTER*COS(COUNTER)
+	P11 = COUNTER*SIN(COUNTER)
+	P13 = ((COUNTER+CounterStep)*COS(COUNTER+CounterStep) - (COUNTER-CounterStep)*COS(COUNTER-CounterStep))*2
+	P14 = ((COUNTER+CounterStep)*SIN(COUNTER+CounterStep) - (COUNTER-CounterStep)*SIN(COUNTER-CounterStep))*2
+	
+	X(AMP*P10):(P13) Y(AMP*P11):(P14)
+	
+	COUNTER = COUNTER + CounterStep
+	
+ENDWHILE
+
+Dwell 0
+Command "End Gather"
+
+TM 1000
+X0 Y0
+
+CLOSE
