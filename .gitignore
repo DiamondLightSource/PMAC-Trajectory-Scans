@@ -68,3 +68,10 @@ target/
 /venv/
 /installed.files
 
+#PMAC Things
+*.PMA
+*.56K
+*.LOG
+*.MAP
+*.TBL
+
