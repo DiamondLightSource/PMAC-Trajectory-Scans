@@ -4,7 +4,8 @@
 
 #Define RootVar 4000
 
-; EPICS Required Variables - P4000 address = $6FA0
+; EPICS Required Variables - (P4000 address = $6FA0)
+
 #Define CurrentBufferAdr  P(RootVar + 1)   		; A or B buffer address
 #Define BufferLength   		P(RootVar + 2)   		; Length of a single buffer e.g. AX, BX, ..., User
 #Define BufferFill     		P(RootVar + 3)   		; The index that current buffers have been filled up to
@@ -13,10 +14,11 @@
 #Define TotalPoints    		P(RootVar + 6)   		; Total number of points scanned through
 #Define Cancel          	P(RootVar + 7)   		; Cancel trigger for EPICS
 #Define Axes            	P(RootVar + 8)   		; An int between 1 and 256 specifying which axes to use
-#Define BufferAdr_A 			P(RootVar + 9)   		; Start index of first sub-buffer of buffer A (AX)
-#Define BufferAdr_B 			P(RootVar + 10)  		; Start index of first sub-buffer of buffer B (BX)
+#Define BufferAdr_A 			P(RootVar + 9)			; Start indexes of buffer A and B
+#Define BufferAdr_B 			P(RootVar + 10)
 
 ; Motion Program Variables
+
 #Define X_Axis          	P(RootVar + 101)  	; Specifiers for what axes are to be used
 #Define Y_Axis          	P(RootVar + 102)
 #Define Z_Axis          	P(RootVar + 103)
@@ -49,18 +51,6 @@
 #Define Prev_B 						P(RootVar + 128)
 #Define Prev_C 						P(RootVar + 129)
 
-#Define Next_Time        	P(RootVar + 130)  	; Next coordinate values
-#Define Next_X	         	P(RootVar + 131)
-#Define Next_Y         		P(RootVar + 132)
-#Define Next_Z        		P(RootVar + 133)
-#Define Next_U         		P(RootVar + 134)
-#Define Next_V        		P(RootVar + 135)
-#Define Next_W        		P(RootVar + 136)
-#Define Next_A        		P(RootVar + 137)
-#Define Next_B        		P(RootVar + 138)
-#Define Next_C        		P(RootVar + 139)
-#Define Next_User     		P(RootVar + 140)
-
 #Define X_Vel							P(RootVar + 141)		; Move velocities
 #Define Y_Vel							P(RootVar + 142)
 #Define Z_Vel							P(RootVar + 143)
@@ -71,29 +61,55 @@
 #Define B_Vel							P(RootVar + 148)
 #Define C_Vel							P(RootVar + 149)
 
-#Define Time_Adr        	M4000  							; Pointers to Next_* coordinate addresses
-#Define X_Adr         		M4001
-#Define Y_Adr         		M4002
-#Define Z_Adr        			M4003
-#Define U_Adr         		M4004
-#Define V_Adr      				M4005
-#Define W_Adr        			M4006
-#Define A_Adr        			M4007
-#Define B_Adr        			M4008
-#Define C_Adr        			M4009
-#Define User_Adr        	M4010
+; Address-Based Variables
 
-Time_Adr->X:$7022,0,24											; Assignments for pointers to P address locations
-X_Adr->X:$7023,0,24													; P0 = $6000 -> P4130 = $7022
-Y_Adr->X:$7024,0,24
-Z_Adr->X:$7025,0,24
-U_Adr->X:$7026,0,24
-V_Adr->X:$7027,0,24
-W_Adr->X:$7028,0,24
-A_Adr->X:$7029,0,24
-B_Adr->X:$702A,0,24
-C_Adr->X:$702B,0,24
-User_Adr->X:$702C,0,24
+#Define Next_Time        	M4000  							; Next coordinate values
+#Define Next_X	         	M4001
+#Define Next_Y         		M4002
+#Define Next_Z        		M4003
+#Define Next_U         		M4004
+#Define Next_V        		M4005
+#Define Next_W        		M4006
+#Define Next_A        		M4007
+#Define Next_B        		M4008
+#Define Next_C        		M4009
+#Define Next_User     		M4010
+
+Next_Time->D:$30000,0,24											; Set initial pointers and type
+Next_X->D:$30000,0,48
+Next_Y->D:$30000,0,48
+Next_Z->D:$30000,0,48
+Next_U->D:$30000,0,48
+Next_V->D:$30000,0,48
+Next_W->D:$30000,0,48
+Next_A->D:$30000,0,48
+Next_B->D:$30000,0,48
+Next_C->D:$30000,0,48
+Next_User->D:$30000,0,48
+
+#Define Time_Adr        	M4020  							; Pointers to Next_* coordinate addresses
+#Define X_Adr         		M4021
+#Define Y_Adr         		M4022
+#Define Z_Adr        			M4023
+#Define U_Adr         		M4024
+#Define V_Adr      				M4025
+#Define W_Adr        			M4026
+#Define A_Adr        			M4027
+#Define B_Adr        			M4028
+#Define C_Adr        			M4029
+#Define User_Adr        	M4030
+
+Time_Adr->Y$4FA0,0,24													; Assignments for pointers to P address locations
+X_Adr->Y:$4FA1,0,24														; M0 = $4000 -> M4000 = $4FA0
+Y_Adr->Y:$4FA2,0,24
+Z_Adr->Y:$4FA3,0,24
+U_Adr->Y:$4FA4,0,24
+V_Adr->Y:$4FA5,0,24
+W_Adr->Y:$4FA6,0,24
+A_Adr->Y:$4FA7,0,24
+B_Adr->Y:$4FA8,0,24
+C_Adr->Y:$4FA9,0,24
+User_Adr->Y:$4FAA,0,24
 
 ; *****************************************************************************************
 ; Set-Up
@@ -114,7 +130,7 @@ Del Gat
 ;#9->C
 
 ; Set Initial Values
-BufferLength = 1000
+BufferLength = 20
 BufferAdr_A = $30000
 BufferAdr_B = BufferAdr_A + 11*BufferLength
 
@@ -129,6 +145,7 @@ Open Prog 1
 Clear
 
 ; Check which axes are required
+Axes = 510
 GoSub1
 
 Abs
@@ -139,7 +156,7 @@ CurrentIndex = 0
 Status = 0
 TotalPoints = 0
 Cancel = 0
-BufferFill = BufferLength
+BufferFill = 20
 
 Prev_X = 0 X_Coord = 0
 Prev_Y = 0 Y_Coord = 0
@@ -150,6 +167,8 @@ Prev_W = 0 W_Coord = 0
 Prev_A = 0 A_Coord = 0
 Prev_B = 0 B_Coord = 0
 Prev_C = 0 C_Coord = 0
+
+GoSub6
 
 P4201 = 0
 P4202 = 0
@@ -189,13 +208,17 @@ While(Cancel != 1 and BufferFill > 0) ; Run indefinitely, but allow EPICS to sto
 
         ; Run any required subroutine >>> Do we need to be able to run more than one?
         If(User > 0)
-            GoSub(User)
+            ;GoSub(User)
         End If
+        
+    		P4203 = P4023 + 1
 
         CurrentIndex = CurrentIndex + 1
         TotalPoints = TotalPoints + 1
         
+    		Dwell 1000
     End While
+    BufferFill = 0
 
     ; >>> Might need second move call because of double endif statements - won't merge otherwise
 
@@ -204,7 +227,6 @@ While(Cancel != 1 and BufferFill > 0) ; Run indefinitely, but allow EPICS to sto
     Else
         CurrentBufferAdr = BufferAdr_A
     End If
-    
 
 End While
 
@@ -229,39 +251,39 @@ N1
 		B_Axis = 0
 		C_Axis = 0
 		
-		If(Axes > 256 or Axes = 256)
+		If(Axes > 255)
 		    X_Axis = 1
 		    Axes = Axes - 256
 		End If
-		If(Axes > 128 or Axes = 128)
+		If(Axes > 127)
 		    Y_Axis = 1
 		    Axes = Axes - 128
 		End If
-		If(Axes > 64 or Axes = 64)
+		If(Axes > 63)
 		    Z_Axis = 1
 		    Axes = Axes - 64
 		End If
-		If(Axes > 32 or Axes = 32)
+		If(Axes > 31)
 		    U_Axis = 1
 		    Axes = Axes - 32
 		End If
-		If(Axes > 16 or Axes = 16)
+		If(Axes > 15)
 		    V_Axis = 1
 		    Axes = Axes - 16
 		End If
-		If(Axes > 8 or Axes = 8)
+		If(Axes > 7)
 		    W_Axis = 1
 		    Axes = Axes - 8
 		End If
-		If(Axes > 4 or Axes = 4)
+		If(Axes > 3)
 		    A_Axis = 1
 		    Axes = Axes - 4
 		End If
-		If(Axes > 2 or Axes = 2)
+		If(Axes > 1)
 		    B_Axis = 1
 		    Axes = Axes - 2
 		End If
-		If(Axes > 1 or Axes = 1)
+		If(Axes > 0)
 		    C_Axis = 1
 		    Axes = Axes - 1
 		End If
@@ -272,6 +294,7 @@ Return
 ; *************************************************************************************************
 
 N2
+		Time = Next_Time
 		Prev_X = X_Coord
 		X_Coord = Next_X
 		Prev_Y = Y_Coord
@@ -290,7 +313,7 @@ N2
 		B_Coord = Next_B
 		Prev_C = C_Coord
 		C_Coord = Next_C
-		Time = Next_Time
+		User = Next_User
 Return
 
 ; Subroutines 3-5 *********************************************************************************
@@ -341,36 +364,35 @@ Return
 ; *************************************************************************************************
 
 N6
+		Time_Adr = 	CurrentBufferAdr + CurrentIndex
 		If(X_Axis = 1) 
-    		X_Adr = CurrentBufferAdr + CurrentIndex 
+    		X_Adr = CurrentBufferAdr + CurrentIndex + BufferLength
     End If
     If(Y_Axis = 1)
-    		Y_Adr = CurrentBufferAdr + CurrentIndex + BufferLength
+    		Y_Adr = CurrentBufferAdr + CurrentIndex + 2*BufferLength
     End If
     If(Z_Axis = 1)
-    		Z_Adr = CurrentBufferAdr + CurrentIndex + 2*BufferLength
+    		Z_Adr = CurrentBufferAdr + CurrentIndex + 3*BufferLength
     End If
     If(U_Axis = 1)
-    		U_Adr = CurrentBufferAdr + CurrentIndex + 3*BufferLength
+    		U_Adr = CurrentBufferAdr + CurrentIndex + 4*BufferLength
     End If
     If(V_Axis = 1)
-    		V_Adr = CurrentBufferAdr + CurrentIndex + 4*BufferLength
+    		V_Adr = CurrentBufferAdr + CurrentIndex + 5*BufferLength
     End If
     If(W_Axis = 1)
-    		W_Adr = CurrentBufferAdr + CurrentIndex + 5*BufferLength
+    		W_Adr = CurrentBufferAdr + CurrentIndex + 6*BufferLength
     End If
     If(A_Axis = 1)
-    		A_Adr = CurrentBufferAdr + CurrentIndex + 6*BufferLength
+    		A_Adr = CurrentBufferAdr + CurrentIndex + 7*BufferLength
     End If
     If(B_Axis = 1)
-    		B_Adr = CurrentBufferAdr + CurrentIndex + 7*BufferLength
+    		B_Adr = CurrentBufferAdr + CurrentIndex + 8*BufferLength
     End If
     If(C_Axis = 1)
-    		C_Adr = CurrentBufferAdr + CurrentIndex + 8*BufferLength
+    		C_Adr = CurrentBufferAdr + CurrentIndex + 9*BufferLength
     End If
-    
-		Time = 	CurrentBufferAdr + CurrentIndex + 9*BufferLength
-		User = 	CurrentBufferAdr + CurrentIndex + 10*BufferLength
+		User_Adr = 	CurrentBufferAdr + CurrentIndex + 10*BufferLength
 Return
 
 ; Subroutine 7 ************************************************************************************
@@ -398,7 +420,7 @@ N7
 		Q17 = C_Coord
 		Q18 = C_Vel
 
-    X(Q1):(Q2) Y(Q3):(Q4) Z(Q5):(Q6) U(Q7):(Q8) V(Q9):(Q10) W(Q11):(Q12) A(Q13):(Q14) B(Q15):(Q16) C(Q17):(Q18)
+    X(Q1):(Q2) Y(Q3):(Q4) Z(Q5):(Q6) U(Q7):(Q8) V(Q9):(Q10) W(Q11):(Q12) A(Q13):(Q14) B(Q15):(Q16) ;C(Q17):(Q18)
 		
 Return
 
