@@ -64,34 +64,42 @@ def generate_points(num_points, buffer_length):
     return points
 
 
-def generate_snake_scan():
+def generate_snake_scan(reverse=False):
 
-    points = []
+    time_points = []
+    x_points = []
+    y_points = []
 
     for i in range(0, 50):
-        points.append(500)
+        time_points.append(500)
 
-    xs = LineGenerator("x", "mm", 0, 10, 5)
-    ys = LineGenerator("y", "mm", 0, 10, 5)
-    gen = NestedGenerator(ys, xs, snake=True)
+    if reverse:
+        xs = LineGenerator("x", "mm", 0, 10, 5)
+        ys = LineGenerator("y", "mm", 0, 10, 5)
+        gen = NestedGenerator(ys, xs, snake=True)
+    else:
+        xs = LineGenerator("x", "mm", 0, 10, 5)
+        ys = LineGenerator("y", "mm", 0, 10, 5)
+        gen = NestedGenerator(ys, xs, snake=True)
 
     for point in gen.iterator():
-        print(point.lower)
-        print(point.upper)
-        points.append(int(point.lower['x']))
-        points.append(int(point.upper['x']))
+        x_points.append(int(point.lower['x']))
+        x_points.append(int(point.upper['x']))
     for point in gen.iterator():
-        points.append(int(point.lower['y']))
-        points.append(int(point.upper['y']))
+        y_points.append(int(point.lower['y']))
+        y_points.append(int(point.upper['y']))
 
-    return points
+    return time_points, x_points, y_points
 
 
-def send_points(points, start):
+def send_points(points, buffer_length, start="30000"):
 
-    for point in points:
-        write_to_address("L", start, str(point))
-        current_address = inc_hex(current_address)
+    for i, subset in enumerate(points):
+        current_address = add_dechex(start, int(buffer_length)*i)
+        print(current_address)
+        for point in subset:
+            write_to_address("L", start, str(point))
+            current_address = inc_hex(current_address)
 
 
 def reset_buffers(buffer_length):
@@ -119,16 +127,16 @@ def trajectory_scan():
 
     # points = generate_points(20, int(buffer_length))
     points = generate_snake_scan()
+    print(points)
     buffer_fill_a = 50
-    send_points(points[:10], "30000")
+    send_points(points, buffer_length, "30000")
     pmac.setVar("P4011", buffer_fill_a)
-    pmac.sendCommand("#1J/ #2J/ #3J/ #4J/ #5J/ #6J/ #7J/ #8J/ &1 B1 R")
+    # pmac.sendCommand("#1J/ #2J/ #3J/ #4J/ #5J/ #6J/ #7J/ #8J/ &1 B1 R")
 
     print("Buffer fill: " + str(buffer_fill_a))
     print("Buffer length: " + buffer_length)
     print("Buffer A: " + buffer_a_address)
     print("Buffer B: " + buffer_b_address)
-    print(points)
 
     time.sleep(2)
 
