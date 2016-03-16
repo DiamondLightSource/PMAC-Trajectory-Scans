@@ -6,16 +6,22 @@
 
 ; EPICS Required Variables - (P4000 address = $6FA0)
 
-#Define CurrentBufferAdr  P(RootVar + 1)   		; A or B buffer address
-#Define BufferLength   		P(RootVar + 2)   		; Length of a single buffer e.g. AX, BX, ..., User
-#Define BufferFill     		P(RootVar + 3)   		; The index that current buffers have been filled up to
-#Define CurrentIndex   		P(RootVar + 4)   		; Current index position in buffers
-#Define Status          	P(RootVar + 5)   		; Status of motion program for EPICS
-#Define TotalPoints    		P(RootVar + 6)   		; Total number of points scanned through
-#Define Cancel          	P(RootVar + 7)   		; Cancel trigger for EPICS
-#Define Axes            	P(RootVar + 8)   		; An int between 1 and 256 specifying which axes to use
-#Define BufferAdr_A 			P(RootVar + 9)			; Start indexes of buffer A and B
-#Define BufferAdr_B 			P(RootVar + 10)
+#Define Status          	P(RootVar + 1)   		; Status of motion program for EPICS - 0: Idle, 1: Running, 2: Finished, 3: Error
+#Define Abort          		P(RootVar + 2)   		; Abort trigger for EPICS
+#Define Axes            	P(RootVar + 3)   		; An int between 1 and 511 specifying which axes to use
+#Define BufferLength   		P(RootVar + 4)   		; Length of a single buffer e.g. AX, AY...
+#Define TotalPoints    		P(RootVar + 5)   		; Total number of points scanned through
+
+#Define CurrentIndex   		P(RootVar + 6)   		; Current index position in buffers
+#Define CurrentBuffer			P(RootVar + 7)			; Current buffer specifier - 0: A, 1: B
+
+#Define BufferAdr_A 			P(RootVar + 8)			; Start indexes of buffer A and B
+#Define BufferAdr_B 			P(RootVar + 9)
+#Define CurrentBufferAdr  P(RootVar + 10)   	; A or B buffer address
+
+#Define BufferFill_A			P(RootVar + 11)			; Fill level of buffer A and B
+#Define BufferFill_B			P(RootVar + 12)
+#Define CurrentBufferFill P(RootVar + 13)   	; The indexes that current buffer has been filled up to
 
 ; Motion Program Variables
 
@@ -99,7 +105,7 @@ Next_User->D:$30000,0,48
 #Define C_Adr        			M4029
 #Define User_Adr        	M4030
 
-Time_Adr->Y$4FA0,0,24													; Assignments for pointers to P address locations
+Time_Adr->Y$4FA0,0,24													; Assignments for pointers to M address locations
 X_Adr->Y:$4FA1,0,24														; M0 = $4000 -> M4000 = $4FA0
 Y_Adr->Y:$4FA2,0,24
 Z_Adr->Y:$4FA3,0,24
@@ -116,18 +122,6 @@ User_Adr->Y:$4FAA,0,24
 ; *****************************************************************************************
 
 Del Gat
-; Coordinate System 1
-&1
-
-#1->X
-#2->Y
-#3->Z
-#4->U
-#5->V
-#6->W
-#7->A
-#8->B
-;#9->C
 
 ; Set Initial Values
 BufferLength = 50
@@ -151,12 +145,16 @@ GoSub1
 Abs
 FRAX(X,Y,Z,U,V,W,A,B,C)
 
-CurrentBufferAdr = BufferAdr_A
-CurrentIndex = 0
+BufferFill_A = 25				; >>> Temp workaround
+
 Status = 0
+Abort = 0
 TotalPoints = 0
-Cancel = 0
-;BufferFill = 25
+
+CurrentIndex = 0
+CurrentBuffer = 0
+CurrentBufferFill = BufferFill_A
+CurrentBufferAdr = BufferAdr_A
 
 Prev_X = 0 X_Coord = 0
 Prev_Y = 0 Y_Coord = 0
@@ -173,7 +171,7 @@ GoSub6
 P4201 = 0
 P4202 = 0
 P4203 = 0
-Dwell 1000
+;Dwell 1000
 
 ; <<< Allow EPICS to assign any values here, so they won't be reset - Or just don't set variables that EPICS will set?
 
@@ -183,13 +181,15 @@ CMD"Def Gat"	; Allocates all the available memory as gather buffer
 Dwell 0		; Force CMD lines to execute
 CMD"Gat"	; Starts gathering of the data
 
-While(Cancel != 1 and BufferFill > 0) ; Run indefinitely, but allow EPICS to stop program
+Status = 1					; State program is running
 
+While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS to stop program
+
+		
 		P4201 = P4201 + 1
-    ; <<< EPICS to set BUFFER_FILL here
 
     CurrentIndex = 0
-    While(CurrentIndex < BufferFill)
+    While(Abort != 1 and CurrentIndex < CurrentBufferFill)
 
 				P4202 = P4202 + 1
 				
@@ -214,7 +214,7 @@ While(Cancel != 1 and BufferFill > 0) ; Run indefinitely, but allow EPICS to sto
 
         ; Run any required subroutine >>> Do we need to be able to run more than one?
         If(User > 0)
-            ;GoSub(User)
+            GoSub(User)
         End If
         
     		P4203 = P4023 + 1
@@ -224,14 +224,24 @@ While(Cancel != 1 and BufferFill > 0) ; Run indefinitely, but allow EPICS to sto
         
         ;Dwell 500
     End While
-    BufferFill = 0
+    CurrentBufferFill = 0 			; >>> Temp workaround
 
-    ; >>> Might need second move call because of double endif statements - won't merge otherwise
+    ; >>> Might need second move call because of double endwhile statements - won't merge otherwise
+    
+    ; <<< EPICS to set BufferFill_* by this point
+    
+    CurrentIndex = 0
 
-    If(CurrentBufferAdr = BufferAdr_A)
-        CurrentBufferAdr = BufferAdr_B
+    If(CurrentBuffer = 0)
+        CurrentBufferAdr = BufferAdr_B				; Swap to Buffer B values
+        CurrentBufferFill = BufferFill_B
+    		CurrentBuffer = 1
+        BufferFill_A = 0											; Empty Buffer A
     Else
-        CurrentBufferAdr = BufferAdr_A
+        CurrentBufferAdr = BufferAdr_A				; Swap to Buffer A values
+        CurrentBufferFill = BufferFill_A
+    		CurrentBuffer = 0
+        BufferFill_B = 0											; Empty Buffer B
     End If
 
 End While
@@ -240,7 +250,7 @@ Dwell 0		; Force CMD lines to execute
 CMD"End Gat"	; Send On-line command to stop data gathering
 Dwell 0		; Force CMD lines to execute
 
-Status = 1		; >>> Use synchronous assignment?
+Status = 2							; State program is finished ; >>> Use synchronous assignment?
 
 ; Buffers: AX, AY, AZ, AU, AV, AW, AA, AB, AC, ATime, AUser
 ;          BX, BY, BZ, BU, BV, BW, BA, BB, BC, BTime, BUser
@@ -331,6 +341,11 @@ Return
 ; *************************************************************************************************
 
 N3
+		If(Time = 0)
+				Status = 3
+				CMD"^A"
+				Time = 1000				; Failsafe
+		End If
 		PVT (Time)
 		X_Vel = (X_Coord - Prev_X)/Time
 		Y_Vel = (Y_Coord - Prev_Y)/Time
@@ -344,6 +359,16 @@ N3
 Return
 
 N4
+		If(Time = 0)
+				Status = 3
+				CMD"^A"
+				CMD"A"
+				CMD"<CTL-A>"
+				CMD"<CTRL-A>"
+				CMD"CTL-A"
+				CMD"CTRL-A"
+				Time = 1000				; Failsafe
+		End If
 		PVT (Time + Next_Time)
 		X_Vel = (Next_X - Prev_X)/(Time + Next_Time)
 		Y_Vel = (Next_Y - Prev_Y)/(Time + Next_Time)
@@ -357,6 +382,11 @@ N4
 Return
 
 N5
+		If(Time = 0)
+				Status = 3
+				CMD"^A"
+				Time = 1000				; Failsafe
+		End If
 		PVT (Next_Time)
 		X_Vel = (Next_X - X_Coord)/Next_Time
 		Y_Vel = (Next_Y - Y_Coord)/Next_Time
