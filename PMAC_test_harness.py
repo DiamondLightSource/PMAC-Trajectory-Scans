@@ -88,24 +88,32 @@ def generate_snake_scan():
 
 def send_points(points):
 
-    address_root = "30000"
-    current_address = address_root
+    current_address = "30000"
 
     for point in points:
         write_to_address("L", current_address, str(point))
         current_address = inc_hex(current_address)
 
 
+def reset_buffers(buffer_length):
+
+    current_address = "30000"
+
+    for i in range(0, int(buffer_length)*11*2):
+        write_to_address("L", current_address, "0")
+        current_address = inc_hex(current_address)
+
+
 def trajectory_scan():
 
-    user_memory_root = "30000"
-    M_memory_root = "4FA0"
-
+    pmac.sendCommand("&1 #1->X #2->Y #3->Z #4->U #5->V #6->W #7->A #8->B")
     pmac.sendCommand("#1hmz#2hmz#3hmz#4hmz#5hmz#6hmz#7hmz#8hmz#9hmz")
 
     buffer_length = read_variable("P4002")
     buffer_a_address = read_variable("P4009")
     buffer_b_address = read_variable("P4010")
+
+    reset_buffers(buffer_length)
 
     axes = "384"
     pmac.setVar("P4008", axes)
