@@ -75,7 +75,7 @@
 #Define Next_C        		M4009
 #Define Next_User     		M4010
 
-Next_Time->D:$30000,0,24											; Set initial pointers and type
+Next_Time->D:$30000,0,48											; Set initial pointers and type
 Next_X->D:$30000,0,48
 Next_Y->D:$30000,0,48
 Next_Z->D:$30000,0,48
@@ -130,7 +130,7 @@ Del Gat
 ;#9->C
 
 ; Set Initial Values
-BufferLength = 20
+BufferLength = 50
 BufferAdr_A = $30000
 BufferAdr_B = BufferAdr_A + 11*BufferLength
 
@@ -145,7 +145,7 @@ Open Prog 1
 Clear
 
 ; Check which axes are required
-Axes = 510
+;Axes = 510
 GoSub1
 
 Abs
@@ -156,7 +156,7 @@ CurrentIndex = 0
 Status = 0
 TotalPoints = 0
 Cancel = 0
-BufferFill = 20
+;BufferFill = 25
 
 Prev_X = 0 X_Coord = 0
 Prev_Y = 0 Y_Coord = 0
@@ -176,6 +176,12 @@ P4203 = 0
 Dwell 1000
 
 ; <<< Allow EPICS to assign any values here, so they won't be reset - Or just don't set variables that EPICS will set?
+
+CMD"End Gat"	; Stop gathering
+CMD"Del Gat"	; Deletes the gather buffer
+CMD"Def Gat"	; Allocates all the available memory as gather buffer
+Dwell 0		; Force CMD lines to execute
+CMD"Gat"	; Starts gathering of the data
 
 While(Cancel != 1 and BufferFill > 0) ; Run indefinitely, but allow EPICS to stop program
 
@@ -216,7 +222,7 @@ While(Cancel != 1 and BufferFill > 0) ; Run indefinitely, but allow EPICS to sto
         CurrentIndex = CurrentIndex + 1
         TotalPoints = TotalPoints + 1
         
-    		Dwell 1000
+        ;Dwell 500
     End While
     BufferFill = 0
 
@@ -229,6 +235,10 @@ While(Cancel != 1 and BufferFill > 0) ; Run indefinitely, but allow EPICS to sto
     End If
 
 End While
+
+Dwell 0		; Force CMD lines to execute
+CMD"End Gat"	; Send On-line command to stop data gathering
+Dwell 0		; Force CMD lines to execute
 
 Status = 1		; >>> Use synchronous assignment?
 
