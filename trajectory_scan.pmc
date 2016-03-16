@@ -116,22 +116,10 @@ User_Adr->Y:$4FAA,0,24
 ; *****************************************************************************************
 
 Del Gat
-; Coordinate System 1
-&1
-
-#1->X
-#2->Y
-#3->Z
-#4->U
-#5->V
-#6->W
-#7->A
-#8->B
-;#9->C
 
 ; Set Initial Values
 BufferLength = 50
-BufferAdr_A = $30000
+BufferAdr_A = $30001
 BufferAdr_B = BufferAdr_A + 11*BufferLength
 
 ; Make sure all buffers are closed
@@ -226,7 +214,7 @@ While(Cancel != 1 and BufferFill > 0) ; Run indefinitely, but allow EPICS to sto
     End While
     BufferFill = 0
 
-    ; >>> Might need second move call because of double endif statements - won't merge otherwise
+    ; >>> Might need second move call because of double endwhile statements - won't merge otherwise
 
     If(CurrentBufferAdr = BufferAdr_A)
         CurrentBufferAdr = BufferAdr_B
@@ -331,6 +319,10 @@ Return
 ; *************************************************************************************************
 
 N3
+		If(Time = 0)
+				Status = 2
+				CMD"^A"
+		End If
 		PVT (Time)
 		X_Vel = (X_Coord - Prev_X)/Time
 		Y_Vel = (Y_Coord - Prev_Y)/Time
@@ -344,6 +336,10 @@ N3
 Return
 
 N4
+		If(Time = 0)
+				Status = 2
+				CMD"^A"
+		End If
 		PVT (Time + Next_Time)
 		X_Vel = (Next_X - Prev_X)/(Time + Next_Time)
 		Y_Vel = (Next_Y - Prev_Y)/(Time + Next_Time)
@@ -357,6 +353,10 @@ N4
 Return
 
 N5
+		If(Time = 0)
+				Status = 2
+				CMD"^A"
+		End If
 		PVT (Next_Time)
 		X_Vel = (Next_X - X_Coord)/Next_Time
 		Y_Vel = (Next_Y - Y_Coord)/Next_Time
