@@ -144,7 +144,7 @@ def trajectory_scan():
     print("Buffer A: " + buffer_a_address)
     print("Buffer B: " + buffer_b_address)
 
-    time.sleep(2)
+    time.sleep(5)
 
     status = read_variable("P4001")
     print("Status: " + status)
