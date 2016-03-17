@@ -1,50 +1,128 @@
 import time
-import dls_pmacremote
+import socket
+from dls_pmacremote import PmacEthernetInterface
 from scanpointgenerator import NestedGenerator, LineGenerator
 
-pmac = dls_pmacremote.PmacEthernetInterface()
-pmac.setConnectionParams(host="172.23.243.169", port=1025)
-pmac.connect()
-pmac.isModelGeobrick()
-pmac.getNumberOfAxes()
 
+class PmacTestHarness(PmacEthernetInterface):
 
-def read_address(mode, address):
+    def __init__(self):
+        super(PmacTestHarness, self).__init__(parent=None, verbose=False, numAxes=None, timeout=3.0)
 
-    value, success = pmac.sendCommand("R" + mode + " $" + address)
-    if success:
-        return value.split('\r')[0]
-    else:
-        return "Read failed"
+        self.setConnectionParams(host="172.23.243.169", port=1025)
+        self.connect()
 
+        self.status = self.read_variable("P4001")
+        self.total_points = 0
+        self.current_index = 0
+        self.current_buffer = 0
+        self.buffer_length = self.read_variable("P4004")
+        self.buffer_address_a = str(hex(int(self.read_variable("P4008")))[2:])
+        self.buffer_address_b = str(hex(int(self.read_variable("P4009")))[2:])
 
-def write_to_address(mode, address, value):
+        self.prev_buffer_write = 1
 
-    response, success = pmac.sendCommand("W" + mode + " $" + address + " " + value)
+    def update_status_variables(self):
 
-    if success:
-        return success
-    else:
-        return response, success
+        self.status = int(self.read_variable("P4001"))
+        self.total_points = int(self.read_variable("P4005"))
+        self.current_index = int(self.read_variable("P4006"))
+        self.current_buffer = int(self.read_variable("P4007"))
 
+    def assign_motors(self):
 
-def read_variable(variable):
+        self.sendCommand("&1 #1->X #2->Y #3->Z #4->U #5->V #6->W #7->A #8->B")
 
-    value, success = pmac.sendCommand(variable)
-    if success:
-        return value.split('\r')[0]
-    else:
-        return "Read failed"
+    def home_motors(self):
 
+        self.sendCommand("#1hmz#2hmz#3hmz#4hmz#5hmz#6hmz#7hmz#8hmz#9hmz")
 
-def add_dechex(hexdec, dec):
+    def run_motion_program(self):
 
-    return hex(int(hexdec, base=16) + dec)[2:]
+        self.sendCommand("#1J/ #2J/ #3J/ #4J/ #5J/ #6J/ #7J/ #8J/ &1 B1 R")
 
+    def set_axes(self, axes):
 
-def inc_hex(hexdec):
+        self.set_variable("P4003", axes)
 
-    return add_dechex(hexdec, 1)
+    def set_buffer_fill(self, fill_level, current=False):
+
+        buffer_toggle = int(current)
+
+        if self.current_buffer == buffer_toggle:
+            self.set_variable("P4012", fill_level)
+        else:
+            self.set_variable("P4011", fill_level)
+
+    def read_address(self, mode, address):
+
+        value, success = self.sendCommand("R" + mode + " $" + address)
+        if success:
+            return value.split('\r')[0]
+        else:
+            return "Read failed"
+
+    def write_to_address(self, mode, address, value):
+
+        response, success = self.sendCommand("W" + mode + " $" + address + " " + value)
+
+        if success:
+            return success
+        else:
+            return response, success
+
+    def read_variable(self, variable):
+
+        value, success = self.sendCommand(variable)
+        if success:
+            return value.split('\r')[0]
+        else:
+            return "Read failed"
+
+    def set_variable(self, variable, value):
+
+        response, success = self.sendCommand(str(variable) + "=" + str(value))
+
+        if success:
+            return success
+        else:
+            return response, success
+
+    def send_points(self, points, current=False):
+
+        buffer_toggle = int(current)
+
+        if self.current_buffer == buffer_toggle:
+            start = self.buffer_address_b
+        else:
+            start = self.buffer_address_a
+
+        for i, subset in enumerate(points):
+            current_address = self.add_dechex(start, int(self.buffer_length)*i)
+            # print(current_address)
+            for point in subset:
+                self.write_to_address("L", current_address, str(point))
+                current_address = self.inc_hex(current_address)
+
+        print("Points sent to " + start)
+
+    def reset_buffers(self):
+
+        current_address = self.buffer_address_a
+
+        for i in range(0, int(self.buffer_length)*11*2):
+            self.write_to_address("L", current_address, "0")
+            current_address = self.inc_hex(current_address)
+
+    @staticmethod
+    def add_dechex(hexdec, dec):
+
+        return hex(int(hexdec, base=16) + dec)[2:]
+
+    @staticmethod
+    def inc_hex(hexdec):
+
+        return PmacTestHarness.add_dechex(hexdec, 1)
 
 
 def generate_lin_points(num_points):
@@ -92,100 +170,69 @@ def generate_snake_scan(reverse=False):
     return time_points, x_points, y_points
 
 
-def send_points(points, buffer_length, start="30000"):
-
-    for i, subset in enumerate(points):
-        current_address = add_dechex(start, int(buffer_length)*i)
-        # print(current_address)
-        for point in subset:
-            write_to_address("L", current_address, str(point))
-            current_address = inc_hex(current_address)
-
-    print("Points sent to " + start)
-
-
-def reset_buffers(buffer_length):
-
-    current_address = "30000"
-
-    for i in range(0, int(buffer_length)*11*2):
-        write_to_address("L", current_address, "0")
-        current_address = inc_hex(current_address)
-
-
 def trajectory_scan():
 
-    pmac.sendCommand("&1 #1->X #2->Y #3->Z #4->U #5->V #6->W #7->A #8->B")
-    pmac.sendCommand("#1hmz#2hmz#3hmz#4hmz#5hmz#6hmz#7hmz#8hmz#9hmz")
+    pmac = PmacTestHarness()
 
-    buffer_length = read_variable("P4004")
-    buffer_a_address = str(hex(int(read_variable("P4008")))[2:])
-    buffer_b_address = str(hex(int(read_variable("P4009")))[2:])
-
-    reset_buffers(buffer_length)
-
-    axes = "384"
-    pmac.setVar("P4003", axes)
+    pmac.assign_motors()
+    pmac.home_motors()
+    pmac.reset_buffers()
+    pmac.set_axes("384")
 
     line_points = generate_lin_points(50)
     snake_points = generate_snake_scan()
     print(line_points)
     print(snake_points)
+
     buffer_fill_a = 50
     buffer_fill_b = 50
-    send_points(line_points, buffer_length, buffer_a_address)
-    send_points(snake_points, buffer_length, buffer_b_address)
-    pmac.setVar("P4011", buffer_fill_a)
-    pmac.setVar("P4012", buffer_fill_b)
-    pmac.sendCommand("#1J/ #2J/ #3J/ #4J/ #5J/ #6J/ #7J/ #8J/ &1 B1 R")
+    pmac.send_points(line_points, current=True)
+    pmac.send_points(snake_points)
+    pmac.set_buffer_fill(buffer_fill_a, current=True)
+    pmac.set_buffer_fill(buffer_fill_b)
 
-    print("Buffer fill: " + str(buffer_fill_a))
-    print("Buffer length: " + buffer_length)
-    print("Buffer A: " + buffer_a_address)
-    print("Buffer B: " + buffer_b_address)
+    pmac.run_motion_program()
+
+    print("Buffer length: " + pmac.buffer_length)
+    print("Buffer A: " + pmac.buffer_address_a)
+    print("Buffer B: " + pmac.buffer_address_b)
 
     time.sleep(5)
 
-    status = read_variable("P4001")
-    print("Status: " + status)
-
-    current_buffer = read_variable("P4007")
-    last_buffer = 0
+    pmac.update_status_variables()
+    print("Status: " + str(pmac.status))
 
     a_points = snake_points
     b_points = line_points
 
-    while int(status) == 1:
+    while int(pmac.status) == 1:
 
-        if last_buffer == 0 and int(current_buffer) == 1:
+        if pmac.prev_buffer_write == 1 and int(pmac.current_buffer) == 1:
             if a_points == line_points:
                 a_points = snake_points
             else:
                 a_points = line_points
-            send_points(a_points, buffer_length, buffer_a_address)
-            pmac.setVar("P4011", buffer_fill_a)
-            last_buffer = 1
-        elif last_buffer == 1 and int(current_buffer) == 0:
+            pmac.send_points(a_points)
+            pmac.set_buffer_fill(buffer_fill_a)
+            pmac.prev_buffer_write = 0
+        elif pmac.prev_buffer_write == 0 and int(pmac.current_buffer) == 0:
             if b_points == line_points:
                 b_points = snake_points
             else:
                 b_points = line_points
-            send_points(b_points, buffer_length, buffer_b_address)
-            pmac.setVar("P4012", buffer_fill_b)
-            last_buffer = 0
+            pmac.send_points(b_points)
+            pmac.set_buffer_fill(buffer_fill_b)
+            pmac.prev_buffer_write = 1
 
         time.sleep(0.5)
 
         if 1 > 2:
             pmac.setVar("P4007", 1)  # End Program
 
-        status = read_variable("P4001")
-        current_buffer = read_variable("P4007")
-        current_index = read_variable("P4006")
-        total_points = read_variable("P4005")
+        pmac.update_status_variables()
 
-        print("Status: " + status + " - Buffer: " + current_buffer + " - Index: " +
-              current_index + " - Total Points: " + total_points)
+        print("Status: " + str(pmac.status) + " - Buffer: " + str(pmac.current_buffer) + " - Index: " +
+              str(pmac.current_index) + " - Total Points: " + str(pmac.total_points))
 
 
 def main():
