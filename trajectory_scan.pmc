@@ -12,16 +12,16 @@
 #Define BufferLength   		P(RootVar + 4)   		; Length of a single buffer e.g. AX, AY...
 #Define TotalPoints    		P(RootVar + 5)   		; Total number of points scanned through
 
-#Define CurrentIndex   		P(RootVar + 6)   		; Current index position in buffers
+#Define CurrentIndex   		P(RootVar + 6)   		; Current index position in buffer
 #Define CurrentBuffer			P(RootVar + 7)			; Current buffer specifier - 0: A, 1: B
 
-#Define BufferAdr_A 			P(RootVar + 8)			; Start indexes of buffer A and B
-#Define BufferAdr_B 			P(RootVar + 9)
+#Define BufferAdr_A 			P(RootVar + 8)			; Start index of buffer A
+#Define BufferAdr_B 			P(RootVar + 9)			; Start index of buffer B
 #Define CurrentBufferAdr  P(RootVar + 10)   	; A or B buffer address
 
-#Define BufferFill_A			P(RootVar + 11)			; Fill level of buffer A and B
-#Define BufferFill_B			P(RootVar + 12)
-#Define CurrentBufferFill P(RootVar + 13)   	; The indexes that current buffer has been filled up to
+#Define BufferFill_A			P(RootVar + 11)			; Fill level of buffer A
+#Define BufferFill_B			P(RootVar + 12)			; Fill level of buffer B
+#Define CurrentBufferFill P(RootVar + 13)   	; A or B buffer fill level
 
 ; Motion Program Variables
 
@@ -145,16 +145,14 @@ GoSub1
 Abs
 FRAX(X,Y,Z,U,V,W,A,B,C)
 
-BufferFill_A = 25				; >>> Temp workaround
-
-Status = 0
-Abort = 0
-TotalPoints = 0
-
-CurrentIndex = 0
-CurrentBuffer = 0
-CurrentBufferFill = BufferFill_A
 CurrentBufferAdr = BufferAdr_A
+CurrentIndex = 0
+Status = 0
+TotalPoints = 0
+Abort = 0
+;BufferFill = 25
+CurrentBufferFill = BufferFill_A
+CurrentBuffer = 0
 
 Prev_X = 0 X_Coord = 0
 Prev_Y = 0 Y_Coord = 0
@@ -171,7 +169,7 @@ GoSub6
 P4201 = 0
 P4202 = 0
 P4203 = 0
-;Dwell 1000
+Dwell 1000
 
 ; <<< Allow EPICS to assign any values here, so they won't be reset - Or just don't set variables that EPICS will set?
 
@@ -181,12 +179,11 @@ CMD"Def Gat"	; Allocates all the available memory as gather buffer
 Dwell 0		; Force CMD lines to execute
 CMD"Gat"	; Starts gathering of the data
 
-Status = 1					; State program is running
-
+Status = 1
 While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS to stop program
 
-		
 		P4201 = P4201 + 1
+    ; <<< EPICS to set BUFFER_FILL here
 
     CurrentIndex = 0
     While(Abort != 1 and CurrentIndex < CurrentBufferFill)
@@ -214,7 +211,7 @@ While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS 
 
         ; Run any required subroutine >>> Do we need to be able to run more than one?
         If(User > 0)
-            GoSub(User)
+            ;GoSub(User)
         End If
         
     		P4203 = P4023 + 1
@@ -224,33 +221,28 @@ While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS 
         
         ;Dwell 500
     End While
-    CurrentBufferFill = 0 			; >>> Temp workaround
+    CurrentBufferFill = 0
 
-    ; >>> Might need second move call because of double endwhile statements - won't merge otherwise
-    
-    ; <<< EPICS to set BufferFill_* by this point
-    
-    CurrentIndex = 0
+    ; >>> Might need second move call because of double endif statements - won't merge otherwise
 
     If(CurrentBuffer = 0)
-        CurrentBufferAdr = BufferAdr_B				; Swap to Buffer B values
+        CurrentBufferAdr = BufferAdr_B
         CurrentBufferFill = BufferFill_B
-    		CurrentBuffer = 1
-        BufferFill_A = 0											; Empty Buffer A
+        BufferFill_A = 0
+        CurrentBuffer = 1
     Else
-        CurrentBufferAdr = BufferAdr_A				; Swap to Buffer A values
+        CurrentBufferAdr = BufferAdr_A
         CurrentBufferFill = BufferFill_A
-    		CurrentBuffer = 0
-        BufferFill_B = 0											; Empty Buffer B
+        BufferFill_B = 0
+        CurrentBuffer = 0
     End If
 
 End While
+Status = 2
 
 Dwell 0		; Force CMD lines to execute
 CMD"End Gat"	; Send On-line command to stop data gathering
 Dwell 0		; Force CMD lines to execute
-
-Status = 2							; State program is finished ; >>> Use synchronous assignment?
 
 ; Buffers: AX, AY, AZ, AU, AV, AW, AA, AB, AC, ATime, AUser
 ;          BX, BY, BZ, BU, BV, BW, BA, BB, BC, BTime, BUser
@@ -343,8 +335,13 @@ Return
 N3
 		If(Time = 0)
 				Status = 3
+				CMD"A"
 				CMD"^A"
-				Time = 1000				; Failsafe
+				CMD"CTL-A"
+				CMD"CTLR-A"
+				CMD"<CTL-A>"
+				CMD"<CTLR-A>"
+				Time = 1000
 		End If
 		PVT (Time)
 		X_Vel = (X_Coord - Prev_X)/Time
@@ -361,13 +358,13 @@ Return
 N4
 		If(Time = 0)
 				Status = 3
-				CMD"^A"
 				CMD"A"
-				CMD"<CTL-A>"
-				CMD"<CTRL-A>"
+				CMD"^A"
 				CMD"CTL-A"
-				CMD"CTRL-A"
-				Time = 1000				; Failsafe
+				CMD"CTLR-A"
+				CMD"<CTL-A>"
+				CMD"<CTLR-A>"
+				Time = 1000
 		End If
 		PVT (Time + Next_Time)
 		X_Vel = (Next_X - Prev_X)/(Time + Next_Time)
@@ -384,8 +381,13 @@ Return
 N5
 		If(Time = 0)
 				Status = 3
+				CMD"A"
 				CMD"^A"
-				Time = 1000				; Failsafe
+				CMD"CTL-A"
+				CMD"CTLR-A"
+				CMD"<CTL-A>"
+				CMD"<CTLR-A>"
+				Time = 1000
 		End If
 		PVT (Next_Time)
 		X_Vel = (Next_X - X_Coord)/Next_Time

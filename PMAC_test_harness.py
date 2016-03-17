@@ -98,7 +98,7 @@ def send_points(points, buffer_length, start="30000"):
         current_address = add_dechex(start, int(buffer_length)*i)
         print(current_address)
         for point in subset:
-            write_to_address("L", start, str(point))
+            write_to_address("L", current_address, str(point))
             current_address = inc_hex(current_address)
 
 
@@ -138,25 +138,24 @@ def trajectory_scan():
     print("Buffer A: " + buffer_a_address)
     print("Buffer B: " + buffer_b_address)
 
-    time.sleep(2)
+    time.sleep(5)
 
     status = read_variable("P4001")
     print("Status: " + status)
-
     while int(status) == 1:
 
         time.sleep(1)
 
         if 1 > 2:
-            pmac.setVar("P4002", 1)  # End Program
+            pmac.setVar("P4007", 1)  # End Program
 
         status = read_variable("P4001")
-        total_points = read_variable("P4005")
-        current_buffer_index = read_variable("P4006")
         current_buffer = read_variable("P4007")
+        current_index = read_variable("P4006")
+        total_points = read_variable("P4005")
 
-        print("Status: " + status + " - Total Points: " + total_points + " - Index: " +
-              current_buffer_index + " - Buffer: " + current_buffer)
+        print("Status: " + status + " - Buffer: " + current_buffer + " - Index: " +
+              current_index + " - Total Points: " + total_points)
 
 
 def main():
