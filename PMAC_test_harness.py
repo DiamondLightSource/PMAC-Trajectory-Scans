@@ -1,3 +1,4 @@
+import time
 import dls_pmacremote
 from scanpointgenerator import NestedGenerator, LineGenerator
 
@@ -131,22 +132,24 @@ def trajectory_scan():
     print("Buffer B: " + buffer_b_address)
     print(points)
 
+    time.sleep(5)
+
     status = read_variable("P4001")
     print("Status: " + status)
-    while status == 0:
+    while int(status) == 1:
+
+        time.sleep(1)
 
         if 1 > 2:
             pmac.setVar("P4007", 1)  # End Program
 
-        status = read_variable("P4005")
-        current_buffer_address = read_variable("P4001")
-        current_buffer_index = read_variable("P4004")
-        total_points = read_variable("P4006")
+        status = read_variable("P4001")
+        current_buffer = read_variable("P4007")
+        current_index = read_variable("P4006")
+        total_points = read_variable("P4005")
 
-        print("Status: " + status)
-        print("Address: " + current_buffer_address)
-        print("Index: " + current_buffer_index)
-        print("Total Points: " + total_points)
+        print("Status: " + status + " - Buffer: " + current_buffer + " - Index: " +
+              current_index + " - Total Points: " + total_points)
 
 
 def main():
