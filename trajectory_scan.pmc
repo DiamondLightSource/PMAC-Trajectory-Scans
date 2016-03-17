@@ -152,6 +152,7 @@ TotalPoints = 0
 Abort = 0
 ;BufferFill = 25
 CurrentBufferFill = BufferFill_A
+CurrentBuffer = 0
 
 Prev_X = 0 X_Coord = 0
 Prev_Y = 0 Y_Coord = 0
