@@ -87,10 +87,12 @@ def generate_snake_scan():
     return points
 
 
-def send_points(points, start):
+def send_points(points):
+
+    current_address = "30000"
 
     for point in points:
-        write_to_address("L", start, str(point))
+        write_to_address("L", current_address, str(point))
         current_address = inc_hex(current_address)
 
 
@@ -120,7 +122,7 @@ def trajectory_scan():
     # points = generate_points(20, int(buffer_length))
     points = generate_snake_scan()
     buffer_fill_a = 50
-    send_points(points[:10], "30000")
+    send_points(points)
     pmac.setVar("P4011", buffer_fill_a)
     pmac.sendCommand("#1J/ #2J/ #3J/ #4J/ #5J/ #6J/ #7J/ #8J/ &1 B1 R")
 
@@ -130,25 +132,24 @@ def trajectory_scan():
     print("Buffer B: " + buffer_b_address)
     print(points)
 
-    time.sleep(2)
+    time.sleep(5)
 
     status = read_variable("P4001")
     print("Status: " + status)
-
     while int(status) == 1:
 
         time.sleep(1)
 
         if 1 > 2:
-            pmac.setVar("P4002", 1)  # End Program
+            pmac.setVar("P4007", 1)  # End Program
 
         status = read_variable("P4001")
-        total_points = read_variable("P4005")
-        current_buffer_index = read_variable("P4006")
         current_buffer = read_variable("P4007")
+        current_index = read_variable("P4006")
+        total_points = read_variable("P4005")
 
-        print("Status: " + status + " - Total Points: " + total_points + " - Index: " +
-              current_buffer_index + " - Buffer: " + current_buffer)
+        print("Status: " + status + " - Buffer: " + current_buffer + " - Index: " +
+              current_index + " - Total Points: " + total_points)
 
 
 def main():
