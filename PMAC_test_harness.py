@@ -1,4 +1,3 @@
-import time
 import dls_pmacremote
 from scanpointgenerator import NestedGenerator, LineGenerator
 
@@ -87,10 +86,12 @@ def generate_snake_scan():
     return points
 
 
-def send_points(points, start):
+def send_points(points):
+
+    current_address = "30000"
 
     for point in points:
-        write_to_address("L", start, str(point))
+        write_to_address("L", current_address, str(point))
         current_address = inc_hex(current_address)
 
 
@@ -108,47 +109,44 @@ def trajectory_scan():
     pmac.sendCommand("&1 #1->X #2->Y #3->Z #4->U #5->V #6->W #7->A #8->B")
     pmac.sendCommand("#1hmz#2hmz#3hmz#4hmz#5hmz#6hmz#7hmz#8hmz#9hmz")
 
-    buffer_length = read_variable("P4004")
-    buffer_a_address = read_variable("P4008")
-    buffer_b_address = read_variable("P4009")
+    buffer_length = read_variable("P4002")
+    buffer_a_address = read_variable("P4009")
+    buffer_b_address = read_variable("P4010")
 
     reset_buffers(buffer_length)
 
     axes = "384"
-    pmac.setVar("P4003", axes)
+    pmac.setVar("P4008", axes)
 
     # points = generate_points(20, int(buffer_length))
     points = generate_snake_scan()
-    buffer_fill_a = 50
-    send_points(points[:10], "30000")
-    pmac.setVar("P4011", buffer_fill_a)
+    buffer_fill = 50
+    send_points(points)
+    pmac.setVar("P4003", buffer_fill)
     pmac.sendCommand("#1J/ #2J/ #3J/ #4J/ #5J/ #6J/ #7J/ #8J/ &1 B1 R")
 
-    print("Buffer fill: " + str(buffer_fill_a))
+    print("Buffer fill: " + str(buffer_fill))
     print("Buffer length: " + buffer_length)
     print("Buffer A: " + buffer_a_address)
     print("Buffer B: " + buffer_b_address)
     print(points)
 
-    time.sleep(2)
-
-    status = read_variable("P4001")
+    status = read_variable("P4005")
     print("Status: " + status)
-
-    while int(status) == 1:
-
-        time.sleep(1)
+    while status == 0:
 
         if 1 > 2:
-            pmac.setVar("P4002", 1)  # End Program
+            pmac.setVar("P4007", 1)  # End Program
 
-        status = read_variable("P4001")
-        total_points = read_variable("P4005")
-        current_buffer_index = read_variable("P4006")
-        current_buffer = read_variable("P4007")
+        status = read_variable("P4005")
+        current_buffer_address = read_variable("P4001")
+        current_buffer_index = read_variable("P4004")
+        total_points = read_variable("P4006")
 
-        print("Status: " + status + " - Total Points: " + total_points + " - Index: " +
-              current_buffer_index + " - Buffer: " + current_buffer)
+        print("Status: " + status)
+        print("Address: " + current_buffer_address)
+        print("Index: " + current_buffer_index)
+        print("Total Points: " + total_points)
 
 
 def main():
