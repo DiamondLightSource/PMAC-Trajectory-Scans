@@ -12,16 +12,16 @@
 #Define BufferLength   		P(RootVar + 4)   		; Length of a single buffer e.g. AX, AY...
 #Define TotalPoints    		P(RootVar + 5)   		; Total number of points scanned through
 
-#Define CurrentIndex   		P(RootVar + 6)   		; Current index position in buffers
+#Define CurrentIndex   		P(RootVar + 6)   		; Current index position in buffer
 #Define CurrentBuffer			P(RootVar + 7)			; Current buffer specifier - 0: A, 1: B
 
-#Define BufferAdr_A 			P(RootVar + 8)			; Start indexes of buffer A and B
-#Define BufferAdr_B 			P(RootVar + 9)
+#Define BufferAdr_A 			P(RootVar + 8)			; Start index of buffer A
+#Define BufferAdr_B 			P(RootVar + 9)			; Start index of buffer B
 #Define CurrentBufferAdr  P(RootVar + 10)   	; A or B buffer address
 
-#Define BufferFill_A			P(RootVar + 11)			; Fill level of buffer A and B
-#Define BufferFill_B			P(RootVar + 12)
-#Define CurrentBufferFill P(RootVar + 13)   	; The indexes that current buffer has been filled up to
+#Define BufferFill_A			P(RootVar + 11)			; Fill level of buffer A
+#Define BufferFill_B			P(RootVar + 12)			; Fill level of buffer B
+#Define CurrentBufferFill P(RootVar + 13)   	; A or B buffer fill level
 
 ; Motion Program Variables
 
@@ -105,7 +105,7 @@ Next_User->D:$30000,0,48
 #Define C_Adr        			M4029
 #Define User_Adr        	M4030
 
-Time_Adr->Y$4FA0,0,24													; Assignments for pointers to P address locations
+Time_Adr->Y$4FA0,0,24													; Assignments for pointers to M address locations
 X_Adr->Y:$4FA1,0,24														; M0 = $4000 -> M4000 = $4FA0
 Y_Adr->Y:$4FA2,0,24
 Z_Adr->Y:$4FA3,0,24
@@ -122,18 +122,6 @@ User_Adr->Y:$4FAA,0,24
 ; *****************************************************************************************
 
 Del Gat
-; Coordinate System 1
-&1
-
-#1->X
-#2->Y
-#3->Z
-#4->U
-#5->V
-#6->W
-#7->A
-#8->B
-;#9->C
 
 ; Set Initial Values
 BufferLength = 50
@@ -190,13 +178,14 @@ CMD"Def Gat"	; Allocates all the available memory as gather buffer
 Dwell 0		; Force CMD lines to execute
 CMD"Gat"	; Starts gathering of the data
 
+Status = 1
 While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS to stop program
 
 		P4201 = P4201 + 1
     ; <<< EPICS to set BUFFER_FILL here
 
     CurrentIndex = 0
-    While(CurrentIndex < CurrentBufferFill)
+    While(Abort != 1 and CurrentIndex < CurrentBufferFill)
 
 				P4202 = P4202 + 1
 				
@@ -235,19 +224,24 @@ While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS 
 
     ; >>> Might need second move call because of double endif statements - won't merge otherwise
 
-    If(CurrentBufferAdr = BufferAdr_A)
+    If(CurrentBuffer = 0)
         CurrentBufferAdr = BufferAdr_B
+        CurrentBufferFill = BufferFill_B
+        BufferFill_A = 0
+        CurrentBuffer = 1
     Else
         CurrentBufferAdr = BufferAdr_A
+        CurrentBufferFill = BufferFill_A
+        BufferFill_B = 0
+        CurrentBuffer = 0
     End If
 
 End While
+Status = 2
 
 Dwell 0		; Force CMD lines to execute
 CMD"End Gat"	; Send On-line command to stop data gathering
 Dwell 0		; Force CMD lines to execute
-
-Status = 1		; >>> Use synchronous assignment?
 
 ; Buffers: AX, AY, AZ, AU, AV, AW, AA, AB, AC, ATime, AUser
 ;          BX, BY, BZ, BU, BV, BW, BA, BB, BC, BTime, BUser
@@ -338,6 +332,16 @@ Return
 ; *************************************************************************************************
 
 N3
+		If(Time = 0)
+				Status = 3
+				CMD"A"
+				CMD"^A"
+				CMD"CTL-A"
+				CMD"CTLR-A"
+				CMD"<CTL-A>"
+				CMD"<CTLR-A>"
+				Time = 1000
+		End If
 		PVT (Time)
 		X_Vel = (X_Coord - Prev_X)/Time
 		Y_Vel = (Y_Coord - Prev_Y)/Time
@@ -351,6 +355,16 @@ N3
 Return
 
 N4
+		If(Time = 0)
+				Status = 3
+				CMD"A"
+				CMD"^A"
+				CMD"CTL-A"
+				CMD"CTLR-A"
+				CMD"<CTL-A>"
+				CMD"<CTLR-A>"
+				Time = 1000
+		End If
 		PVT (Time + Next_Time)
 		X_Vel = (Next_X - Prev_X)/(Time + Next_Time)
 		Y_Vel = (Next_Y - Prev_Y)/(Time + Next_Time)
@@ -364,6 +378,16 @@ N4
 Return
 
 N5
+		If(Time = 0)
+				Status = 3
+				CMD"A"
+				CMD"^A"
+				CMD"CTL-A"
+				CMD"CTLR-A"
+				CMD"<CTL-A>"
+				CMD"<CTLR-A>"
+				Time = 1000
+		End If
 		PVT (Next_Time)
 		X_Vel = (Next_X - X_Coord)/Next_Time
 		Y_Vel = (Next_Y - Y_Coord)/Next_Time
