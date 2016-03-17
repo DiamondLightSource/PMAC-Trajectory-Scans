@@ -109,29 +109,29 @@ def trajectory_scan():
     pmac.sendCommand("&1 #1->X #2->Y #3->Z #4->U #5->V #6->W #7->A #8->B")
     pmac.sendCommand("#1hmz#2hmz#3hmz#4hmz#5hmz#6hmz#7hmz#8hmz#9hmz")
 
-    buffer_length = read_variable("P4002")
-    buffer_a_address = read_variable("P4009")
-    buffer_b_address = read_variable("P4010")
+    buffer_length = read_variable("P4004")
+    buffer_a_address = read_variable("P4008")
+    buffer_b_address = read_variable("P4009")
 
     reset_buffers(buffer_length)
 
     axes = "384"
-    pmac.setVar("P4008", axes)
+    pmac.setVar("P4003", axes)
 
     # points = generate_points(20, int(buffer_length))
     points = generate_snake_scan()
-    buffer_fill = 50
+    buffer_fill_a = 50
     send_points(points)
-    pmac.setVar("P4003", buffer_fill)
+    pmac.setVar("P4011", buffer_fill_a)
     pmac.sendCommand("#1J/ #2J/ #3J/ #4J/ #5J/ #6J/ #7J/ #8J/ &1 B1 R")
 
-    print("Buffer fill: " + str(buffer_fill))
+    print("Buffer fill: " + str(buffer_fill_a))
     print("Buffer length: " + buffer_length)
     print("Buffer A: " + buffer_a_address)
     print("Buffer B: " + buffer_b_address)
     print(points)
 
-    status = read_variable("P4005")
+    status = read_variable("P4001")
     print("Status: " + status)
     while status == 0:
 
