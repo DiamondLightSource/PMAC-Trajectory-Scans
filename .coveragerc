@@ -3,3 +3,4 @@ omit =
     dls_pmacremote.py
     trajectory_scan_test.py
     trajectory_scan.pmc
+    scanpointgenerator/*
