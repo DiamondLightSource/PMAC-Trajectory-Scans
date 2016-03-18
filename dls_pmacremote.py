@@ -7,7 +7,7 @@ import telnetlib
 class IOPmacSentNullError(IOError):
         pass
 
-class RemotePmacInterface:
+class RemotePmacInterface(object):
 	'''This class provides a common interface to a remote PMAC. It provides methods
            to connect to the PMAC (e.g. via a Telnet terminal server
 	   session or Ethernet), to disconnect, and to issue commands. It provides
