@@ -82,55 +82,6 @@ class PmacTestHarness(PmacEthernetInterface):
 
         self.set_variable("P4003", str(axes))
 
-    def send_points(self, points, current=False):
-        """
-        Send points to fill a buffer. If current is False, the currently unused buffer will be filled.
-        If current is True, the current buffer will be filled (e.g. for filling both buffers before
-        program is run).
-
-        Args:
-            points(list(list(int))): List of lists of the time and coordinates for each move
-            current(int): A 1 or 0 to specify which buffer to fill
-
-        Raises:
-            IOError: Write failed
-
-        """
-
-        buffer_toggle = int(current)
-
-        if self.current_buffer == buffer_toggle:
-            start = self.buffer_address_b
-        else:
-            start = self.buffer_address_a
-
-        for i, subset in enumerate(points):
-            current_address = self.add_dechex(start, int(self.buffer_length)*i)
-            # print(current_address)
-            for point in subset:
-                self.write_to_address("L", current_address, str(point))
-                current_address = self.inc_hex(current_address)
-
-        print("Points sent to " + start)
-
-    def set_buffer_fill(self, fill_level, current=False):
-        """
-        Set the buffer fill level of a buffer. If current is False, the currently unused buffer will
-        be set. If current is True, the current buffer will be set.
-
-        Args:
-            fill_level(int): Number of coordinate sets in buffer
-            current(int): A 1 or 0 to specify which buffer to set
-
-        """
-
-        buffer_toggle = int(current)
-
-        if self.current_buffer == buffer_toggle:
-            self.set_variable("P4012", str(fill_level))
-        else:
-            self.set_variable("P4011", str(fill_level))
-
     def read_address(self, mode, address):
         """
         Read the value at a memory location specified by address in a given read mode
@@ -233,6 +184,60 @@ class PmacTestHarness(PmacEthernetInterface):
         for i in range(0, int(self.buffer_length)*11*2):
             self.write_to_address("L", current_address, "0")
             current_address = self.inc_hex(current_address)
+
+    def send_points(self, points, current=False):
+        """
+        Send points to fill a buffer. If current is False, the currently unused buffer will be filled.
+        If current is True, the current buffer will be filled (e.g. for filling both buffers before
+        program is run).
+
+        Args:
+            points(list(list(int))): List of lists of the time and coordinates for each move
+            current(int): A 1 or 0 to specify which buffer to fill
+
+        Raises:
+            IOError: Write failed
+
+        """
+
+        buffer_toggle = int(current)
+
+        if self.current_buffer == buffer_toggle:
+            start = self.buffer_address_b
+        else:
+            start = self.buffer_address_a
+
+        current_address = start
+        for time_point in points[0]:
+                self.write_to_address("Y", current_address, str(time_point))
+                current_address = self.inc_hex(current_address)
+
+        for i, subset in enumerate(points[1:]):
+            current_address = self.add_dechex(start, int(self.buffer_length)*(i+1))
+            # print(current_address)
+            for point in subset:
+                self.write_to_address("L", current_address, str(point))
+                current_address = self.inc_hex(current_address)
+
+        print("Points sent to " + start)
+
+    def set_buffer_fill(self, fill_level, current=False):
+        """
+        Set the buffer fill level of a buffer. If current is False, the currently unused buffer will
+        be set. If current is True, the current buffer will be set.
+
+        Args:
+            fill_level(int): Number of coordinate sets in buffer
+            current(int): A 1 or 0 to specify which buffer to set
+
+        """
+
+        buffer_toggle = int(current)
+
+        if self.current_buffer == buffer_toggle:
+            self.set_variable("P4012", str(fill_level))
+        else:
+            self.set_variable("P4011", str(fill_level))
 
     @staticmethod
     def add_dechex(hexdec, dec):
