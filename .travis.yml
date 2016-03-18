@@ -13,4 +13,3 @@ script: nosetests
 
 after_success:
     - coveralls
-
