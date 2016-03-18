@@ -1,15 +1,26 @@
 import time
-import socket
 from dls_pmacremote import PmacEthernetInterface
 from scanpointgenerator import NestedGenerator, LineGenerator
 
 
 class PmacTestHarness(PmacEthernetInterface):
+    """
+    A pmac controller that can interface with and control the `trajectory_scan` motion program
+    as the EPICS driver does.
+    """
 
-    def __init__(self):
+    def __init__(self, ip_address):
+        """
+        Set up the connection to the given pmac and retrieve the required variables
+        for any functions.
+
+        Args:
+            ip_address(str): The IP address of the pmac to connect to
+
+        """
         super(PmacTestHarness, self).__init__(parent=None, verbose=False, numAxes=None, timeout=3.0)
 
-        self.setConnectionParams(host="172.23.243.169", port=1025)
+        self.setConnectionParams(host=ip_address, port=1025)
         self.connect()
 
         self.status = self.read_variable("P4001")
@@ -23,6 +34,10 @@ class PmacTestHarness(PmacEthernetInterface):
         self.prev_buffer_write = 1
 
     def update_status_variables(self):
+        """
+        Update status, total points scanned, current index and current buffer specifier from the pmac
+
+        """
 
         self.status = int(self.read_variable("P4001"))
         self.total_points = int(self.read_variable("P4005"))
@@ -30,65 +45,57 @@ class PmacTestHarness(PmacEthernetInterface):
         self.current_buffer = int(self.read_variable("P4007"))
 
     def assign_motors(self):
+        """
+        Send command to assign motors to the required axes
+
+        """
 
         self.sendCommand("&1 #1->X #2->Y #3->Z #4->U #5->V #6->W #7->A #8->B")
 
     def home_motors(self):
+        """
+        Send command to home motors
+
+        """
 
         self.sendCommand("#1hmz#2hmz#3hmz#4hmz#5hmz#6hmz#7hmz#8hmz#9hmz")
 
-    def run_motion_program(self):
+    def run_motion_program(self, program_num):
+        """
+        Send command to run motion program
 
-        self.sendCommand("#1J/ #2J/ #3J/ #4J/ #5J/ #6J/ #7J/ #8J/ &1 B1 R")
+        Args:
+            program_num(int): Number of motion program to run
+
+        """
+
+        self.sendCommand("#1J/ #2J/ #3J/ #4J/ #5J/ #6J/ #7J/ #8J/ &{num} B{num} R".format(num=str(program_num)))
 
     def set_axes(self, axes):
+        """
+        Send number of require axes
 
-        self.set_variable("P4003", axes)
+        Args:
+            axes(int): Int between 1 and 510 that will be split into 8 bits specifying the required motors
+            e.g. X, Y and Z = 256 + 128 + 64 = 448; X, Y and U = 256 + 128 + 32 = 416
+        """
 
-    def set_buffer_fill(self, fill_level, current=False):
-
-        buffer_toggle = int(current)
-
-        if self.current_buffer == buffer_toggle:
-            self.set_variable("P4012", fill_level)
-        else:
-            self.set_variable("P4011", fill_level)
-
-    def read_address(self, mode, address):
-
-        value, success = self.sendCommand("R" + mode + " $" + address)
-        if success:
-            return value.split('\r')[0]
-        else:
-            return "Read failed"
-
-    def write_to_address(self, mode, address, value):
-
-        response, success = self.sendCommand("W" + mode + " $" + address + " " + value)
-
-        if success:
-            return success
-        else:
-            return response, success
-
-    def read_variable(self, variable):
-
-        value, success = self.sendCommand(variable)
-        if success:
-            return value.split('\r')[0]
-        else:
-            return "Read failed"
-
-    def set_variable(self, variable, value):
-
-        response, success = self.sendCommand(str(variable) + "=" + str(value))
-
-        if success:
-            return success
-        else:
-            return response, success
+        self.set_variable("P4003", str(axes))
 
     def send_points(self, points, current=False):
+        """
+        Send points to fill a buffer. If current is False, the currently unused buffer will be filled.
+        If current is True, the current buffer will be filled (e.g. for filling both buffers before
+        program is run).
+
+        Args:
+            points(list(list(int))): List of lists of the time and coordinates for each move
+            current(int): A 1 or 0 to specify which buffer to fill
+
+        Raises:
+            IOError: Write failed
+
+        """
 
         buffer_toggle = int(current)
 
@@ -106,7 +113,120 @@ class PmacTestHarness(PmacEthernetInterface):
 
         print("Points sent to " + start)
 
+    def set_buffer_fill(self, fill_level, current=False):
+        """
+        Set the buffer fill level of a buffer. If current is False, the currently unused buffer will
+        be set. If current is True, the current buffer will be set.
+
+        Args:
+            fill_level(int): Number of coordinate sets in buffer
+            current(int): A 1 or 0 to specify which buffer to set
+
+        """
+
+        buffer_toggle = int(current)
+
+        if self.current_buffer == buffer_toggle:
+            self.set_variable("P4012", str(fill_level))
+        else:
+            self.set_variable("P4011", str(fill_level))
+
+    def read_address(self, mode, address):
+        """
+        Read the value at a memory location specified by address in a given read mode
+        e.g. X, Y, L, D
+
+        Args:
+            mode(str): The read mode to interpret the data at the given address
+            address(str): The hex address of the memory location to access
+
+        Returns:
+            str: Value stored at given address
+        Raises:
+            IOError: Read failed
+
+        """
+
+        value, success = self.sendCommand("R" + mode + " $" + address)
+        if success:
+            return value.split('\r')[0]
+        else:
+            raise IOError("Read failed")
+
+    def write_to_address(self, mode, address, value):
+        """
+        Write a value into a memory location specified by address in the given mode
+        e.g. X, Y, L, D
+
+        Args:
+            mode(str): The mode to write the data into the given address with
+            address(str): The hex address of the memory location to access
+            value(str): The value to write
+
+        Returns:
+            bool: Success specifier
+        Raises:
+            IOError: Write failed
+
+        """
+
+        response, success = self.sendCommand("W" + mode + " $" + address + " " + value)
+
+        if success:
+            return success
+        else:
+            raise IOError("Write failed")
+
+    def read_variable(self, variable):
+        """
+        Read a given variable
+
+        Args:
+            variable(str): The variable to read e.g. P4001, M4000
+
+        Returns:
+            str: Value of variable
+        Raises:
+            IOError: Read failed
+
+        """
+
+        value, success = self.sendCommand(variable)
+        if success:
+            return value.split('\r')[0]
+        else:
+            raise IOError("Read failed")
+
+    def set_variable(self, variable, value):
+        """
+        Set a given variable
+
+        Args:
+            variable(str): The variable to set e.g. P4001, M4000
+            value(str): Value to set variable to
+
+        Returns:
+            bool: Success specifier
+        Raises:
+            IOError: Write failed
+
+        """
+
+        response, success = self.sendCommand(variable + "=" + value)
+
+        if success:
+            return success
+        else:
+            raise IOError("Write failed")
+
     def reset_buffers(self):
+        """
+        Reset all memory in buffers to 0
+
+        Raises:
+            IOError: Write failed
+
+        """
 
         current_address = self.buffer_address_a
 
@@ -116,11 +236,30 @@ class PmacTestHarness(PmacEthernetInterface):
 
     @staticmethod
     def add_dechex(hexdec, dec):
+        """
+        Add an int to a hexadecimal string
+
+        Args:
+            hexdec(str): Hexadecimal string to add to
+            dec(int): Decimal number to add
+
+        Returns:
+            str: Hexadecimal sum of hexdec and dec
+        """
 
         return hex(int(hexdec, base=16) + dec)[2:]
 
     @staticmethod
     def inc_hex(hexdec):
+        """
+        Increment a hexadecimal string
+
+        Args:
+            hexdec(str): Hexadecimal string to increment
+
+        Returns:
+            str: Incremented hexadecimal value
+        """
 
         return PmacTestHarness.add_dechex(hexdec, 1)
 
@@ -172,12 +311,12 @@ def generate_snake_scan(reverse=False):
 
 def trajectory_scan():
 
-    pmac = PmacTestHarness()
+    pmac = PmacTestHarness("172.23.243.169")
 
     pmac.assign_motors()
     pmac.home_motors()
     pmac.reset_buffers()
-    pmac.set_axes("384")
+    pmac.set_axes(384)
 
     line_points = generate_lin_points(50)
     snake_points = generate_snake_scan()
@@ -191,13 +330,9 @@ def trajectory_scan():
     pmac.set_buffer_fill(buffer_fill_a, current=True)
     pmac.set_buffer_fill(buffer_fill_b)
 
-    pmac.run_motion_program()
+    pmac.run_motion_program(1)
 
-    print("Buffer length: " + pmac.buffer_length)
-    print("Buffer A: " + pmac.buffer_address_a)
-    print("Buffer B: " + pmac.buffer_address_b)
-
-    time.sleep(5)
+    time.sleep(3)
 
     pmac.update_status_variables()
     print("Status: " + str(pmac.status))
