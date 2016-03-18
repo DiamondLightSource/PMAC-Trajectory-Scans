@@ -1,5 +1,5 @@
 import time
-from PMAC_test_harness import PmacTestHarness
+from PmacTestHarness import PmacTestHarness
 from scanpointgenerator import NestedGenerator, LineGenerator
 
 
