@@ -46,16 +46,17 @@
 #Define B_Coord						P(RootVar + 118)
 #Define C_Coord						P(RootVar + 119)
 #Define User							P(RootVar + 120)
+#Define VelMode						P(RootVar + 121)
 
-#Define Prev_X 						P(RootVar + 121)		; Previous coordinate values
-#Define Prev_Y 						P(RootVar + 122)
-#Define Prev_Z 						P(RootVar + 123)
-#Define Prev_U 						P(RootVar + 124)
-#Define Prev_V 						P(RootVar + 125)
-#Define Prev_W 						P(RootVar + 126)
-#Define Prev_A 						P(RootVar + 127)
-#Define Prev_B 						P(RootVar + 128)
-#Define Prev_C 						P(RootVar + 129)
+#Define Prev_X 						P(RootVar + 131)		; Previous coordinate values
+#Define Prev_Y 						P(RootVar + 132)
+#Define Prev_Z 						P(RootVar + 133)
+#Define Prev_U 						P(RootVar + 134)
+#Define Prev_V 						P(RootVar + 135)
+#Define Prev_W 						P(RootVar + 136)
+#Define Prev_A 						P(RootVar + 137)
+#Define Prev_B 						P(RootVar + 138)
+#Define Prev_C 						P(RootVar + 139)
 
 #Define X_Vel							P(RootVar + 141)		; Move velocities
 #Define Y_Vel							P(RootVar + 142)
@@ -80,8 +81,11 @@
 #Define Next_B        		M4008
 #Define Next_C        		M4009
 #Define Next_User     		M4010
+#Define NextVelMode				M4011
 
-Next_Time->D:$30000,0,48											; Set initial pointers and type
+NextVelMode->X:$30000,4,4										; Set initial pointers and type
+Next_User->X:$30000,0,4
+Next_Time->Y:$30000,0,24
 Next_X->D:$30000,0,48
 Next_Y->D:$30000,0,48
 Next_Z->D:$30000,0,48
@@ -91,7 +95,6 @@ Next_W->D:$30000,0,48
 Next_A->D:$30000,0,48
 Next_B->D:$30000,0,48
 Next_C->D:$30000,0,48
-Next_User->D:$30000,0,48
 
 #Define Time_Adr        	M4020  							; Pointers to Next_* coordinate addresses
 #Define X_Adr         		M4021
@@ -104,6 +107,7 @@ Next_User->D:$30000,0,48
 #Define B_Adr        			M4028
 #Define C_Adr        			M4029
 #Define User_Adr        	M4030
+#Define Vel_Adr						M4031
 
 Time_Adr->Y$4FA0,0,24													; Assignments for pointers to M address locations
 X_Adr->Y:$4FA1,0,24														; M0 = $4000 -> M4000 = $4FA0
@@ -116,6 +120,7 @@ A_Adr->Y:$4FA7,0,24
 B_Adr->Y:$4FA8,0,24
 C_Adr->Y:$4FA9,0,24
 User_Adr->Y:$4FAA,0,24
+Vel_Adr->Y:$4FAB,0,24
 
 ; *****************************************************************************************
 ; Set-Up
@@ -139,7 +144,6 @@ Open Prog 1
 Clear
 
 ; Check which axes are required
-;Axes = 510
 GoSub1
 
 Abs
@@ -150,7 +154,6 @@ CurrentIndex = 0
 Status = 0
 TotalPoints = 0
 Abort = 0
-;BufferFill = 25
 CurrentBufferFill = BufferFill_A
 CurrentBuffer = 0
 
@@ -195,14 +198,15 @@ While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS 
 		    ; Increment Addresses
 		    GoSub6
 		    
+		    PVT (Time)
 				; Calculate velocities
-		    If(1 < 2)
+		    If(VelMode = 2)
 		    	GoSub3	; Prev -> Current
 				EndIf
-				If(1 = 1)
+				If(VelMode = 0 or VelMode > 2)
 					GoSub4	; Prev -> Next
 				EndIf
-				If(1 < 2)
+				If(VelMode = 1)
 					GoSub5	; Current -> Next
 				EndIf
     		
@@ -211,7 +215,7 @@ While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS 
 
         ; Run any required subroutine >>> Do we need to be able to run more than one?
         If(User > 0)
-            ;GoSub(User)
+            GoSub(User)
         End If
         
     		P4203 = P4023 + 1
@@ -219,7 +223,6 @@ While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS 
         CurrentIndex = CurrentIndex + 1
         TotalPoints = TotalPoints + 1
         
-        ;Dwell 500
     End While
     CurrentBufferFill = 0
 
@@ -326,6 +329,7 @@ N2
 		Prev_C = C_Coord
 		C_Coord = Next_C
 		User = Next_User
+		VelMode = NextVelMode
 Return
 
 ; Subroutines 3-5 *********************************************************************************
@@ -343,7 +347,6 @@ N3
 				CMD"<CTLR-A>"
 				Time = 1000
 		End If
-		PVT (Time)
 		X_Vel = (X_Coord - Prev_X)/Time
 		Y_Vel = (Y_Coord - Prev_Y)/Time
 		Z_Vel = (Z_Coord - Prev_Z)/Time
@@ -366,7 +369,6 @@ N4
 				CMD"<CTLR-A>"
 				Time = 1000
 		End If
-		PVT (Time + Next_Time)
 		X_Vel = (Next_X - Prev_X)/(Time + Next_Time)
 		Y_Vel = (Next_Y - Prev_Y)/(Time + Next_Time)
 		Z_Vel = (Next_Z - Prev_Z)/(Time + Next_Time)
@@ -389,7 +391,6 @@ N5
 				CMD"<CTLR-A>"
 				Time = 1000
 		End If
-		PVT (Next_Time)
 		X_Vel = (Next_X - X_Coord)/Next_Time
 		Y_Vel = (Next_Y - Y_Coord)/Next_Time
 		Z_Vel = (Next_Z - Z_Coord)/Next_Time
@@ -435,6 +436,7 @@ N6
     		C_Adr = CurrentBufferAdr + CurrentIndex + 9*BufferLength
     End If
 		User_Adr = 	CurrentBufferAdr + CurrentIndex + 10*BufferLength
+		Vel_Adr = 	CurrentBufferAdr + CurrentIndex + 10*BufferLength
 Return
 
 ; Subroutine 7 ************************************************************************************
