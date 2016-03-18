@@ -198,11 +198,12 @@ While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS 
 		    ; Increment Addresses
 		    GoSub6
 		    
+		    PVT (Time)
 				; Calculate velocities
 		    If(VelMode = 2)
 		    	GoSub3	; Prev -> Current
 				EndIf
-				If(VelMode = 0 or VelMode = 3)
+				If(VelMode = 0 or VelMode > 2)
 					GoSub4	; Prev -> Next
 				EndIf
 				If(VelMode = 1)
@@ -346,7 +347,6 @@ N3
 				CMD"<CTLR-A>"
 				Time = 1000
 		End If
-		PVT (Time)
 		X_Vel = (X_Coord - Prev_X)/Time
 		Y_Vel = (Y_Coord - Prev_Y)/Time
 		Z_Vel = (Z_Coord - Prev_Z)/Time
@@ -369,7 +369,6 @@ N4
 				CMD"<CTLR-A>"
 				Time = 1000
 		End If
-		PVT (Time + Next_Time)
 		X_Vel = (Next_X - Prev_X)/(Time + Next_Time)
 		Y_Vel = (Next_Y - Prev_Y)/(Time + Next_Time)
 		Z_Vel = (Next_Z - Prev_Z)/(Time + Next_Time)
@@ -392,7 +391,6 @@ N5
 				CMD"<CTLR-A>"
 				Time = 1000
 		End If
-		PVT (Next_Time)
 		X_Vel = (Next_X - X_Coord)/Next_Time
 		Y_Vel = (Next_Y - Y_Coord)/Next_Time
 		Z_Vel = (Next_Z - Z_Coord)/Next_Time
