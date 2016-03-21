@@ -70,6 +70,9 @@
 
 ; Address-Based Variables
 
+#Define BlankAddress			M4015
+BlankAddress->D:$3FFFF,0,48
+
 #Define Next_Time        	M4000  							; Next coordinate values
 #Define Next_X	         	M4001
 #Define Next_Y         		M4002
@@ -83,18 +86,18 @@
 #Define Next_User     		M4010
 #Define NextVelMode				M4011
 
-NextVelMode->X:$30000,4,4										; Set initial pointers and type
-Next_User->X:$30000,0,4
-Next_Time->Y:$30000,0,24
-Next_X->D:$30000,0,48
-Next_Y->D:$30000,0,48
-Next_Z->D:$30000,0,48
-Next_U->D:$30000,0,48
-Next_V->D:$30000,0,48
-Next_W->D:$30000,0,48
-Next_A->D:$30000,0,48
-Next_B->D:$30000,0,48
-Next_C->D:$30000,0,48
+NextVelMode->X:$3FFFF,4,4											; Set initial pointers and type
+Next_User->X:$3FFFF,0,4
+Next_Time->Y:$3FFFF,0,24
+Next_X->D:$3FFFF,0,48
+Next_Y->D:$3FFFF,0,48
+Next_Z->D:$3FFFF,0,48
+Next_U->D:$3FFFF,0,48
+Next_V->D:$3FFFF,0,48
+Next_W->D:$3FFFF,0,48
+Next_A->D:$3FFFF,0,48
+Next_B->D:$3FFFF,0,48
+Next_C->D:$3FFFF,0,48
 
 #Define Time_Adr        	M4020  							; Pointers to Next_* coordinate addresses
 #Define X_Adr         		M4021
@@ -107,7 +110,6 @@ Next_C->D:$30000,0,48
 #Define B_Adr        			M4028
 #Define C_Adr        			M4029
 #Define User_Adr        	M4030
-#Define Vel_Adr						M4031
 
 Time_Adr->Y$4FA0,0,24													; Assignments for pointers to M address locations
 X_Adr->Y:$4FA1,0,24														; M0 = $4000 -> M4000 = $4FA0
@@ -120,7 +122,6 @@ A_Adr->Y:$4FA7,0,24
 B_Adr->Y:$4FA8,0,24
 C_Adr->Y:$4FA9,0,24
 User_Adr->Y:$4FAA,0,24
-Vel_Adr->Y:$4FAB,0,24
 
 ; *****************************************************************************************
 ; Set-Up
@@ -132,6 +133,7 @@ Del Gat
 BufferLength = 50
 BufferAdr_A = $30000
 BufferAdr_B = BufferAdr_A + 11*BufferLength
+BlankAddress = 0
 
 ; Make sure all buffers are closed
 Close
@@ -171,7 +173,6 @@ GoSub6
 
 P4201 = 0
 P4202 = 0
-P4203 = 0
 Dwell 1000
 
 ; <<< Allow EPICS to assign any values here, so they won't be reset - Or just don't set variables that EPICS will set?
@@ -183,7 +184,7 @@ Dwell 0		; Force CMD lines to execute
 CMD"Gat"	; Starts gathering of the data
 
 Status = 1
-While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS to stop program
+;While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS to stop program
 
 		P4201 = P4201 + 1
     ; <<< EPICS to set BUFFER_FILL here
@@ -195,20 +196,12 @@ While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS 
 				
 		    GoSub2	; Shift values through Next_* -> *_Coord -> Prev_*
     		
-		    ; Increment Addresses
+		    ; Increment addresses
 		    GoSub6
 		    
 		    PVT (Time)
 				; Calculate velocities
-		    If(VelMode = 2)
-		    	GoSub3	; Prev -> Current
-				EndIf
-				If(VelMode = 0 or VelMode > 2)
-					GoSub4	; Prev -> Next
-				EndIf
-				If(VelMode = 1)
-					GoSub5	; Current -> Next
-				EndIf
+				GoSub8
     		
 				; Move axes
 				GoSub7
@@ -217,15 +210,16 @@ While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS 
         If(User > 0)
             GoSub(User)
         End If
-        
-    		P4203 = P4023 + 1
 
         CurrentIndex = CurrentIndex + 1
         TotalPoints = TotalPoints + 1
         
     End While
-    CurrentBufferFill = 0
-
+    
+    If(CurrentBufferFill != BufferLength)				; Abort if buffer wasn't completely full
+    		Abort = 1
+    End If
+    
     ; >>> Might need second move call because of double endif statements - won't merge otherwise
 
     If(CurrentBuffer = 0)
@@ -239,8 +233,13 @@ While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS 
         BufferFill_B = 0
         CurrentBuffer = 0
     End If
+    
+;End While
 
-End While
+GoSub2					; Increment addresses to move to final Next_* point
+GoSub8					; Calculate velocities
+GoSub7					; Move axes
+
 Status = 2
 
 Dwell 0		; Force CMD lines to execute
@@ -340,11 +339,6 @@ N3
 		If(Time = 0)
 				Status = 3
 				CMD"A"
-				CMD"^A"
-				CMD"CTL-A"
-				CMD"CTLR-A"
-				CMD"<CTL-A>"
-				CMD"<CTLR-A>"
 				Time = 1000
 		End If
 		X_Vel = (X_Coord - Prev_X)/Time
@@ -362,11 +356,6 @@ N4
 		If(Time = 0)
 				Status = 3
 				CMD"A"
-				CMD"^A"
-				CMD"CTL-A"
-				CMD"CTLR-A"
-				CMD"<CTL-A>"
-				CMD"<CTLR-A>"
 				Time = 1000
 		End If
 		X_Vel = (Next_X - Prev_X)/(Time + Next_Time)
@@ -384,11 +373,6 @@ N5
 		If(Time = 0)
 				Status = 3
 				CMD"A"
-				CMD"^A"
-				CMD"CTL-A"
-				CMD"CTLR-A"
-				CMD"<CTL-A>"
-				CMD"<CTLR-A>"
 				Time = 1000
 		End If
 		X_Vel = (Next_X - X_Coord)/Next_Time
@@ -407,6 +391,7 @@ Return
 ; *************************************************************************************************
 
 N6
+		User_Adr = 	CurrentBufferAdr + CurrentIndex
 		Time_Adr = 	CurrentBufferAdr + CurrentIndex
 		If(X_Axis = 1) 
     		X_Adr = CurrentBufferAdr + CurrentIndex + BufferLength
@@ -435,8 +420,6 @@ N6
     If(C_Axis = 1)
     		C_Adr = CurrentBufferAdr + CurrentIndex + 9*BufferLength
     End If
-		User_Adr = 	CurrentBufferAdr + CurrentIndex + 10*BufferLength
-		Vel_Adr = 	CurrentBufferAdr + CurrentIndex + 10*BufferLength
 Return
 
 ; Subroutine 7 ************************************************************************************
@@ -466,6 +449,18 @@ N7
 
     X(Q1):(Q2) Y(Q3):(Q4) Z(Q5):(Q6) U(Q7):(Q8) V(Q9):(Q10) W(Q11):(Q12) A(Q13):(Q14) B(Q15):(Q16) ;C(Q17):(Q18)
 		
+Return
+
+N8
+		If(VelMode = 2)
+		    GoSub3	; Prev -> Current
+		EndIf
+		If(VelMode = 0 or VelMode > 2)
+				GoSub4	; Prev -> Next
+		EndIf
+		If(VelMode = 1)
+				GoSub5	; Current -> Next
+		EndIf
 Return
 
 Close
