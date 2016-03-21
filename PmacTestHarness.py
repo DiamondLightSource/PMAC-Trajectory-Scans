@@ -21,7 +21,7 @@ class PmacTestHarness(PmacEthernetInterface):
         self.setConnectionParams(host=ip_address, port=1025)
         self.connect()
 
-        self.status = self.read_variable("P4001")
+        self.status = self.read_variable("P4001")  # Change to int() ?
         self.total_points = 0
         self.current_index = 0
         self.current_buffer = 0
@@ -56,7 +56,7 @@ class PmacTestHarness(PmacEthernetInterface):
 
         """
 
-        self.sendCommand("#1hmz#2hmz#3hmz#4hmz#5hmz#6hmz#7hmz#8hmz#9hmz")
+        self.sendCommand("#1HMZ #2HMZ #3HMZ #4HMZ #5HMZ #6HMZ #7HMZ #8HMZ #9HMZ")
 
     def run_motion_program(self, program_num):
         """
@@ -122,7 +122,7 @@ class PmacTestHarness(PmacEthernetInterface):
         response, success = self.sendCommand("W" + mode + " $" + address + " " + value)
 
         if success:
-            return success
+            return response, success
         else:
             raise IOError("Write failed")
 
@@ -164,7 +164,7 @@ class PmacTestHarness(PmacEthernetInterface):
         response, success = self.sendCommand(variable + "=" + value)
 
         if success:
-            return success
+            return response, success
         else:
             raise IOError("Write failed")
 
@@ -179,7 +179,7 @@ class PmacTestHarness(PmacEthernetInterface):
 
         current_address = self.buffer_address_a
 
-        for i in range(0, int(self.buffer_length)*11*2):
+        for _ in range(0, int(self.buffer_length)*11*2):
             self.write_to_address("L", current_address, "0")
             current_address = self.inc_hex(current_address)
 
@@ -207,11 +207,13 @@ class PmacTestHarness(PmacEthernetInterface):
 
         current_address = start
         for time_point in points[0]:
-                self.write_to_address("Y", current_address, str(time_point))
-                current_address = self.inc_hex(current_address)
+            self.write_to_address("Y", current_address, str(time_point))
+            current_address = self.inc_hex(current_address)
 
-        for i, axis in enumerate(points[1:]):
-            current_address = self.add_dechex(start, int(self.buffer_length)*(i+1))
+        axis_num = 0
+        for axis in points[1:]:
+            axis_num += 1
+            current_address = self.add_dechex(start, int(self.buffer_length)*axis_num)
             # print(current_address)
             for point in axis:
                 self.write_to_address("L", current_address, str(point))

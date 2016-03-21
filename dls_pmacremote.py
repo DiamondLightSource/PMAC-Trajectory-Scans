@@ -355,39 +355,39 @@ class RemotePmacInterface(object):
 		(retStr, status) = self.sendCommand( cmd )
 		return (cmd, retStr, status)
 
-	def testSendCommand(self):
-		(str, code) = self.sendCommand('i20')
-		print 'i20: %r' % str
-		(str, code) = self.sendCommand('nonsense')
-		print 'nonsense: %r' % str
-		(str, code) = self.sendCommand('i20..23')
-		print 'i20..23: %r' % str
-
-	# ---------------------------------------------------------- Tests ----------------------------------------------------------
-	# A very basic test framework. Prints out test results onto standard output.
-	# Run pmac.runTests() on a newly created pmac = PmacRemoteInterface(...) object, which is already successfully connect()-ed.
-
-	def testGetAxisMacroStationNumber(self):
-		for i in range(1,33):
-			try:
-				print 'pmac.getAxisMacroStationNumber(%d) returns %s.' % (i, repr(self.getAxisMacroStationNumber(i)))
-			except Exception, e:
-				print 'pmac.getAxisMacroStationNumber(%d) raised %s' % (i, str(e))
-
-	def testIsMacroStationAxis(self):
-		for i in range(1,33):
-			try:
-				print 'pmac.isMacroStationAxis(%d) returns %s.' % (i, repr(self.isMacroStationAxis(i)))
-			except Exception, e:
-				print 'pmac.isMacroStationAxis(%d) raised %s' % (i, str(e))
-
-	def runTests(self):
-		print '______________________________________'
-		self.testSendCommand()
-		print 'pmac.isModelGeobrick() returns %s' % str(self.isModelGeobrick())
-		self.getNumberOfAxes()
-		self.testIsMacroStationAxis()
-		self.testGetAxisMacroStationNumber()
+	# def testSendCommand(self):
+	# 	(str, code) = self.sendCommand('i20')
+	# 	print 'i20: %r' % str
+	# 	(str, code) = self.sendCommand('nonsense')
+	# 	print 'nonsense: %r' % str
+	# 	(str, code) = self.sendCommand('i20..23')
+	# 	print 'i20..23: %r' % str
+    #
+	# # ---------------------------------------------------------- Tests ----------------------------------------------------------
+	# # A very basic test framework. Prints out test results onto standard output.
+	# # Run pmac.runTests() on a newly created pmac = PmacRemoteInterface(...) object, which is already successfully connect()-ed.
+    #
+	# def testGetAxisMacroStationNumber(self):
+	# 	for i in range(1,33):
+	# 		try:
+	# 			print 'pmac.getAxisMacroStationNumber(%d) returns %s.' % (i, repr(self.getAxisMacroStationNumber(i)))
+	# 		except Exception, e:
+	# 			print 'pmac.getAxisMacroStationNumber(%d) raised %s' % (i, str(e))
+    #
+	# def testIsMacroStationAxis(self):
+	# 	for i in range(1,33):
+	# 		try:
+	# 			print 'pmac.isMacroStationAxis(%d) returns %s.' % (i, repr(self.isMacroStationAxis(i)))
+	# 		except Exception, e:
+	# 			print 'pmac.isMacroStationAxis(%d) raised %s' % (i, str(e))
+    #
+	# def runTests(self):
+	# 	print '______________________________________'
+	# 	self.testSendCommand()
+	# 	print 'pmac.isModelGeobrick() returns %s' % str(self.isModelGeobrick())
+	# 	self.getNumberOfAxes()
+	# 	self.testIsMacroStationAxis()
+	# 	self.testGetAxisMacroStationNumber()
 
 class PmacEthernetInterface(RemotePmacInterface):
 	'''Allows connection to a PMAC over an Ethernet interface.'''

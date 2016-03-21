@@ -1,4 +1,3 @@
 ignore-paths:
-    - scanpointgenerator/*
     - dls_pmacremote.py
-
+    - scanpointgenerator
