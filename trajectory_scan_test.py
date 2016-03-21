@@ -105,8 +105,12 @@ def trajectory_scan():
 
         pmac.update_status_variables()
 
-        print("Status: " + str(pmac.status) + " - Buffer: " + str(pmac.current_buffer) + " - Index: " +
-              str(pmac.current_index) + " - Total Points: " + str(pmac.total_points))
+        if pmac.current_buffer == 0:
+            print("Status: " + str(pmac.status) + " - Buffer: A" + " - Index: " +
+                  str(pmac.current_index) + " - Total Points: " + str(pmac.total_points))
+        else:
+            print("Status: " + str(pmac.status) + " - Buffer: B" + " - Index: " +
+                  str(pmac.current_index) + " - Total Points: " + str(pmac.total_points))
 
 
 def main():
