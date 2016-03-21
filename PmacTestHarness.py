@@ -21,7 +21,7 @@ class PmacTestHarness(PmacEthernetInterface):
         self.setConnectionParams(host=ip_address, port=1025)
         self.connect()
 
-        self.status = self.read_variable("P4001")
+        self.status = self.read_variable("P4001")  # Change to int() ?
         self.total_points = 0
         self.current_index = 0
         self.current_buffer = 0
@@ -56,7 +56,7 @@ class PmacTestHarness(PmacEthernetInterface):
 
         """
 
-        self.sendCommand("#1hmz#2hmz#3hmz#4hmz#5hmz#6hmz#7hmz#8hmz#9hmz")
+        self.sendCommand("#1HMZ #2HMZ #3HMZ #4HMZ #5HMZ #6HMZ #7HMZ #8HMZ #9HMZ")
 
     def run_motion_program(self, program_num):
         """
