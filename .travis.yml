@@ -9,7 +9,7 @@ install:
   - python setup.py bdist_egg
 
 # command to run tests
-script: nosetests --exclude=dls_pmacremote
+script: nosetests -v
 
 after_success:
     - coveralls
