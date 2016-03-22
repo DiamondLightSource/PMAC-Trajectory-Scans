@@ -47,6 +47,7 @@
 #Define C_Coord						P(RootVar + 119)
 #Define User							P(RootVar + 120)
 #Define VelMode						P(RootVar + 121)
+#Define Next_Time					P(RootVar + 122)
 
 #Define Prev_X 						P(RootVar + 131)		; Previous coordinate values
 #Define Prev_Y 						P(RootVar + 132)
@@ -73,7 +74,7 @@
 #Define BlankAddress			M4015								; Address storing a zero for unused axes to point to
 BlankAddress->D:$3FFFF,0,48
 
-#Define Next_Time        	M4000  							; Next coordinate values
+#Define Next_Time_N      	M4000  							; Next coordinate values
 #Define Next_X	         	M4001
 #Define Next_Y         		M4002
 #Define Next_Z        		M4003
@@ -88,7 +89,7 @@ BlankAddress->D:$3FFFF,0,48
 
 NextVelMode->X:$3FFFF,4,4											; Set initial pointers and type
 Next_User->X:$3FFFF,0,4
-Next_Time->Y:$3FFFF,0,24
+Next_Time_N->Y:$3FFFF,0,24
 Next_X->D:$3FFFF,0,48
 Next_Y->D:$3FFFF,0,48
 Next_Z->D:$3FFFF,0,48
@@ -123,6 +124,9 @@ B_Adr->Y:$4FA8,0,24
 C_Adr->Y:$4FA9,0,24
 User_Adr->Y:$4FAA,0,24
 
+#Define RTE								M4031
+RTE->Y:$203F,22
+
 ; *****************************************************************************************
 ; Set-Up
 ; *****************************************************************************************
@@ -134,6 +138,7 @@ BufferLength = 50
 BufferAdr_A = $30000
 BufferAdr_B = BufferAdr_A + 11*BufferLength
 BlankAddress = 0
+Status = 0
 
 ; Make sure all buffers are closed
 Close
@@ -153,7 +158,6 @@ FRAX(X,Y,Z,U,V,W,A,B,C)
 
 CurrentBufferAdr = BufferAdr_A
 CurrentIndex = 0
-Status = 0
 TotalPoints = 0
 Abort = 0
 CurrentBufferFill = BufferFill_A
@@ -194,6 +198,7 @@ While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS 
 				
 				P4202 = P4202 + 1
 				
+				Next_Time = Next_Time_N/4			; Convert 1/4s of a ms into ms
 		    GoSub2	; Shift values through Next_* -> *_Coord -> Prev_*
     		
 		    ; Increment addresses
@@ -213,6 +218,11 @@ While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS 
 				
         CurrentIndex = CurrentIndex + 1
         TotalPoints = TotalPoints + 1
+        
+        If(M141 = 1 or M241 = 1 or RTE = 1)
+        		Abort = 1
+        		Status = 3
+       	End If
         
     End While
     
@@ -340,6 +350,7 @@ N3
 		If(Time = 0)
 				Status = 3
 				CMD"A"
+				Dwell 0
 				Time = 1000
 		End If
 		X_Vel = 1000*(X_Coord - Prev_X)/Time
@@ -357,6 +368,7 @@ N4
 		If(Time = 0)
 				Status = 3
 				CMD"A"
+				Dwell 0
 				Time = 1000
 		End If
 		X_Vel = 1000*(Next_X - Prev_X)/(Time + Next_Time)
@@ -374,6 +386,7 @@ N5
 		If(Time = 0)
 				Status = 3
 				CMD"A"
+				Dwell 0
 				Time = 1000
 		End If
 		X_Vel = 1000*(Next_X - X_Coord)/Next_Time
