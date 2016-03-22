@@ -70,7 +70,7 @@
 
 ; Address-Based Variables
 
-#Define BlankAddress			M4015
+#Define BlankAddress			M4015								; Address storing a zero for unused axes to point to
 BlankAddress->D:$3FFFF,0,48
 
 #Define Next_Time        	M4000  							; Next coordinate values
@@ -188,10 +188,10 @@ While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS 
 
 		P4201 = P4201 + 1
     ; <<< EPICS to set BUFFER_FILL here
-
+		
     CurrentIndex = 0
     While(Abort != 1 and CurrentIndex < CurrentBufferFill)
-
+				
 				P4202 = P4202 + 1
 				
 		    GoSub2	; Shift values through Next_* -> *_Coord -> Prev_*
@@ -205,12 +205,12 @@ While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS 
     		
 				; Move axes
 				GoSub7
-
+				
         ; Run any required subroutine >>> Do we need to be able to run more than one?
         If(User > 0)
             GoSub(User)
         End If
-
+				
         CurrentIndex = CurrentIndex + 1
         TotalPoints = TotalPoints + 1
         
@@ -221,7 +221,7 @@ While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS 
     End If
     
     ; >>> Might need second move call because of double endif statements - won't merge otherwise
-
+		
     If(CurrentBuffer = 0)
         CurrentBufferAdr = BufferAdr_B
         CurrentBufferFill = BufferFill_B
