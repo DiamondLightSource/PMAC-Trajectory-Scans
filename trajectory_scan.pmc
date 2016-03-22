@@ -138,6 +138,7 @@ BufferLength = 50
 BufferAdr_A = $30000
 BufferAdr_B = BufferAdr_A + 11*BufferLength
 BlankAddress = 0
+Status = 0
 
 ; Make sure all buffers are closed
 Close
@@ -157,7 +158,6 @@ FRAX(X,Y,Z,U,V,W,A,B,C)
 
 CurrentBufferAdr = BufferAdr_A
 CurrentIndex = 0
-Status = 0
 TotalPoints = 0
 Abort = 0
 CurrentBufferFill = BufferFill_A
