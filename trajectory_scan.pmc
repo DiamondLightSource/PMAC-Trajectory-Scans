@@ -124,6 +124,9 @@ B_Adr->Y:$4FA8,0,24
 C_Adr->Y:$4FA9,0,24
 User_Adr->Y:$4FAA,0,24
 
+#Define RTE								M4031
+RTE->Y:$203F,22
+
 ; *****************************************************************************************
 ; Set-Up
 ; *****************************************************************************************
@@ -215,6 +218,11 @@ While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS 
 				
         CurrentIndex = CurrentIndex + 1
         TotalPoints = TotalPoints + 1
+        
+        If(M141 = 1 or M241 = 1 or RTE = 1)
+        		Abort = 1
+        		Status = 3
+       	End If
         
     End While
     
