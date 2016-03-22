@@ -98,7 +98,7 @@ def trajectory_scan():
             pmac.set_buffer_fill(buffer_fill_b)
             pmac.prev_buffer_write = 1
 
-        time.sleep(0.5)
+        time.sleep(0.25)
 
         if 1 > 2:
             pmac.setVar("P4007", 1)  # End Program
