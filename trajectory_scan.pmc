@@ -184,7 +184,7 @@ Dwell 0		; Force CMD lines to execute
 CMD"Gat"	; Starts gathering of the data
 
 Status = 1
-;While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS to stop program
+While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS to stop program
 
 		P4201 = P4201 + 1
     ; <<< EPICS to set BUFFER_FILL here
@@ -234,7 +234,7 @@ Status = 1
         CurrentBuffer = 0
     End If
     
-;End While
+End While
 
 GoSub2					; Increment addresses to move to final Next_* point
 GoSub8					; Calculate velocities
@@ -334,6 +334,7 @@ Return
 ; Subroutines 3-5 *********************************************************************************
 ; Calculate velocities for next move - 3: Prev->Current, 4: Prev->Next, 5: Current->Next
 ; *************************************************************************************************
+; Multiply velocities by 1000 because units(Time): msec and units(velocity): sec in PVT move def
 
 N3
 		If(Time = 0)
@@ -341,15 +342,15 @@ N3
 				CMD"A"
 				Time = 1000
 		End If
-		X_Vel = (X_Coord - Prev_X)/Time
-		Y_Vel = (Y_Coord - Prev_Y)/Time
-		Z_Vel = (Z_Coord - Prev_Z)/Time
-		U_Vel = (U_Coord - Prev_U)/Time
-		V_Vel = (V_Coord - Prev_V)/Time
-		W_Vel = (W_Coord - Prev_W)/Time
-		A_Vel = (A_Coord - Prev_A)/Time
-		B_Vel = (B_Coord - Prev_B)/Time
-		C_Vel = (C_Coord - Prev_C)/Time
+		X_Vel = 1000*(X_Coord - Prev_X)/Time
+		Y_Vel = 1000*(Y_Coord - Prev_Y)/Time
+		Z_Vel = 1000*(Z_Coord - Prev_Z)/Time
+		U_Vel = 1000*(U_Coord - Prev_U)/Time
+		V_Vel = 1000*(V_Coord - Prev_V)/Time
+		W_Vel = 1000*(W_Coord - Prev_W)/Time
+		A_Vel = 1000*(A_Coord - Prev_A)/Time
+		B_Vel = 1000*(B_Coord - Prev_B)/Time
+		C_Vel = 1000*(C_Coord - Prev_C)/Time
 Return
 
 N4
@@ -358,15 +359,15 @@ N4
 				CMD"A"
 				Time = 1000
 		End If
-		X_Vel = (Next_X - Prev_X)/(Time + Next_Time)
-		Y_Vel = (Next_Y - Prev_Y)/(Time + Next_Time)
-		Z_Vel = (Next_Z - Prev_Z)/(Time + Next_Time)
-		U_Vel = (Next_U - Prev_U)/(Time + Next_Time)
-		V_Vel = (Next_V - Prev_V)/(Time + Next_Time)
-		W_Vel = (Next_W - Prev_W)/(Time + Next_Time)
-		A_Vel = (Next_A - Prev_A)/(Time + Next_Time)
-		B_Vel = (Next_B - Prev_B)/(Time + Next_Time)
-		C_Vel = (Next_C - Prev_C)/(Time + Next_Time)
+		X_Vel = 1000*(Next_X - Prev_X)/(Time + Next_Time)
+		Y_Vel = 1000*(Next_Y - Prev_Y)/(Time + Next_Time)
+		Z_Vel = 1000*(Next_Z - Prev_Z)/(Time + Next_Time)
+		U_Vel = 1000*(Next_U - Prev_U)/(Time + Next_Time)
+		V_Vel = 1000*(Next_V - Prev_V)/(Time + Next_Time)
+		W_Vel = 1000*(Next_W - Prev_W)/(Time + Next_Time)
+		A_Vel = 1000*(Next_A - Prev_A)/(Time + Next_Time)
+		B_Vel = 1000*(Next_B - Prev_B)/(Time + Next_Time)
+		C_Vel = 1000*(Next_C - Prev_C)/(Time + Next_Time)
 Return
 
 N5
@@ -375,15 +376,15 @@ N5
 				CMD"A"
 				Time = 1000
 		End If
-		X_Vel = (Next_X - X_Coord)/Next_Time
-		Y_Vel = (Next_Y - Y_Coord)/Next_Time
-		Z_Vel = (Next_Z - Z_Coord)/Next_Time
-		U_Vel = (Next_U - U_Coord)/Next_Time
-		V_Vel = (Next_V - V_Coord)/Next_Time
-		W_Vel = (Next_W - W_Coord)/Next_Time
-		A_Vel = (Next_A - A_Coord)/Next_Time
-		B_Vel = (Next_B - B_Coord)/Next_Time
-		C_Vel = (Next_C - C_Coord)/Next_Time
+		X_Vel = 1000*(Next_X - X_Coord)/Next_Time
+		Y_Vel = 1000*(Next_Y - Y_Coord)/Next_Time
+		Z_Vel = 1000*(Next_Z - Z_Coord)/Next_Time
+		U_Vel = 1000*(Next_U - U_Coord)/Next_Time
+		V_Vel = 1000*(Next_V - V_Coord)/Next_Time
+		W_Vel = 1000*(Next_W - W_Coord)/Next_Time
+		A_Vel = 1000*(Next_A - A_Coord)/Next_Time
+		B_Vel = 1000*(Next_B - B_Coord)/Next_Time
+		C_Vel = 1000*(Next_C - C_Coord)/Next_Time
 Return
 
 ; Subroutine 6 ************************************************************************************
