@@ -77,7 +77,7 @@ class AssignMotorsTest(unittest.TestCase):
         self.pmac.assign_motors()
 
         send_command_mock.assert_called_once_with(
-            "&1 #1->X #2->Y #3->Z #4->U #5->V #6->W #7->A #8->B")
+            "&1 #1->100X #2->100Y #3->Z #4->U #5->V #6->W #7->A #8->B")
 
 
 class HomeMotorsTest(unittest.TestCase):

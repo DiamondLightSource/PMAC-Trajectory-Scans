@@ -48,7 +48,7 @@ class PmacTestHarness(PmacEthernetInterface):
 
         """
 
-        self.sendCommand("&1 #1->X #2->Y #3->Z #4->U #5->V #6->W #7->A #8->B")
+        self.sendCommand("&1 #1->100X #2->100Y #3->Z #4->U #5->V #6->W #7->A #8->B")
 
     def home_motors(self):
         """
