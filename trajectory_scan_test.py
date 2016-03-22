@@ -10,12 +10,11 @@ def generate_lin_points(num_points):
     y_points = []
 
     for j in range(1, num_points+1, 1):
-        time_points.append(250)
+        time_points.append(1003)
 
-    for i in range(1, 9, 1):
-        for j in range(1, num_points+1, 1):
-            x_points.append(j)
-            y_points.append(j)
+    for j in range(1, num_points+1, 1):
+        x_points.append(j)
+        y_points.append(j)
 
     return time_points, x_points, y_points
 
@@ -27,7 +26,7 @@ def generate_snake_scan(reverse=False):
     y_points = []
 
     for i in range(0, 50):
-        time_points.append(250)
+        time_points.append(1003)
 
     if reverse:
         xs = LineGenerator("x", "mm", 0, 10, 5)
