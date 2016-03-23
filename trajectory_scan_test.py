@@ -40,7 +40,7 @@ class InitialisationTest(unittest.TestCase):
         self.assertEqual(self.pmac.read_variable("P4002"), "1")
 
     def test_given_axes_too_low_then_error_status_and_abort(self):
-        self.pmac.set_axes(-1)
+        self.pmac.set_axes(0)
         self.pmac.run_motion_program(PROG_NUM)
 
         self.assertEqual(self.pmac.read_variable("P4001"), "3")

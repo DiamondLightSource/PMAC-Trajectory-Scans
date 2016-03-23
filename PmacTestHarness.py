@@ -16,7 +16,8 @@ class PmacTestHarness(PmacEthernetInterface):
             ip_address(str): The IP address of the pmac to connect to
 
         """
-        super(PmacTestHarness, self).__init__(parent=None, verbose=False, numAxes=None, timeout=3.0)
+        super(PmacTestHarness, self).__init__(
+            parent=None, verbose=False, numAxes=None, timeout=3.0)
 
         self.setConnectionParams(host=ip_address, port=1025)
         self.connect()
@@ -67,7 +68,8 @@ class PmacTestHarness(PmacEthernetInterface):
 
         """
 
-        self.sendCommand("#1J/ #2J/ #3J/ #4J/ #5J/ #6J/ #7J/ #8J/ &{num} B{num} R".format(num=str(program_num)))
+        self.sendCommand("#1J/ #2J/ #3J/ #4J/ #5J/ #6J/ #7J/ #8J/ &{num} B{num} R".format(
+                num=str(program_num)))
 
     def force_abort(self):
         """
@@ -90,7 +92,8 @@ class PmacTestHarness(PmacEthernetInterface):
         Send number of require axes
 
         Args:
-            axes(int): Int between 1 and 510 that will be split into 8 bits specifying the required motors
+            axes(int): Int between 1 and 510 that will be split into 8 bits specifying the
+            required motors
             e.g. X, Y and Z = 256 + 128 + 64 = 448; X, Y and U = 256 + 128 + 32 = 416
         """
 
