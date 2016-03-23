@@ -69,6 +69,14 @@ class PmacTestHarness(PmacEthernetInterface):
 
         self.sendCommand("#1J/ #2J/ #3J/ #4J/ #5J/ #6J/ #7J/ #8J/ &{num} B{num} R".format(num=str(program_num)))
 
+    def abort(self):
+        """
+        Send abort command to pmac
+
+        """
+
+        self.sendCommand("A")
+
     def set_axes(self, axes):
         """
         Send number of require axes
@@ -135,6 +143,7 @@ class PmacTestHarness(PmacEthernetInterface):
 
         Returns:
             str: Value of variable
+
         Raises:
             IOError: Read failed
 
@@ -179,7 +188,7 @@ class PmacTestHarness(PmacEthernetInterface):
 
         current_address = self.buffer_address_a
 
-        for _ in range(0, int(self.buffer_length)*11*2):
+        for _ in range(0, int(self.buffer_length)*10*2):
             self.write_to_address("L", current_address, "0")
             current_address = self.inc_hex(current_address)
 
@@ -220,6 +229,35 @@ class PmacTestHarness(PmacEthernetInterface):
                 current_address = self.inc_hex(current_address)
 
         print("Points sent to " + start)
+
+    def read_points(self, num_points, buffer_num=0):
+        """
+        Read points store in pmac memory buffer
+
+        Args:
+            num_points: Number of sets of points to read
+            buffer_num: Specifier for buffer A (0) or B (1)
+
+        Returns:
+            list(str): Points stored in pmac memory
+
+        Raises:
+            IOError: Read failed
+        """
+
+        if buffer_num == 0:
+            start = "30000"
+        else:
+            start = self.add_dechex("30000", int(self.buffer_length)*10)
+
+        pmac_buffer = []
+        for i in range(0, 10):
+            current_address = self.add_dechex(start, int(self.buffer_length)*i)
+            for _ in range(0, num_points):
+                pmac_buffer.append(self.read_address("L", current_address))
+                current_address = self.inc_hex(current_address)
+
+        return pmac_buffer
 
     def set_buffer_fill(self, fill_level, current=False):
         """
