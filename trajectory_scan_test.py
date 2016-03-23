@@ -1,124 +1,253 @@
-import time
 from PmacTestHarness import PmacTestHarness
-from scanpointgenerator import NestedGenerator, LineGenerator
+import trajectory_scan_driver as driver
+import unittest
+import time
+
+PMAC_IP = "172.23.243.169"
+PROG_NUM = 1
 
 
-def generate_lin_points(num_points):
+class InitialisationTest(unittest.TestCase):
 
-    time_points = []
-    x_points = []
-    y_points = []
+    def setUp(self):
+        self.pmac = PmacTestHarness(PMAC_IP)
+        self.pmac.assign_motors()
 
-    for j in range(1, num_points+1, 1):
-        time_points.append(250)
+    def tearDown(self):
+        self.pmac.force_abort()
+        self.pmac.disconnect()
 
-    for i in range(1, 9, 1):
-        for j in range(1, num_points+1, 1):
-            x_points.append(j)
-            y_points.append(j)
+    def test_given_valid_axes_then_set_axis_values(self):
+        self.pmac.set_axes(511)
+        self.pmac.run_motion_program(PROG_NUM)
 
-    return time_points, x_points, y_points
+        self.assertEqual(self.pmac.read_variable("P4003"), "0")
+        self.assertEqual(self.pmac.read_variable("P4101"), "1")
+        self.assertEqual(self.pmac.read_variable("P4102"), "1")
+        self.assertEqual(self.pmac.read_variable("P4103"), "1")
+        self.assertEqual(self.pmac.read_variable("P4104"), "1")
+        self.assertEqual(self.pmac.read_variable("P4105"), "1")
+        self.assertEqual(self.pmac.read_variable("P4106"), "1")
+        self.assertEqual(self.pmac.read_variable("P4107"), "1")
+        self.assertEqual(self.pmac.read_variable("P4108"), "1")
+        self.assertEqual(self.pmac.read_variable("P4109"), "1")
 
+    def test_given_axes_too_high_then_error_status_and_abort(self):
+        self.pmac.set_axes(550)
+        self.pmac.run_motion_program(PROG_NUM)
 
-def generate_snake_scan(reverse=False):
+        self.assertEqual(self.pmac.read_variable("P4001"), "3")
+        self.assertEqual(self.pmac.read_variable("P4002"), "1")
 
-    time_points = []
-    x_points = []
-    y_points = []
+    def test_given_axes_too_low_then_error_status_and_abort(self):
+        self.pmac.set_axes(0)
+        self.pmac.run_motion_program(PROG_NUM)
 
-    for i in range(0, 50):
-        time_points.append(250)
-
-    if reverse:
-        xs = LineGenerator("x", "mm", 0, 10, 5)
-        ys = LineGenerator("y", "mm", 0, 10, 5)
-        gen = NestedGenerator(ys, xs, snake=True)
-    else:
-        xs = LineGenerator("x", "mm", 0, 10, 5)
-        ys = LineGenerator("y", "mm", 0, 10, 5)
-        gen = NestedGenerator(ys, xs, snake=True)
-
-    for point in gen.iterator():
-        x_points.append(int(point.lower['x']))
-        x_points.append(int(point.upper['x']))
-    for point in gen.iterator():
-        y_points.append(int(point.lower['y']))
-        y_points.append(int(point.upper['y']))
-
-    return time_points, x_points, y_points
+        self.assertEqual(self.pmac.read_variable("P4001"), "3")
+        self.assertEqual(self.pmac.read_variable("P4002"), "1")
 
 
-def trajectory_scan():
+class FillBuffersTest(unittest.TestCase):
 
-    pmac = PmacTestHarness("172.23.243.169")
+    def setUp(self):
+        self.pmac = PmacTestHarness(PMAC_IP)
 
-    pmac.assign_motors()
-    pmac.home_motors()
-    pmac.reset_buffers()
-    pmac.set_axes(384)
+    def tearDown(self):
+        self.pmac.force_abort()
+        self.pmac.disconnect()
 
-    line_points = generate_lin_points(50)
-    snake_points = generate_snake_scan()
-    print(line_points)
-    print(snake_points)
+    def test_send_points_then_buffers_filled(self):
+        self.pmac.send_points(driver.generate_lin_points(5, 100), current=True)
 
-    buffer_fill_a = 50
-    buffer_fill_b = 50
-    pmac.send_points(line_points, current=True)
-    pmac.send_points(snake_points)
-    pmac.set_buffer_fill(buffer_fill_a, current=True)
-    pmac.set_buffer_fill(buffer_fill_b)
+        pmac_buffer = self.pmac.read_points(5)
 
-    pmac.run_motion_program(1)
+        self.assertEqual(pmac_buffer[:15], ['100', '100', '100', '100', '100',
+                                            '1', '2', '3', '4', '5',
+                                            '1', '2', '3', '4', '5'])
 
-    time.sleep(3)
+    def test_set_buffer_fill_current(self):
+        self.pmac.set_buffer_fill(50, current=True)
 
-    pmac.update_status_variables()
-    print("Status: " + str(pmac.status))
+        self.assertEqual(self.pmac.read_variable("P4011"), "50")
 
-    a_points = snake_points
-    b_points = line_points
+    def test_set_buffer_fill_not_current(self):
+        self.pmac.set_buffer_fill(50, current=False)
 
-    while int(pmac.status) == 1:
-
-        if pmac.prev_buffer_write == 1 and int(pmac.current_buffer) == 1:
-            if a_points == line_points:
-                a_points = snake_points
-            else:
-                a_points = line_points
-            pmac.send_points(a_points)
-            pmac.set_buffer_fill(buffer_fill_a)
-            pmac.prev_buffer_write = 0
-        elif pmac.prev_buffer_write == 0 and int(pmac.current_buffer) == 0:
-            if b_points == line_points:
-                b_points = snake_points
-            else:
-                b_points = line_points
-            pmac.send_points(b_points)
-            pmac.set_buffer_fill(buffer_fill_b)
-            pmac.prev_buffer_write = 1
-
-        time.sleep(0.25)
-
-        if 1 > 2:
-            pmac.setVar("P4007", 1)  # End Program
-
-        pmac.update_status_variables()
-
-        if pmac.current_buffer == 0:
-            print("Status: " + str(pmac.status) + " - Buffer: A" + " - Index: " +
-                  str(pmac.current_index) + " - Total Points: " + str(pmac.total_points))
-        else:
-            print("Status: " + str(pmac.status) + " - Buffer: B" + " - Index: " +
-                  str(pmac.current_index) + " - Total Points: " + str(pmac.total_points))
+        self.assertEqual(self.pmac.read_variable("P4012"), "50")
 
 
-def main():
+class AbortTests(unittest.TestCase):
 
-    trajectory_scan()
-    # points = generate_lin_points(25)
-    # send_points(points)
+    def setUp(self):
+        self.pmac = PmacTestHarness(PMAC_IP)
+        self.pmac.assign_motors()
+        self.pmac.home_motors()
+        self.pmac.set_axes(256)
+
+    def tearDown(self):
+        self.pmac.force_abort()
+        self.pmac.disconnect()
+
+    def test_given_running_and_abort_command_then_abort(self):
+        self.pmac.send_points(driver.generate_lin_points(50, 500), current=True)
+        self.pmac.set_buffer_fill(50, current=True)
+        self.pmac.run_motion_program(PROG_NUM)
+
+        time.sleep(0.1)
+        self.assertEqual(self.pmac.read_variable("P4001"), "1")
+        self.assertEqual(self.pmac.read_variable("P4002"), "0")
+
+        self.pmac.set_abort()
+
+        time.sleep(0.5)
+        self.assertEqual(self.pmac.read_variable("P4001"), "2")
+        self.assertEqual(self.pmac.read_variable("P4002"), "1")
+
+    def test_given_time_0_then_abort_and_status_3(self):
+        self.pmac.send_points([[0, 0, 0], [1, 2, 3]], current=True)
+        self.pmac.set_buffer_fill(3, current=True)
+        self.pmac.run_motion_program(PROG_NUM)
+        time.sleep(0.1)
+
+        self.assertEqual(self.pmac.read_variable("P4001"), "3")
+        self.assertEqual(self.pmac.read_variable("P4002"), "1")
 
 
-if __name__ == "__main__":
-    main()
+class TrajectoryScanTest(unittest.TestCase):
+
+    def setUp(self):
+        self.pmac = PmacTestHarness(PMAC_IP)
+        self.pmac.assign_motors()
+        self.pmac.home_motors()
+        self.pmac.set_axes(384)
+
+    def tearDown(self):
+        self.pmac.force_abort()
+        self.pmac.disconnect()
+
+    def test_given_one_partial_buffer_then_complete_and_abort(self):
+
+        buffer_fill = 25
+        move_time = 400
+
+        line_points = driver.generate_lin_points(buffer_fill, move_time)
+
+        self.pmac.send_points(line_points, current=True)
+        self.pmac.set_buffer_fill(buffer_fill, current=True)
+
+        self.pmac.run_motion_program(PROG_NUM)
+        scan_time = (move_time/4*buffer_fill)/1000
+        time.sleep(scan_time + 1)
+
+        self.assertEqual(self.pmac.read_variable("P4001"), "2")
+        self.assertEqual(self.pmac.read_variable("P4002"), "1")
+        self.assertEqual(self.pmac.read_variable("P4005"), str(buffer_fill))
+
+    def test_given_one_full_buffer_then_complete(self):
+
+        buffer_length = self.pmac.buffer_length
+        buffer_fill = int(buffer_length)
+        move_time = 400
+
+        line_points = driver.generate_lin_points(buffer_fill, move_time)
+        self.pmac.send_points(line_points, current=True)
+        self.pmac.set_buffer_fill(buffer_fill, current=True)
+
+        self.pmac.run_motion_program(PROG_NUM)
+        scan_time = (move_time/4*buffer_fill)/1000
+        time.sleep(scan_time + 1)
+
+        self.assertEqual(self.pmac.read_variable("P4001"), "2")
+        self.assertEqual(self.pmac.read_variable("P4002"), "0")
+        self.assertEqual(self.pmac.read_variable("P4005"), str(buffer_fill))
+
+    def test_given_second_partial_buffer_then_complete_and_abort(self):
+
+        buffer_length = self.pmac.buffer_length
+        buffer_fill_a = int(buffer_length)
+        buffer_fill_b = 25
+        move_time = 400
+
+        line_points = driver.generate_lin_points(buffer_fill_a, move_time)
+        self.pmac.send_points(line_points, current=True)
+        self.pmac.set_buffer_fill(buffer_fill_a, current=True)
+
+        line_points = driver.generate_lin_points(buffer_fill_b, move_time)
+        self.pmac.send_points(line_points)
+        self.pmac.set_buffer_fill(buffer_fill_b)
+
+        self.pmac.run_motion_program(PROG_NUM)
+
+        scan_time = (move_time/4*buffer_fill_a + move_time/4*buffer_fill_b)/1000
+        time.sleep(scan_time + 1)
+
+        self.assertEqual(self.pmac.read_variable("P4001"), "2")
+        self.assertEqual(self.pmac.read_variable("P4002"), "1")
+        self.assertEqual(self.pmac.read_variable("P4005"),
+                         str(buffer_fill_a + buffer_fill_b))
+
+    def test_given_two_full_buffers_then_complete(self):
+
+        buffer_length = self.pmac.buffer_length
+        buffer_fill_a = int(buffer_length)
+        buffer_fill_b = int(buffer_length)
+        move_time = 400
+
+        line_points = driver.generate_lin_points(buffer_fill_a, move_time)
+        self.pmac.send_points(line_points, current=True)
+        self.pmac.set_buffer_fill(buffer_fill_a, current=True)
+
+        line_points = driver.generate_lin_points(buffer_fill_b, move_time)
+        self.pmac.send_points(line_points)
+        self.pmac.set_buffer_fill(buffer_fill_b)
+
+        self.pmac.run_motion_program(PROG_NUM)
+
+        scan_time = (move_time/4*buffer_fill_a + move_time/4*buffer_fill_b)/1000
+        time.sleep(scan_time + 1)
+
+        self.assertEqual(self.pmac.read_variable("P4001"), "2")
+        self.assertEqual(self.pmac.read_variable("P4002"), "0")
+        self.assertEqual(self.pmac.read_variable("P4005"), "100")
+
+    def test_given_five_full_buffers_then_complete(self):
+
+        buffer_length = self.pmac.buffer_length
+        buffer_fill_a = int(buffer_length)
+        buffer_fill_b = int(buffer_length)
+        move_time = 400
+
+        line_points = driver.generate_lin_points(buffer_fill_a, move_time)
+        self.pmac.send_points(line_points, current=True)
+        self.pmac.set_buffer_fill(buffer_fill_a, current=True)
+
+        line_points = driver.generate_lin_points(buffer_fill_b, move_time)
+        self.pmac.send_points(line_points)
+        self.pmac.set_buffer_fill(buffer_fill_b)
+
+        self.pmac.run_motion_program(PROG_NUM)
+
+        num_buffers = 2
+        while num_buffers < 5:
+
+            if self.pmac.prev_buffer_write == 1 and int(self.pmac.current_buffer) == 1:
+                self.pmac.send_points(line_points)
+                self.pmac.set_buffer_fill(buffer_fill_a)
+                self.pmac.prev_buffer_write = 0
+                num_buffers += 1
+            elif self.pmac.prev_buffer_write == 0 and int(self.pmac.current_buffer) == 0:
+                self.pmac.send_points(line_points)
+                self.pmac.set_buffer_fill(buffer_fill_b)
+                self.pmac.prev_buffer_write = 1
+                num_buffers += 1
+
+            time.sleep(move_time/4/1000)
+
+            self.pmac.update_status_variables()
+
+        scan_time = (move_time/4*buffer_fill_a + move_time/4*buffer_fill_b)/1000
+        time.sleep(scan_time + 1)
+
+        self.assertEqual(self.pmac.read_variable("P4001"), "2")
+        self.assertEqual(self.pmac.read_variable("P4002"), "0")
+        self.assertEqual(self.pmac.read_variable("P4005"), "250")

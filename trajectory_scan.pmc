@@ -6,7 +6,7 @@
 
 ; EPICS Required Variables - (P4000 address = $6FA0)
 
-#Define Status          	P(RootVar + 1)   		; Status of motion program for EPICS - 0: Idle, 1: Running, 2: Finished, 3: Error
+#Define Status          	P(RootVar + 1)   		; Status of motion program for EPICS - 0: Initialised, 1: Active, 2: Idle, 3: Error
 #Define Abort          		P(RootVar + 2)   		; Abort trigger for EPICS
 #Define Axes            	P(RootVar + 3)   		; An int between 1 and 511 specifying which axes to use
 #Define BufferLength   		P(RootVar + 4)   		; Length of a single buffer e.g. AX, AY...
@@ -47,6 +47,7 @@
 #Define C_Coord						P(RootVar + 119)
 #Define User							P(RootVar + 120)
 #Define VelMode						P(RootVar + 121)
+#Define Next_Time					P(RootVar + 122)
 
 #Define Prev_X 						P(RootVar + 131)		; Previous coordinate values
 #Define Prev_Y 						P(RootVar + 132)
@@ -73,7 +74,7 @@
 #Define BlankAddress			M4015								; Address storing a zero for unused axes to point to
 BlankAddress->D:$3FFFF,0,48
 
-#Define Next_Time        	M4000  							; Next coordinate values
+#Define Next_Time_N      	M4000  							; Next coordinate values
 #Define Next_X	         	M4001
 #Define Next_Y         		M4002
 #Define Next_Z        		M4003
@@ -88,7 +89,7 @@ BlankAddress->D:$3FFFF,0,48
 
 NextVelMode->X:$3FFFF,4,4											; Set initial pointers and type
 Next_User->X:$3FFFF,0,4
-Next_Time->Y:$3FFFF,0,24
+Next_Time_N->Y:$3FFFF,0,24
 Next_X->D:$3FFFF,0,48
 Next_Y->D:$3FFFF,0,48
 Next_Z->D:$3FFFF,0,48
@@ -123,6 +124,9 @@ B_Adr->Y:$4FA8,0,24
 C_Adr->Y:$4FA9,0,24
 User_Adr->Y:$4FAA,0,24
 
+#Define RTE								M4031
+RTE->Y:$203F,22
+
 ; *****************************************************************************************
 ; Set-Up
 ; *****************************************************************************************
@@ -134,6 +138,8 @@ BufferLength = 50
 BufferAdr_A = $30000
 BufferAdr_B = BufferAdr_A + 11*BufferLength
 BlankAddress = 0
+Status = 0
+Abort = 0
 
 ; Make sure all buffers are closed
 Close
@@ -145,6 +151,9 @@ Close
 Open Prog 1
 Clear
 
+Status = 1
+Abort = 0
+
 ; Check which axes are required
 GoSub1
 
@@ -153,9 +162,7 @@ FRAX(X,Y,Z,U,V,W,A,B,C)
 
 CurrentBufferAdr = BufferAdr_A
 CurrentIndex = 0
-Status = 0
 TotalPoints = 0
-Abort = 0
 CurrentBufferFill = BufferFill_A
 CurrentBuffer = 0
 
@@ -173,7 +180,6 @@ GoSub6
 
 P4201 = 0
 P4202 = 0
-Dwell 1000
 
 ; <<< Allow EPICS to assign any values here, so they won't be reset - Or just don't set variables that EPICS will set?
 
@@ -183,7 +189,6 @@ CMD"Def Gat"	; Allocates all the available memory as gather buffer
 Dwell 0		; Force CMD lines to execute
 CMD"Gat"	; Starts gathering of the data
 
-Status = 1
 While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS to stop program
 
 		P4201 = P4201 + 1
@@ -194,6 +199,7 @@ While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS 
 				
 				P4202 = P4202 + 1
 				
+				Next_Time = Next_Time_N/4			; Convert 1/4s of a ms into ms
 		    GoSub2	; Shift values through Next_* -> *_Coord -> Prev_*
     		
 		    ; Increment addresses
@@ -213,6 +219,11 @@ While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS 
 				
         CurrentIndex = CurrentIndex + 1
         TotalPoints = TotalPoints + 1
+        
+        If(M141 = 1 or M241 = 1 or RTE = 1)
+        		Abort = 1
+        		Status = 3
+       	End If
         
     End While
     
@@ -236,70 +247,75 @@ While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS 
     
 End While
 
-GoSub2					; Increment addresses to move to final Next_* point
-GoSub8					; Calculate velocities
-GoSub7					; Move axes
-
-Status = 2
+If(Status = 1)			; Move to final point and set status finished, if no error
+		GoSub2					; Increment addresses to move to final Next_* point
+		GoSub8					; Calculate velocities
+		GoSub7					; Move axes
+		Status = 2
+End If
 
 Dwell 0		; Force CMD lines to execute
 CMD"End Gat"	; Send On-line command to stop data gathering
 Dwell 0		; Force CMD lines to execute
 
-; Buffers: AX, AY, AZ, AU, AV, AW, AA, AB, AC, ATime, AUser
-;          BX, BY, BZ, BU, BV, BW, BA, BB, BC, BTime, BUser
-
+CMD"A"
+While(1=1)
+End While
 
 ; Subroutine 1 ************************************************************************************
 ; Convert <Axes> to binary values for each axis to decide which axes to use
 ; *************************************************************************************************
-
 N1
-		X_Axis = 0
-		Y_Axis = 0
-		Z_Axis = 0
-		U_Axis = 0
-		V_Axis = 0
-		W_Axis = 0
-		A_Axis = 0
-		B_Axis = 0
-		C_Axis = 0
-		
-		If(Axes > 255)
-		    X_Axis = 1
-		    Axes = Axes - 256
-		End If
-		If(Axes > 127)
-		    Y_Axis = 1
-		    Axes = Axes - 128
-		End If
-		If(Axes > 63)
-		    Z_Axis = 1
-		    Axes = Axes - 64
-		End If
-		If(Axes > 31)
-		    U_Axis = 1
-		    Axes = Axes - 32
-		End If
-		If(Axes > 15)
-		    V_Axis = 1
-		    Axes = Axes - 16
-		End If
-		If(Axes > 7)
-		    W_Axis = 1
-		    Axes = Axes - 8
-		End If
-		If(Axes > 3)
-		    A_Axis = 1
-		    Axes = Axes - 4
-		End If
-		If(Axes > 1)
-		    B_Axis = 1
-		    Axes = Axes - 2
-		End If
-		If(Axes > 0)
-		    C_Axis = 1
-		    Axes = Axes - 1
+		If(Axes > 511 or Axes < 1)
+				Status = 3
+				Abort = 1
+		Else
+				X_Axis = 0
+				Y_Axis = 0
+				Z_Axis = 0
+				U_Axis = 0
+				V_Axis = 0
+				W_Axis = 0
+				A_Axis = 0
+				B_Axis = 0
+				C_Axis = 0
+				
+				If(Axes > 255)
+				    X_Axis = 1
+				    Axes = Axes - 256
+				End If
+				If(Axes > 127)
+				    Y_Axis = 1
+				    Axes = Axes - 128
+				End If
+				If(Axes > 63)
+				    Z_Axis = 1
+				    Axes = Axes - 64
+				End If
+				If(Axes > 31)
+				    U_Axis = 1
+				    Axes = Axes - 32
+				End If
+				If(Axes > 15)
+				    V_Axis = 1
+				    Axes = Axes - 16
+				End If
+				If(Axes > 7)
+				    W_Axis = 1
+				    Axes = Axes - 8
+				End If
+				If(Axes > 3)
+				    A_Axis = 1
+				    Axes = Axes - 4
+				End If
+				If(Axes > 1)
+				    B_Axis = 1
+				    Axes = Axes - 2
+				End If
+				If(Axes > 0)
+				    C_Axis = 1
+				    Axes = Axes - 1
+				End If
 		End If
 Return
 
@@ -339,7 +355,9 @@ Return
 N3
 		If(Time = 0)
 				Status = 3
+				Abort = 1
 				CMD"A"
+				Dwell 0
 				Time = 1000
 		End If
 		X_Vel = 1000*(X_Coord - Prev_X)/Time
@@ -356,7 +374,9 @@ Return
 N4
 		If(Time = 0)
 				Status = 3
+				Abort = 1
 				CMD"A"
+				Dwell 0
 				Time = 1000
 		End If
 		X_Vel = 1000*(Next_X - Prev_X)/(Time + Next_Time)
@@ -373,7 +393,9 @@ Return
 N5
 		If(Time = 0)
 				Status = 3
+				Abort = 1
 				CMD"A"
+				Dwell 0
 				Time = 1000
 		End If
 		X_Vel = 1000*(Next_X - X_Coord)/Next_Time

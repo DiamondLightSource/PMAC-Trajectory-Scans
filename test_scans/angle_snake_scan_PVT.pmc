@@ -51,7 +51,7 @@ CLEAR
 
 ; Set move modes
 MoveTime = 0.025
-TurnTime = 0.05
+TurnTime = 0.25
 PVT (MoveTime*1000)
 ABS
 
@@ -160,9 +160,9 @@ N1
 Return
 
 N2
-	PVT (TurnTime*1000)
-	X_Vel = (X_Move - Prev_X_Move)/TurnTime
-	Y_Vel = (Y_Move - Prev_Y_Move)/TurnTime
+	PVT (MoveTime*1000)
+	X_Vel = (X_Move - Prev_X_Move)/MoveTime
+	Y_Vel = (Y_Move - Prev_Y_Move)/MoveTime
 Return
 
 N3
@@ -173,8 +173,8 @@ Return
 
 N4
 	PVT (TurnTime*1000)
-	X_Vel = (Next_X_Move - X_Move)/TurnTime
-	Y_Vel = (Next_Y_Move - Y_Move)/TurnTime
+	X_Vel = (Next_X_Move - X_Move)/MoveTime
+	Y_Vel = (Next_Y_Move - Y_Move)/MoveTime
 Return
 
 CLOSE
