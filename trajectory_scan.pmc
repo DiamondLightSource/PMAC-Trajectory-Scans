@@ -6,7 +6,7 @@
 
 ; EPICS Required Variables - (P4000 address = $6FA0)
 
-#Define Status          	P(RootVar + 1)   		; Status of motion program for EPICS - 0: Idle, 1: Running, 2: Finished, 3: Error
+#Define Status          	P(RootVar + 1)   		; Status of motion program for EPICS - 0: Initialised, 1: Active, 2: Idle, 3: Error
 #Define Abort          		P(RootVar + 2)   		; Abort trigger for EPICS
 #Define Axes            	P(RootVar + 3)   		; An int between 1 and 511 specifying which axes to use
 #Define BufferLength   		P(RootVar + 4)   		; Length of a single buffer e.g. AX, AY...
@@ -139,6 +139,7 @@ BufferAdr_A = $30000
 BufferAdr_B = BufferAdr_A + 11*BufferLength
 BlankAddress = 0
 Status = 0
+Abort = 0
 
 ; Make sure all buffers are closed
 Close
@@ -150,6 +151,9 @@ Close
 Open Prog 1
 Clear
 
+Status = 1
+Abort = 0
+
 ; Check which axes are required
 GoSub1
 
@@ -159,7 +163,6 @@ FRAX(X,Y,Z,U,V,W,A,B,C)
 CurrentBufferAdr = BufferAdr_A
 CurrentIndex = 0
 TotalPoints = 0
-Abort = 0
 CurrentBufferFill = BufferFill_A
 CurrentBuffer = 0
 
@@ -177,7 +180,6 @@ GoSub6
 
 P4201 = 0
 P4202 = 0
-Dwell 1000
 
 ; <<< Allow EPICS to assign any values here, so they won't be reset - Or just don't set variables that EPICS will set?
 
@@ -187,7 +189,6 @@ CMD"Def Gat"	; Allocates all the available memory as gather buffer
 Dwell 0		; Force CMD lines to execute
 CMD"Gat"	; Starts gathering of the data
 
-Status = 1
 While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS to stop program
 
 		P4201 = P4201 + 1
@@ -246,70 +247,75 @@ While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS 
     
 End While
 
-GoSub2					; Increment addresses to move to final Next_* point
-GoSub8					; Calculate velocities
-GoSub7					; Move axes
-
-Status = 2
+If(Status = 1)			; Move to final point and set status finished, if no error
+		GoSub2					; Increment addresses to move to final Next_* point
+		GoSub8					; Calculate velocities
+		GoSub7					; Move axes
+		Status = 2
+End If
 
 Dwell 0		; Force CMD lines to execute
 CMD"End Gat"	; Send On-line command to stop data gathering
 Dwell 0		; Force CMD lines to execute
 
-; Buffers: AX, AY, AZ, AU, AV, AW, AA, AB, AC, ATime, AUser
-;          BX, BY, BZ, BU, BV, BW, BA, BB, BC, BTime, BUser
-
+CMD"A"
+While(1=1)
+End While
 
 ; Subroutine 1 ************************************************************************************
 ; Convert <Axes> to binary values for each axis to decide which axes to use
 ; *************************************************************************************************
-
 N1
-		X_Axis = 0
-		Y_Axis = 0
-		Z_Axis = 0
-		U_Axis = 0
-		V_Axis = 0
-		W_Axis = 0
-		A_Axis = 0
-		B_Axis = 0
-		C_Axis = 0
-		
-		If(Axes > 255)
-		    X_Axis = 1
-		    Axes = Axes - 256
-		End If
-		If(Axes > 127)
-		    Y_Axis = 1
-		    Axes = Axes - 128
-		End If
-		If(Axes > 63)
-		    Z_Axis = 1
-		    Axes = Axes - 64
-		End If
-		If(Axes > 31)
-		    U_Axis = 1
-		    Axes = Axes - 32
-		End If
-		If(Axes > 15)
-		    V_Axis = 1
-		    Axes = Axes - 16
-		End If
-		If(Axes > 7)
-		    W_Axis = 1
-		    Axes = Axes - 8
-		End If
-		If(Axes > 3)
-		    A_Axis = 1
-		    Axes = Axes - 4
-		End If
-		If(Axes > 1)
-		    B_Axis = 1
-		    Axes = Axes - 2
-		End If
-		If(Axes > 0)
-		    C_Axis = 1
-		    Axes = Axes - 1
+		If(Axes > 511 or Axes < 1)
+				Status = 3
+				Abort = 1
+		Else
+				X_Axis = 0
+				Y_Axis = 0
+				Z_Axis = 0
+				U_Axis = 0
+				V_Axis = 0
+				W_Axis = 0
+				A_Axis = 0
+				B_Axis = 0
+				C_Axis = 0
+				
+				If(Axes > 255)
+				    X_Axis = 1
+				    Axes = Axes - 256
+				End If
+				If(Axes > 127)
+				    Y_Axis = 1
+				    Axes = Axes - 128
+				End If
+				If(Axes > 63)
+				    Z_Axis = 1
+				    Axes = Axes - 64
+				End If
+				If(Axes > 31)
+				    U_Axis = 1
+				    Axes = Axes - 32
+				End If
+				If(Axes > 15)
+				    V_Axis = 1
+				    Axes = Axes - 16
+				End If
+				If(Axes > 7)
+				    W_Axis = 1
+				    Axes = Axes - 8
+				End If
+				If(Axes > 3)
+				    A_Axis = 1
+				    Axes = Axes - 4
+				End If
+				If(Axes > 1)
+				    B_Axis = 1
+				    Axes = Axes - 2
+				End If
+				If(Axes > 0)
+				    C_Axis = 1
+				    Axes = Axes - 1
+				End If
 		End If
 Return
 
@@ -349,6 +355,7 @@ Return
 N3
 		If(Time = 0)
 				Status = 3
+				Abort = 1
 				CMD"A"
 				Dwell 0
 				Time = 1000
@@ -367,6 +374,7 @@ Return
 N4
 		If(Time = 0)
 				Status = 3
+				Abort = 1
 				CMD"A"
 				Dwell 0
 				Time = 1000
@@ -385,6 +393,7 @@ Return
 N5
 		If(Time = 0)
 				Status = 3
+				Abort = 1
 				CMD"A"
 				Dwell 0
 				Time = 1000
