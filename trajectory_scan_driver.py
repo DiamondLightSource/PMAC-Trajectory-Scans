@@ -3,14 +3,14 @@ from PmacTestHarness import PmacTestHarness
 from scanpointgenerator import NestedGenerator, LineGenerator
 
 
-def generate_lin_points(num_points):
+def generate_lin_points(num_points, move_time):
 
     time_points = []
     x_points = []
     y_points = []
 
     for j in range(1, num_points+1, 1):
-        time_points.append(1003)
+        time_points.append(move_time)
 
     for j in range(1, num_points+1, 1):
         x_points.append(j)
@@ -19,14 +19,14 @@ def generate_lin_points(num_points):
     return time_points, x_points, y_points
 
 
-def generate_snake_scan(reverse=False):
+def generate_snake_scan(move_time, reverse=False):
 
     time_points = []
     x_points = []
     y_points = []
 
     for i in range(0, 50):
-        time_points.append(1003)
+        time_points.append(move_time)
 
     if reverse:
         xs = LineGenerator("x", "mm", 0, 10, 5)
@@ -56,8 +56,8 @@ def trajectory_scan():
     pmac.reset_buffers()
     pmac.set_axes(384)
 
-    line_points = generate_lin_points(50)
-    snake_points = generate_snake_scan()
+    line_points = generate_lin_points(50, 1003)
+    snake_points = generate_snake_scan(1003)
     print(line_points)
     print(snake_points)
 
@@ -115,7 +115,7 @@ def trajectory_scan():
 def main():
 
     trajectory_scan()
-    # points = generate_lin_points(25)
+    # points = generate_lin_points(25, 250)
     # send_points(points)
 
 
