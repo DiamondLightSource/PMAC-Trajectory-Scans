@@ -69,13 +69,21 @@ class PmacTestHarness(PmacEthernetInterface):
 
         self.sendCommand("#1J/ #2J/ #3J/ #4J/ #5J/ #6J/ #7J/ #8J/ &{num} B{num} R".format(num=str(program_num)))
 
-    def abort(self):
+    def force_abort(self):
         """
-        Send abort command to pmac
+        Send on-line abort command to pmac
 
         """
 
         self.sendCommand("A")
+
+    def set_abort(self):
+        """
+        Set abort variable
+
+        """
+
+        self.set_variable("P4002", "1")
 
     def set_axes(self, axes):
         """

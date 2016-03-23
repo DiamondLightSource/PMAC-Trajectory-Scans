@@ -98,7 +98,7 @@ class CommandsTest(unittest.TestCase):
     @patch('PmacTestHarness_test.TesterPmacTestHarness.sendCommand')
     def test_abort_command(self, send_command_mock):
 
-        self.pmac.abort()
+        self.pmac.force_abort()
 
         send_command_mock.assert_called_once_with("A")
 
@@ -113,6 +113,18 @@ class SetAxesTest(unittest.TestCase):
         self.pmac.set_axes(510)
 
         set_variable_mock.assert_called_once_with("P4003", "510")
+
+
+class SetAbortTest(unittest.TestCase):
+
+    def setUp(self):
+        self.pmac = TesterPmacTestHarness()
+
+    @patch('PmacTestHarness_test.TesterPmacTestHarness.set_variable')
+    def test_axes_set(self, set_variable_mock):
+        self.pmac.set_abort()
+
+        set_variable_mock.assert_called_once_with("P4002", "1")
 
 
 class ReadAddressTest(unittest.TestCase):
