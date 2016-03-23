@@ -1,4 +1,7 @@
-:mod:`PMAC_test_harness`
------------------------------------------------
-.. automodule:: PMAC_test_harness
+PMAC Test Harness
+=================
+
+.. module:: PmacTestHarness
+
+.. autoclass:: PmacTestHarness
     :members:
