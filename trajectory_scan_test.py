@@ -125,6 +125,24 @@ class TrajectoryScanTest(unittest.TestCase):
         self.pmac.force_abort()
         self.pmac.disconnect()
 
+    def test_given_single_point_then_move_and_abort(self):
+
+        buffer_fill = 1
+        move_time = 400
+
+        line_points = driver.generate_lin_points(buffer_fill, move_time)
+
+        self.pmac.send_points(line_points, current=True)
+        self.pmac.set_buffer_fill(buffer_fill, current=True)
+
+        self.pmac.run_motion_program(PROG_NUM)
+        scan_time = (move_time/4*buffer_fill)/1000
+        time.sleep(scan_time + 1)
+
+        self.assertEqual(self.pmac.read_variable("P4001"), "2")
+        self.assertEqual(self.pmac.read_variable("P4002"), "1")
+        self.assertEqual(self.pmac.read_variable("P4005"), str(buffer_fill))
+
     def test_given_one_partial_buffer_then_complete_and_abort(self):
 
         buffer_fill = 25
