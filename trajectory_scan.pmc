@@ -90,15 +90,15 @@ BlankAddress->D:$3FFFF,0,48
 NextVelMode->X:$3FFFF,4,4											; Set initial pointers and type
 Next_User->X:$3FFFF,0,4
 Next_Time_N->Y:$3FFFF,0,24
-Next_X->D:$3FFFF,0,48
-Next_Y->D:$3FFFF,0,48
-Next_Z->D:$3FFFF,0,48
-Next_U->D:$3FFFF,0,48
-Next_V->D:$3FFFF,0,48
-Next_W->D:$3FFFF,0,48
-Next_A->D:$3FFFF,0,48
-Next_B->D:$3FFFF,0,48
-Next_C->D:$3FFFF,0,48
+Next_X->L:$3FFFF,0,48
+Next_Y->L:$3FFFF,0,48
+Next_Z->L:$3FFFF,0,48
+Next_U->L:$3FFFF,0,48
+Next_V->L:$3FFFF,0,48
+Next_W->L:$3FFFF,0,48
+Next_A->L:$3FFFF,0,48
+Next_B->L:$3FFFF,0,48
+Next_C->L:$3FFFF,0,48
 
 #Define Time_Adr        	M4020  							; Pointers to Next_* coordinate addresses
 #Define X_Adr         		M4021
