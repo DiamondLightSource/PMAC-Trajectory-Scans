@@ -242,14 +242,14 @@ class PmacTestHarness(PmacEthernetInterface):
 
         print("Points sent to " + start)
 
-    def read_points(self, num_points, buffer_num=0, first_only=False):
+    def read_points(self, num_points, buffer_num=0, num_axes=1):
         """
         Read points store in pmac memory buffer
 
         Args:
             num_points(int): Number of sets of points to read
             buffer_num(int): Specifier for buffer A (0) or B (1)
-            first_only(bool): Specifier to read first coordinate set only
+            num_axes(int): Number of axes to read
 
         Returns:
             list(str): Points stored in pmac memory
@@ -264,17 +264,16 @@ class PmacTestHarness(PmacEthernetInterface):
             start = self.add_dechex("30000", int(self.buffer_length)*10)
 
         pmac_buffer = []
-        if first_only:
-            current_address = start
+        current_address = start
+        for _ in range(0, num_points):
+            pmac_buffer.append(self.read_address("L", current_address))
+            current_address = self.inc_hex(current_address)
+        for i in range(1, num_axes + 1):
+            current_address = self.add_dechex(start, int(self.buffer_length)*i)
+            # print(current_address)
             for _ in range(0, num_points):
-                pmac_buffer.append(int(self.read_address("L", current_address), base=16))
+                pmac_buffer.append(self.read_address("L", current_address))
                 current_address = self.inc_hex(current_address)
-        else:
-            for i in range(0, 10):
-                current_address = self.add_dechex(start, int(self.buffer_length)*i)
-                for _ in range(0, num_points):
-                    pmac_buffer.append(int(self.read_address("L", current_address), base=16))
-                    current_address = self.inc_hex(current_address)
 
         return pmac_buffer
 

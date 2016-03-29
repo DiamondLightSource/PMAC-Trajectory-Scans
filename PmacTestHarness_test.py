@@ -271,7 +271,7 @@ class ReadPointsTest(unittest.TestCase):
                         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                         0, 0, 0, 0, 0, 0, 0, 0, 0])
     def test_read_points(self, _):
-        pmac_buffer = self.pmac.read_points(3)
+        pmac_buffer = self.pmac.read_points(3, num_axes=2)
 
         points = [100, 100, 100,
                   200, 200, 200,
