@@ -218,6 +218,7 @@ class PmacTestHarness(PmacEthernetInterface):
 
         """
 
+        # Toggle to invert buffer choice logic
         buffer_toggle = int(current)
 
         if self.current_buffer == buffer_toggle:
@@ -241,13 +242,14 @@ class PmacTestHarness(PmacEthernetInterface):
 
         print("Points sent to " + start)
 
-    def read_points(self, num_points, buffer_num=0):
+    def read_points(self, num_points, buffer_num=0, first_only=False):
         """
         Read points store in pmac memory buffer
 
         Args:
-            num_points: Number of sets of points to read
-            buffer_num: Specifier for buffer A (0) or B (1)
+            num_points(int): Number of sets of points to read
+            buffer_num(int): Specifier for buffer A (0) or B (1)
+            first_only(bool): Specifier to read first coordinate set only
 
         Returns:
             list(str): Points stored in pmac memory
@@ -262,11 +264,17 @@ class PmacTestHarness(PmacEthernetInterface):
             start = self.add_dechex("30000", int(self.buffer_length)*10)
 
         pmac_buffer = []
-        for i in range(0, 10):
-            current_address = self.add_dechex(start, int(self.buffer_length)*i)
+        if first_only:
+            current_address = start
             for _ in range(0, num_points):
-                pmac_buffer.append(self.read_address("L", current_address))
+                pmac_buffer.append(int(self.read_address("L", current_address), base=16))
                 current_address = self.inc_hex(current_address)
+        else:
+            for i in range(0, 10):
+                current_address = self.add_dechex(start, int(self.buffer_length)*i)
+                for _ in range(0, num_points):
+                    pmac_buffer.append(int(self.read_address("L", current_address), base=16))
+                    current_address = self.inc_hex(current_address)
 
         return pmac_buffer
 
@@ -317,3 +325,42 @@ class PmacTestHarness(PmacEthernetInterface):
 
         return PmacTestHarness.add_dechex(hexdec, 1)
 
+    @staticmethod
+    def double_to_pmac_float(value):
+
+        negative = False
+        if value < 0.0:
+            value *= -1.0
+            negative = True
+
+        exp_value = value
+        exponent = 0
+        # Normalise value between 1 and 2
+        while exp_value >= 2.0:
+            exp_value /= 2.0
+            exponent += 1
+        while exp_value < 1.0:
+            exp_value *= 2.0
+            exponent -= 1
+        # Offset exponent to provide +-2048 range
+        exponent += 0x800
+
+        # Bit shift mantissa to maximum precision (in powers of 2)
+        mantissa_value = value
+        max_mantissa = 34359738368.0
+        while mantissa_value < max_mantissa:
+            mantissa_value *= 2.0
+        mantissa_value /= 2.0
+
+        # To make value negative, subtract value from max
+        if negative:
+            int_value = 0xFFFFFFFFFFF - int(mantissa_value)
+        else:
+            int_value = int(mantissa_value)
+
+        # Bit shift mantissa to correct location, then add exponent to end
+        pmac_float = int_value << 12
+        pmac_float += exponent
+
+        # Convert decimal representation to string of hex representation.
+        return "$" + str(hex(pmac_float))[2:]
