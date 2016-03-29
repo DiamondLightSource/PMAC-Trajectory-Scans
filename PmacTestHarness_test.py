@@ -326,3 +326,27 @@ class DecHexConverterTest(unittest.TestCase):
         self.assertEqual(series, ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
                                   "a", "b", "c", "d", "e", "f", "10", "11", "12",
                                   "13", "14", "15", "16", "17", "18", "19", "1a"])
+
+
+class DoubleToPmacFloatTest(unittest.TestCase):
+
+    def test_given_positive_then_convert(self):
+
+        value = '$500000000803'
+        pmac_float = PmacTestHarness.double_to_pmac_float(10)
+
+        self.assertEqual(pmac_float, value)
+
+    def test_given_decimal_then_convert(self):
+
+        value = '$5471a9fbe803'
+        pmac_float = PmacTestHarness.double_to_pmac_float(10.5555)
+
+        self.assertEqual(pmac_float, value)
+
+    def test_given_negative_then_convert(self):
+
+        value = '$ffaffffffff803'
+        pmac_float = PmacTestHarness.double_to_pmac_float(-10)
+
+        self.assertEqual(pmac_float, value)
