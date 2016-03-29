@@ -19,7 +19,7 @@ setup(
         'Programming Language :: Python :: 2.7',
     ],
     license='APACHE',
-    install_requires=[],
+    install_requires=['scanpointgenerator'],
     include_package_data=True,
     test_suite='nose.collector',
     tests_require=[
