@@ -242,7 +242,7 @@ class SendPointsTest(unittest.TestCase):
 
         self.pmac.send_points(points, current=True)
 
-        self.assertEqual(write_mock.call_args_list[0][0], ("Y", "30000", "100"))
+        self.assertEqual(write_mock.call_args_list[0][0], ("L", "30000", "100"))
         self.assertEqual(write_mock.call_args_list[10][0], ("L", ANY, "200"))
         self.assertEqual(write_mock.call_args_list[20][0], ("L", ANY, "300"))
         self.assertEqual(write_mock.call_count, 30)
@@ -255,7 +255,7 @@ class SendPointsTest(unittest.TestCase):
 
         self.pmac.send_points(points, current=False)
 
-        self.assertEqual(write_mock.call_args_list[0][0], ("Y", "30226", "100"))
+        self.assertEqual(write_mock.call_args_list[0][0], ("L", "30226", "100"))
         self.assertEqual(write_mock.call_args_list[10][0], ("L", ANY, "200"))
         self.assertEqual(write_mock.call_args_list[20][0], ("L", ANY, "300"))
         self.assertEqual(write_mock.call_count, 30)
@@ -271,7 +271,7 @@ class ReadPointsTest(unittest.TestCase):
                         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                         0, 0, 0, 0, 0, 0, 0, 0, 0])
     def test_read_points(self, _):
-        pmac_buffer = self.pmac.read_points(3)
+        pmac_buffer = self.pmac.read_points(3, num_axes=2)
 
         points = [100, 100, 100,
                   200, 200, 200,
@@ -300,6 +300,12 @@ class SetBufferFill(unittest.TestCase):
 
 class DecHexConverterTest(unittest.TestCase):
 
+    def test_add_hex(self):
+
+        sum_ = PmacTestHarness.add_hex("A", "E")
+
+        self.assertEqual(sum_, "18")
+
     def test_add_dechex(self):
 
         sum_ = PmacTestHarness.add_dechex("9", 1)
@@ -326,3 +332,27 @@ class DecHexConverterTest(unittest.TestCase):
         self.assertEqual(series, ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
                                   "a", "b", "c", "d", "e", "f", "10", "11", "12",
                                   "13", "14", "15", "16", "17", "18", "19", "1a"])
+
+
+class DoubleToPmacFloatTest(unittest.TestCase):
+
+    def test_given_positive_then_convert(self):
+
+        value = '$500000000803'
+        pmac_float = PmacTestHarness.double_to_pmac_float(10)
+
+        self.assertEqual(pmac_float, value)
+
+    def test_given_decimal_then_convert(self):
+
+        value = '$5471a9fbe803'
+        pmac_float = PmacTestHarness.double_to_pmac_float(10.5555)
+
+        self.assertEqual(pmac_float, value)
+
+    def test_given_negative_then_convert(self):
+
+        value = '$ffaffffffff803'
+        pmac_float = PmacTestHarness.double_to_pmac_float(-10)
+
+        self.assertEqual(pmac_float, value)

@@ -218,6 +218,7 @@ class PmacTestHarness(PmacEthernetInterface):
 
         """
 
+        # Toggle to invert buffer choice logic
         buffer_toggle = int(current)
 
         if self.current_buffer == buffer_toggle:
@@ -227,7 +228,7 @@ class PmacTestHarness(PmacEthernetInterface):
 
         current_address = start
         for time_point in points[0]:
-            self.write_to_address("Y", current_address, str(time_point))
+            self.write_to_address("L", current_address, str(time_point))
             current_address = self.inc_hex(current_address)
 
         axis_num = 0
@@ -241,13 +242,14 @@ class PmacTestHarness(PmacEthernetInterface):
 
         print("Points sent to " + start)
 
-    def read_points(self, num_points, buffer_num=0):
+    def read_points(self, num_points, buffer_num=0, num_axes=1):
         """
         Read points store in pmac memory buffer
 
         Args:
-            num_points: Number of sets of points to read
-            buffer_num: Specifier for buffer A (0) or B (1)
+            num_points(int): Number of sets of points to read
+            buffer_num(int): Specifier for buffer A (0) or B (1)
+            num_axes(int): Number of axes to read
 
         Returns:
             list(str): Points stored in pmac memory
@@ -262,8 +264,13 @@ class PmacTestHarness(PmacEthernetInterface):
             start = self.add_dechex("30000", int(self.buffer_length)*10)
 
         pmac_buffer = []
-        for i in range(0, 10):
+        current_address = start
+        for _ in range(0, num_points):
+            pmac_buffer.append(self.read_address("L", current_address))
+            current_address = self.inc_hex(current_address)
+        for i in range(1, num_axes + 1):
             current_address = self.add_dechex(start, int(self.buffer_length)*i)
+            # print(current_address)
             for _ in range(0, num_points):
                 pmac_buffer.append(self.read_address("L", current_address))
                 current_address = self.inc_hex(current_address)
@@ -287,6 +294,21 @@ class PmacTestHarness(PmacEthernetInterface):
             self.set_variable("P4012", str(fill_level))
         else:
             self.set_variable("P4011", str(fill_level))
+
+    @staticmethod
+    def add_hex(hex1, hex2):
+        """
+        Add two hexadecimal strings
+
+        Args:
+            hex1(str): First hexadecimal string to add
+            hex2(str): Second hexadecimal string to add
+
+        Returns:
+            str: Hexadecimal sum of hex1 and hex 2
+        """
+
+        return hex(int(hex1, base=16) + int(hex2, base=16))[2:]
 
     @staticmethod
     def add_dechex(hexdec, dec):
@@ -317,3 +339,45 @@ class PmacTestHarness(PmacEthernetInterface):
 
         return PmacTestHarness.add_dechex(hexdec, 1)
 
+    @staticmethod
+    def double_to_pmac_float(value):
+
+        if int(value) == 0:
+            return '$0'
+
+        negative = False
+        if value < 0.0:
+            value *= -1.0
+            negative = True
+
+        exp_value = value
+        exponent = 0
+        # Normalise value between 1 and 2
+        while exp_value >= 2.0:
+            exp_value /= 2.0
+            exponent += 1
+        while exp_value < 1.0:
+            exp_value *= 2.0
+            exponent -= 1
+        # Offset exponent to provide +-2048 range
+        exponent += 0x800
+
+        # Bit shift mantissa to maximum precision (in powers of 2)
+        mantissa_value = value
+        max_mantissa = 34359738368.0
+        while mantissa_value < max_mantissa:
+            mantissa_value *= 2.0
+        mantissa_value /= 2.0
+
+        # To make value negative, subtract value from max
+        if negative:
+            int_value = 0xFFFFFFFFFFF - int(mantissa_value)
+        else:
+            int_value = int(mantissa_value)
+
+        # Bit shift mantissa to correct location, then add exponent to end
+        pmac_float = int_value << 12
+        pmac_float += exponent
+
+        # Convert decimal representation to string of hex representation.
+        return "$" + str(hex(pmac_float))[2:]
