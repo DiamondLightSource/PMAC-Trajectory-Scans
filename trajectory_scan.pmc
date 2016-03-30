@@ -136,7 +136,7 @@ RTE->Y:$203F,22
 Del Gat
 
 ; Set Initial Values
-BufferLength = 50
+BufferLength = 1000
 BufferAdr_A = $30000
 BufferAdr_B = BufferAdr_A + 11*BufferLength
 BlankAddress = 0
@@ -167,6 +167,7 @@ CurrentIndex = 0
 TotalPoints = 0
 CurrentBufferFill = BufferFill_A
 CurrentBuffer = 0
+M4500 = 0
 
 Prev_X = 0 X_Coord = 0
 Prev_Y = 0 Y_Coord = 0
@@ -491,6 +492,10 @@ N8
 		If(VelMode = 2)
 				GoSub5	; Current -> Next
 		EndIf
+Return
+
+N10
+	M4500 = 1
 Return
 
 Close
