@@ -111,6 +111,7 @@ Next_C->L:$3FFFF,0,48
 #Define B_Adr        			M4028
 #Define C_Adr        			M4029
 #Define User_Adr        	M4030
+#Define VelMode_Adr       M4031
 
 Time_Adr->Y$4FA0,0,24													; Assignments for pointers to M address locations
 X_Adr->Y:$4FA1,0,24														; M0 = $4000 -> M4000 = $4FA0
@@ -123,8 +124,9 @@ A_Adr->Y:$4FA7,0,24
 B_Adr->Y:$4FA8,0,24
 C_Adr->Y:$4FA9,0,24
 User_Adr->Y:$4FAA,0,24
+VelMode_Adr->Y:$4FAB,0,24
 
-#Define RTE								M4031
+#Define RTE								M4041
 RTE->Y:$203F,22
 
 ; *****************************************************************************************
@@ -414,6 +416,7 @@ Return
 ; *************************************************************************************************
 
 N6
+		VelMode_Adr = 	CurrentBufferAdr + CurrentIndex
 		User_Adr = 	CurrentBufferAdr + CurrentIndex
 		Time_Adr = 	CurrentBufferAdr + CurrentIndex
 		If(X_Axis = 1) 
@@ -475,13 +478,14 @@ N7
 Return
 
 N8
-		If(VelMode = 2)
+		If(VelMode = 1)
 		    GoSub3	; Prev -> Current
+		    P4500 = P4500 + 1
 		EndIf
 		If(VelMode = 0 or VelMode > 2)
 				GoSub4	; Prev -> Next
 		EndIf
-		If(VelMode = 1)
+		If(VelMode = 2)
 				GoSub5	; Current -> Next
 		EndIf
 Return
