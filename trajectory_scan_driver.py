@@ -47,6 +47,37 @@ def generate_snake_scan(move_time, reverse=False):
     return time_points, x_points, y_points
 
 
+def generate_snake_scan_w_vel(move_time, reverse=False):
+
+    time_points = []
+    x_points = []
+    y_points = []
+
+    for i in range(0, 50):
+        if (i+1) % 5 == 0 and i > 0:
+            time_points.append("$" + PmacTestHarness.add_hex(hex(move_time)[2:], "10000000"))
+        elif i % 5 == 0 and i > 0:
+            time_points.append("$" + PmacTestHarness.add_hex(hex(move_time)[2:], "20000000"))
+        else:
+            time_points.append("$" + hex(move_time)[2:])
+
+    if reverse:
+        xs = LineGenerator("x", "mm", 0, 10, 5)
+        ys = LineGenerator("y", "mm", 0, 10, 5)
+        gen = NestedGenerator(ys, xs, snake=True)
+    else:
+        xs = LineGenerator("x", "mm", 0, 10, 5)
+        ys = LineGenerator("y", "mm", 0, 10, 5)
+        gen = NestedGenerator(ys, xs, snake=True)
+
+    for point in gen.iterator():
+        x_points.append(PmacTestHarness.double_to_pmac_float(int(point.positions['x'])))
+    for point in gen.iterator():
+        y_points.append(PmacTestHarness.double_to_pmac_float(int(point.positions['y'])))
+
+    return time_points, x_points, y_points
+
+
 def trajectory_scan():
 
     pmac = PmacTestHarness("172.23.243.169")
@@ -112,11 +143,49 @@ def trajectory_scan():
                   str(pmac.current_index) + " - Total Points: " + str(pmac.total_points))
 
 
+def trajectory_scan_2():
+
+    pmac = PmacTestHarness("172.23.243.169")
+
+    pmac.assign_motors()
+    pmac.home_motors()
+    pmac.reset_buffers()
+    pmac.set_axes(384)
+
+    snake_points = generate_snake_scan_w_vel(1003)
+    for axis in snake_points:
+        print(axis)
+
+    buffer_fill = 50
+    pmac.send_points(snake_points, current=True)
+    pmac.set_buffer_fill(buffer_fill, current=True)
+
+    pmac.run_motion_program(1)
+
+    time.sleep(3)
+
+    pmac.update_status_variables()
+    print("Status: " + str(pmac.status))
+
+    while int(pmac.status) == 1:
+
+        time.sleep(0.25)
+
+        pmac.update_status_variables()
+        print(pmac.read_variable("M4011"))
+
+        if pmac.current_buffer == 0:
+            print("Status: " + str(pmac.status) + " - Buffer: A" + " - Index: " +
+                  str(pmac.current_index) + " - Total Points: " + str(pmac.total_points))
+        else:
+            print("Status: " + str(pmac.status) + " - Buffer: B" + " - Index: " +
+                  str(pmac.current_index) + " - Total Points: " + str(pmac.total_points))
+
+
 def main():
 
-    trajectory_scan()
-    # points = generate_lin_points(25, 250)
-    # send_points(points)
+    # trajectory_scan()
+    trajectory_scan_2()
 
 
 if __name__ == "__main__":
