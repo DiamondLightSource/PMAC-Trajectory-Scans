@@ -228,6 +228,14 @@ While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS 
        	End If
         
     End While
+		       	
+		GoSub2					; Increment addresses to move to final Next_* point
+		GoSub8					; Calculate velocities
+		GoSub7					; Move axes
+		
+    If(User > 0)
+       GoSub(User)
+    End If
     
     If(CurrentBufferFill != BufferLength)				; Abort if buffer wasn't completely full
     		Abort = 1
@@ -249,12 +257,7 @@ While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS 
     
 End While
 
-If(Status = 1)			; Move to final point and set status finished, if no error
-		GoSub2					; Increment addresses to move to final Next_* point
-		GoSub8					; Calculate velocities
-		GoSub7					; Move axes
-		Status = 2
-End If
+Status = 2
 
 Dwell 0		; Force CMD lines to execute
 CMD"End Gat"	; Send On-line command to stop data gathering
