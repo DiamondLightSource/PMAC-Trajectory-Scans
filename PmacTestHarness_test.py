@@ -242,7 +242,7 @@ class SendPointsTest(unittest.TestCase):
 
         self.pmac.send_points(points, current=True)
 
-        self.assertEqual(write_mock.call_args_list[0][0], ("Y", "30000", "100"))
+        self.assertEqual(write_mock.call_args_list[0][0], ("L", "30000", "100"))
         self.assertEqual(write_mock.call_args_list[10][0], ("L", ANY, "200"))
         self.assertEqual(write_mock.call_args_list[20][0], ("L", ANY, "300"))
         self.assertEqual(write_mock.call_count, 30)
@@ -255,7 +255,7 @@ class SendPointsTest(unittest.TestCase):
 
         self.pmac.send_points(points, current=False)
 
-        self.assertEqual(write_mock.call_args_list[0][0], ("Y", "30226", "100"))
+        self.assertEqual(write_mock.call_args_list[0][0], ("L", "30226", "100"))
         self.assertEqual(write_mock.call_args_list[10][0], ("L", ANY, "200"))
         self.assertEqual(write_mock.call_args_list[20][0], ("L", ANY, "300"))
         self.assertEqual(write_mock.call_count, 30)
