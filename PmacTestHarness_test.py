@@ -300,6 +300,12 @@ class SetBufferFill(unittest.TestCase):
 
 class DecHexConverterTest(unittest.TestCase):
 
+    def test_add_hex(self):
+
+        sum_ = PmacTestHarness.add_hex("A", "E")
+
+        self.assertEqual(sum_, "18")
+
     def test_add_dechex(self):
 
         sum_ = PmacTestHarness.add_dechex("9", 1)

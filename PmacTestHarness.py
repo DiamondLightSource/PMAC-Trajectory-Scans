@@ -228,7 +228,7 @@ class PmacTestHarness(PmacEthernetInterface):
 
         current_address = start
         for time_point in points[0]:
-            self.write_to_address("Y", current_address, str(time_point))
+            self.write_to_address("L", current_address, str(time_point))
             current_address = self.inc_hex(current_address)
 
         axis_num = 0
@@ -296,6 +296,21 @@ class PmacTestHarness(PmacEthernetInterface):
             self.set_variable("P4011", str(fill_level))
 
     @staticmethod
+    def add_hex(hex1, hex2):
+        """
+        Add two hexadecimal strings
+
+        Args:
+            hex1(str): First hexadecimal string to add
+            hex2(str): Second hexadecimal string to add
+
+        Returns:
+            str: Hexadecimal sum of hex1 and hex 2
+        """
+
+        return hex(int(hex1, base=16) + int(hex2, base=16))[2:]
+
+    @staticmethod
     def add_dechex(hexdec, dec):
         """
         Add an int to a hexadecimal string
@@ -326,6 +341,9 @@ class PmacTestHarness(PmacEthernetInterface):
 
     @staticmethod
     def double_to_pmac_float(value):
+
+        if int(value) == 0:
+            return '$0'
 
         negative = False
         if value < 0.0:
