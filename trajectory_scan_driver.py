@@ -77,7 +77,7 @@ def generate_snake_scan_w_vel(move_time, reverse=False):
 
 def generate_circle_points():
 
-    time_points = [40]*3600
+    time_points = ['$' + hex(60)[2:]]*3600
     x_points = []
     y_points = []
 
@@ -223,11 +223,12 @@ def trajectory_scan_3():
 
     pmac.assign_motors()
     pmac.home_motors()
-    pmac.reset_buffers()
+    # pmac.reset_buffers()
     pmac.set_axes(384)
 
     circle_points = generate_circle_points()
     print(circle_points)
+    circle_points = pmac.convert_points_to_pmac_float(circle_points)
 
     buffer_length = 1000
     current_start = 0
@@ -236,9 +237,9 @@ def trajectory_scan_3():
 
     pmac.send_points(circle_points, current=True)
     pmac.set_buffer_fill(buffer_length, current=True)
+    pmac.prev_buffer_write = 0
 
     pmac.run_motion_program(1)
-
     time.sleep(3)
 
     pmac.update_status_variables()
@@ -281,18 +282,7 @@ def main():
 
     # trajectory_scan()
     # trajectory_scan_2()
-    # trajectory_scan_3()
-    circle = generate_circle_points()
-    print(circle)
-
-    start = 0
-    i = 0
-    while i < 4:
-        points, end = grab_buffer_of_points(start, 1000, circle)
-        start = end + 1
-        for axis in points:
-            print(axis)
-        i += 1
+    trajectory_scan_3()
 
 if __name__ == "__main__":
     main()

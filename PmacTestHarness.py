@@ -212,8 +212,9 @@ class PmacTestHarness(PmacEthernetInterface):
                        'a': [], 'b': [], 'c': []}
 
         for axis, axis_points in points.iteritems():
-            for point in axis_points:
-                pmac_points[axis].append(self.double_to_pmac_float(point))
+            if axis != 'time':
+                for point in axis_points:
+                    pmac_points[axis].append(self.double_to_pmac_float(point))
 
         return pmac_points
 
