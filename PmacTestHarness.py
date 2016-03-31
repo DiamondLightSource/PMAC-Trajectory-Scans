@@ -29,6 +29,7 @@ class PmacTestHarness(PmacEthernetInterface):
         self.buffer_length = self.read_variable("P4004")
         self.buffer_address_a = str(hex(int(self.read_variable("P4008")))[2:])
         self.buffer_address_b = str(hex(int(self.read_variable("P4009")))[2:])
+        self.addresses = {}
 
         self.prev_buffer_write = 1
 
@@ -203,6 +204,32 @@ class PmacTestHarness(PmacEthernetInterface):
             self.write_to_address("L", current_address, "0")
             current_address = self.inc_hex(current_address)
 
+    def convert_points_to_pmac_float(self, points):
+
+        pmac_points = {'time': [],
+                       'x': [], 'y': [], 'z': [],
+                       'u': [], 'v': [], 'w': [],
+                       'a': [], 'b': [], 'c': []}
+
+        for axis, axis_points in points.iteritems():
+            for point in axis_points:
+                pmac_points[axis].append(self.double_to_pmac_float(point))
+
+        return pmac_points
+
+    def update_address_dict(self, root_address):
+
+        self.addresses = {'time': root_address,
+                          'x': self.add_dechex(root_address, int(self.buffer_length)),
+                          'y': self.add_dechex(root_address, 2*int(self.buffer_length)),
+                          'z': self.add_dechex(root_address, 3*int(self.buffer_length)),
+                          'u': self.add_dechex(root_address, 4*int(self.buffer_length)),
+                          'v': self.add_dechex(root_address, 5*int(self.buffer_length)),
+                          'w': self.add_dechex(root_address, 6*int(self.buffer_length)),
+                          'a': self.add_dechex(root_address, 7*int(self.buffer_length)),
+                          'b': self.add_dechex(root_address, 8*int(self.buffer_length)),
+                          'c': self.add_dechex(root_address, 9*int(self.buffer_length))}
+
     def send_points(self, points, current=False):
         """
         Send points to fill a buffer. If current is False, the currently unused buffer will be filled.
@@ -222,25 +249,37 @@ class PmacTestHarness(PmacEthernetInterface):
         buffer_toggle = int(current)
 
         if self.current_buffer == buffer_toggle:
-            start = self.buffer_address_b
+            self.update_address_dict(self.buffer_address_b)
         else:
-            start = self.buffer_address_a
-
-        current_address = start
-        for time_point in points[0]:
-            self.write_to_address("L", current_address, str(time_point))
-            current_address = self.inc_hex(current_address)
+            self.update_address_dict(self.buffer_address_a)
 
         axis_num = 0
-        for axis in points[1:]:
-            axis_num += 1
-            current_address = self.add_dechex(start, int(self.buffer_length)*axis_num)
-            # print(current_address)
-            for point in axis:
+        for axis, axis_points in points.iteritems():
+            current_address = self.addresses[axis]
+            for point in axis_points:
                 self.write_to_address("L", current_address, str(point))
                 current_address = self.inc_hex(current_address)
+            axis_num += 1
 
-        print("Points sent to " + start)
+        print("Points sent to " + self.addresses['time'])
+
+    def set_buffer_fill(self, fill_level, current=False):
+        """
+        Set the buffer fill level of a buffer. If current is False, the currently unused buffer will
+        be set. If current is True, the current buffer will be set.
+
+        Args:
+            fill_level(int): Number of coordinate sets in buffer
+            current(int): A 1 or 0 to specify which buffer to set
+
+        """
+
+        buffer_toggle = int(current)
+
+        if self.current_buffer == buffer_toggle:
+            self.set_variable("P4012", str(fill_level))
+        else:
+            self.set_variable("P4011", str(fill_level))
 
     def read_points(self, num_points, buffer_num=0, num_axes=1):
         """
@@ -276,24 +315,6 @@ class PmacTestHarness(PmacEthernetInterface):
                 current_address = self.inc_hex(current_address)
 
         return pmac_buffer
-
-    def set_buffer_fill(self, fill_level, current=False):
-        """
-        Set the buffer fill level of a buffer. If current is False, the currently unused buffer will
-        be set. If current is True, the current buffer will be set.
-
-        Args:
-            fill_level(int): Number of coordinate sets in buffer
-            current(int): A 1 or 0 to specify which buffer to set
-
-        """
-
-        buffer_toggle = int(current)
-
-        if self.current_buffer == buffer_toggle:
-            self.set_variable("P4012", str(fill_level))
-        else:
-            self.set_variable("P4011", str(fill_level))
 
     @staticmethod
     def add_hex(hex1, hex2):
@@ -342,7 +363,7 @@ class PmacTestHarness(PmacEthernetInterface):
     @staticmethod
     def double_to_pmac_float(value):
 
-        if int(value) == 0:
+        if value == value*10:
             return '$0'
 
         negative = False

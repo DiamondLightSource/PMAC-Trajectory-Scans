@@ -66,6 +66,44 @@ class UpdateStatusVariablesTest(unittest.TestCase):
         self.assertEqual(read_variable_mock.call_args_list[3][0][0], "P4007")
 
 
+class UpdateAddressesTest(unittest.TestCase):
+
+    def setUp(self):
+        self.pmac = TesterPmacTestHarness()
+
+    def test_given_buffer_A_then_update(self):
+        expected_address = {'a': '3015e',
+                            'b': '30190',
+                            'c': '301c2',
+                            'time': '30000',
+                            'u': '300c8',
+                            'v': '300fa',
+                            'w': '3012c',
+                            'x': '30032',
+                            'y': '30064',
+                            'z': '30096'}
+
+        self.pmac.update_address_dict(self.pmac.buffer_address_a)
+
+        self.assertEqual(expected_address, self.pmac.addresses)
+
+    def test_given_buffer_B_then_update(self):
+        expected_address = {'a': '30384',
+                            'b': '303b6',
+                            'c': '303e8',
+                            'time': '30226',
+                            'u': '302ee',
+                            'v': '30320',
+                            'w': '30352',
+                            'x': '30258',
+                            'y': '3028a',
+                            'z': '302bc'}
+
+        self.pmac.update_address_dict(self.pmac.buffer_address_b)
+
+        self.assertEqual(expected_address, self.pmac.addresses)
+
+
 class CommandsTest(unittest.TestCase):
 
     def setUp(self):
@@ -229,36 +267,58 @@ class ResetBuffersTest(unittest.TestCase):
         self.assertEqual(write_mock.call_count, self.num_points)
 
 
-class SendPointsTest(unittest.TestCase):
+class ConvertPointsToPmacFloat(unittest.TestCase):
 
     def setUp(self):
         self.pmac = TesterPmacTestHarness()
 
+    def test_given_points_convert_to_pmac_float(self):
+        points = {'x': [0.0, 0.099861063292,
+                  0.198723793760,
+                  0.295599839129]}
+        expected_points = ['$0', '$6641fa83e7fc',
+                           '$65bf200647fd', '$4bac6e59c7fe']
+
+        pmac_points = self.pmac.convert_points_to_pmac_float(points)
+
+        self.assertEqual(expected_points, pmac_points['x'])
+
+
+class SendPointsTest(unittest.TestCase):
+
+    def setUp(self):
+        self.pmac = TesterPmacTestHarness()
+        self.points = {'time': [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+                       'x': [200, 200, 200, 200, 200, 200, 200, 200, 200, 200],
+                       'y': [300, 300, 300, 300, 300, 300, 300, 300, 300, 300]}
+
     @patch('PmacTestHarness_test.TesterPmacTestHarness.write_to_address')
     def test_given_current_True_then_points_sent_to_A(self, write_mock):
-        points = [[100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
-                  [200, 200, 200, 200, 200, 200, 200, 200, 200, 200],
-                  [300, 300, 300, 300, 300, 300, 300, 300, 300, 300]]
 
-        self.pmac.send_points(points, current=True)
+        self.pmac.send_points(self.points, current=True)
+        root_address = self.pmac.buffer_address_a
 
-        self.assertEqual(write_mock.call_args_list[0][0], ("L", "30000", "100"))
-        self.assertEqual(write_mock.call_args_list[10][0], ("L", ANY, "200"))
-        self.assertEqual(write_mock.call_args_list[20][0], ("L", ANY, "300"))
+        call_list = [call[0] for call in write_mock.call_args_list]
         self.assertEqual(write_mock.call_count, 30)
+        self.assertIn(("L", root_address, "100"), call_list)
+        self.assertIn(
+            ("L", self.pmac.add_dechex(root_address, int(self.pmac.buffer_length)), "200"),call_list)
+        self.assertIn(
+            ("L", self.pmac.add_dechex(root_address, 2*int(self.pmac.buffer_length)), "300"), call_list)
 
     @patch('PmacTestHarness_test.TesterPmacTestHarness.write_to_address')
     def test_given_current_False_points_sent_to_B(self, write_mock):
-        points = [[100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
-                  [200, 200, 200, 200, 200, 200, 200, 200, 200, 200],
-                  [300, 300, 300, 300, 300, 300, 300, 300, 300, 300]]
 
-        self.pmac.send_points(points, current=False)
+        self.pmac.send_points(self.points, current=False)
+        root_address = self.pmac.buffer_address_b
 
-        self.assertEqual(write_mock.call_args_list[0][0], ("L", "30226", "100"))
-        self.assertEqual(write_mock.call_args_list[10][0], ("L", ANY, "200"))
-        self.assertEqual(write_mock.call_args_list[20][0], ("L", ANY, "300"))
+        call_list = [call[0] for call in write_mock.call_args_list]
         self.assertEqual(write_mock.call_count, 30)
+        self.assertIn(("L", root_address, "100"), call_list)
+        self.assertIn(
+            ("L", self.pmac.add_dechex(root_address, int(self.pmac.buffer_length)), "200"), call_list)
+        self.assertIn(
+            ("L", self.pmac.add_dechex(root_address, 2*int(self.pmac.buffer_length)), "300"), call_list)
 
 
 class ReadPointsTest(unittest.TestCase):
@@ -343,10 +403,17 @@ class DoubleToPmacFloatTest(unittest.TestCase):
 
         self.assertEqual(pmac_float, value)
 
-    def test_given_decimal_then_convert(self):
+    def test_given_less_than_1_decimal_then_convert(self):
 
-        value = '$5471a9fbe803'
-        pmac_float = PmacTestHarness.double_to_pmac_float(10.5555)
+        value = '$4bac6e59b7fe'
+        pmac_float = PmacTestHarness.double_to_pmac_float(0.295599839124)
+
+        self.assertEqual(pmac_float, value)
+
+    def test_given_more_than_1_decimal_then_convert(self):
+
+        value = '$52eb1b910800'
+        pmac_float = PmacTestHarness.double_to_pmac_float(1.2955998341)
 
         self.assertEqual(pmac_float, value)
 
