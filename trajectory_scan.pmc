@@ -90,15 +90,15 @@ BlankAddress->D:$3FFFF,0,48
 NextVelMode->X:$3FFFF,4,4											; Set initial pointers and type
 Next_User->X:$3FFFF,0,4
 Next_Time_N->Y:$3FFFF,0,24
-Next_X->D:$3FFFF,0,48
-Next_Y->D:$3FFFF,0,48
-Next_Z->D:$3FFFF,0,48
-Next_U->D:$3FFFF,0,48
-Next_V->D:$3FFFF,0,48
-Next_W->D:$3FFFF,0,48
-Next_A->D:$3FFFF,0,48
-Next_B->D:$3FFFF,0,48
-Next_C->D:$3FFFF,0,48
+Next_X->L:$3FFFF,0,48
+Next_Y->L:$3FFFF,0,48
+Next_Z->L:$3FFFF,0,48
+Next_U->L:$3FFFF,0,48
+Next_V->L:$3FFFF,0,48
+Next_W->L:$3FFFF,0,48
+Next_A->L:$3FFFF,0,48
+Next_B->L:$3FFFF,0,48
+Next_C->L:$3FFFF,0,48
 
 #Define Time_Adr        	M4020  							; Pointers to Next_* coordinate addresses
 #Define X_Adr         		M4021
@@ -111,6 +111,7 @@ Next_C->D:$3FFFF,0,48
 #Define B_Adr        			M4028
 #Define C_Adr        			M4029
 #Define User_Adr        	M4030
+#Define VelMode_Adr       M4031
 
 Time_Adr->Y$4FA0,0,24													; Assignments for pointers to M address locations
 X_Adr->Y:$4FA1,0,24														; M0 = $4000 -> M4000 = $4FA0
@@ -123,8 +124,9 @@ A_Adr->Y:$4FA7,0,24
 B_Adr->Y:$4FA8,0,24
 C_Adr->Y:$4FA9,0,24
 User_Adr->Y:$4FAA,0,24
+VelMode_Adr->Y:$4FAB,0,24
 
-#Define RTE								M4031
+#Define RTE								M4041
 RTE->Y:$203F,22
 
 ; *****************************************************************************************
@@ -134,7 +136,7 @@ RTE->Y:$203F,22
 Del Gat
 
 ; Set Initial Values
-BufferLength = 50
+BufferLength = 1000
 BufferAdr_A = $30000
 BufferAdr_B = BufferAdr_A + 11*BufferLength
 BlankAddress = 0
@@ -154,9 +156,6 @@ Clear
 Status = 1
 Abort = 0
 
-; Check which axes are required
-GoSub1
-
 Abs
 FRAX(X,Y,Z,U,V,W,A,B,C)
 
@@ -165,18 +164,10 @@ CurrentIndex = 0
 TotalPoints = 0
 CurrentBufferFill = BufferFill_A
 CurrentBuffer = 0
+M4500 = 0
 
-Prev_X = 0 X_Coord = 0
-Prev_Y = 0 Y_Coord = 0
-Prev_Z = 0 Z_Coord = 0
-Prev_U = 0 U_Coord = 0
-Prev_V = 0 V_Coord = 0
-Prev_W = 0 W_Coord = 0
-Prev_A = 0 A_Coord = 0
-Prev_B = 0 B_Coord = 0
-Prev_C = 0 C_Coord = 0
-
-GoSub6
+GoSub1			; Check which axes are required
+GoSub6			; Set addresses for required axes
 
 P4201 = 0
 P4202 = 0
@@ -226,6 +217,14 @@ While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS 
        	End If
         
     End While
+		       	
+		GoSub2					; Increment addresses to move to final Next_* point
+		GoSub8					; Calculate velocities
+		GoSub7					; Move axes
+		
+    If(User > 0)
+       GoSub(User)
+    End If
     
     If(CurrentBufferFill != BufferLength)				; Abort if buffer wasn't completely full
     		Abort = 1
@@ -247,12 +246,7 @@ While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS 
     
 End While
 
-If(Status = 1)			; Move to final point and set status finished, if no error
-		GoSub2					; Increment addresses to move to final Next_* point
-		GoSub8					; Calculate velocities
-		GoSub7					; Move axes
-		Status = 2
-End If
+Status = 2
 
 Dwell 0		; Force CMD lines to execute
 CMD"End Gat"	; Send On-line command to stop data gathering
@@ -414,6 +408,7 @@ Return
 ; *************************************************************************************************
 
 N6
+		VelMode_Adr = 	CurrentBufferAdr + CurrentIndex
 		User_Adr = 	CurrentBufferAdr + CurrentIndex
 		Time_Adr = 	CurrentBufferAdr + CurrentIndex
 		If(X_Axis = 1) 
@@ -475,15 +470,20 @@ N7
 Return
 
 N8
-		If(VelMode = 2)
+		If(VelMode = 1)
 		    GoSub3	; Prev -> Current
+		    P4500 = P4500 + 1
 		EndIf
 		If(VelMode = 0 or VelMode > 2)
 				GoSub4	; Prev -> Next
 		EndIf
-		If(VelMode = 1)
+		If(VelMode = 2)
 				GoSub5	; Current -> Next
 		EndIf
+Return
+
+N10
+	M4500 = 1
 Return
 
 Close
