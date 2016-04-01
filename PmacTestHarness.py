@@ -44,6 +44,26 @@ class PmacTestHarness(PmacEthernetInterface):
         self.current_index = int(self.read_variable("P4006"))
         self.current_buffer = int(self.read_variable("P4007"))
 
+    def update_address_dict(self, root_address):
+        """
+        Update the addresses of each sub-buffer based on the current half buffer
+
+        Args:
+            root_address(str): Root address of current half-buffer
+
+        """
+
+        self.addresses = {'time': root_address,
+                          'x': self.add_dechex(root_address, int(self.buffer_length)),
+                          'y': self.add_dechex(root_address, 2*int(self.buffer_length)),
+                          'z': self.add_dechex(root_address, 3*int(self.buffer_length)),
+                          'u': self.add_dechex(root_address, 4*int(self.buffer_length)),
+                          'v': self.add_dechex(root_address, 5*int(self.buffer_length)),
+                          'w': self.add_dechex(root_address, 6*int(self.buffer_length)),
+                          'a': self.add_dechex(root_address, 7*int(self.buffer_length)),
+                          'b': self.add_dechex(root_address, 8*int(self.buffer_length)),
+                          'c': self.add_dechex(root_address, 9*int(self.buffer_length))}
+
     def assign_motors(self):
         """
         Send command to assign motors to the required axes
@@ -205,8 +225,17 @@ class PmacTestHarness(PmacEthernetInterface):
             current_address = self.inc_hex(current_address)
 
     def convert_points_to_pmac_float(self, points):
+        """
+        Convert the position coordinates of `points` to pmac float type.
 
-        pmac_points = {'time': [],
+        Args:
+            points(dict): Set of points to convert
+
+        Returns:
+            dict: Set of points with position coordinated converted to pmac float
+        """
+
+        pmac_points = {'time': points['time'],
                        'x': [], 'y': [], 'z': [],
                        'u': [], 'v': [], 'w': [],
                        'a': [], 'b': [], 'c': []}
@@ -217,19 +246,6 @@ class PmacTestHarness(PmacEthernetInterface):
                     pmac_points[axis].append(self.double_to_pmac_float(point))
 
         return pmac_points
-
-    def update_address_dict(self, root_address):
-
-        self.addresses = {'time': root_address,
-                          'x': self.add_dechex(root_address, int(self.buffer_length)),
-                          'y': self.add_dechex(root_address, 2*int(self.buffer_length)),
-                          'z': self.add_dechex(root_address, 3*int(self.buffer_length)),
-                          'u': self.add_dechex(root_address, 4*int(self.buffer_length)),
-                          'v': self.add_dechex(root_address, 5*int(self.buffer_length)),
-                          'w': self.add_dechex(root_address, 6*int(self.buffer_length)),
-                          'a': self.add_dechex(root_address, 7*int(self.buffer_length)),
-                          'b': self.add_dechex(root_address, 8*int(self.buffer_length)),
-                          'c': self.add_dechex(root_address, 9*int(self.buffer_length))}
 
     def send_points(self, points, current=False):
         """
@@ -263,6 +279,95 @@ class PmacTestHarness(PmacEthernetInterface):
             axis_num += 1
 
         print("Points sent to " + self.addresses['time'])
+
+    def set_point_vel_mode(self, coord, num):
+        raise NotImplementedError
+
+    def set_subroutine(self, coord, num):
+        raise NotImplementedError
+
+    @staticmethod
+    def _construct_write_command_and_remove_used_points(command_details):
+        """
+        Construct a command to send as many points as possible from the given set.
+        Length must be less than 255 characters
+
+        Args:
+            command_details(dict): The write mode, address and point set to send
+
+        Returns:
+            dict: The resulting command, the remaining point set and the number of points sent
+        """
+
+        command = 'W' + command_details['mode'] + '$' + command_details['address']
+
+        point_num = 0
+        axis_points = command_details['points']
+        while len(axis_points) > 0 and len(command + ',' + axis_points[0]) <= 255:
+            command += ',' + axis_points.pop(0)
+            point_num += 1
+
+        response = {'command': command, 'points': axis_points, 'num_sent': point_num}
+        return response
+
+    def fill_idle_buffer(self, points):
+        """
+        Update the address dictionary to fill idle buffer and then call _fill_buffer()
+
+        Args:
+            points(dict): Point set to fill with
+
+        """
+
+        if self.current_buffer == 0:
+            self.update_address_dict(self.buffer_address_b)
+        else:
+            self.update_address_dict(self.buffer_address_a)
+
+        self._fill_buffer(points)
+
+    def fill_current_buffer(self, points):
+        """
+        Update the address dictionary to fill current buffer and then call _fill_buffer()
+
+        Args:
+            points(dict): Point set to fill with
+
+        """
+
+        if self.current_buffer == 1:
+            self.update_address_dict(self.buffer_address_b)
+        else:
+            self.update_address_dict(self.buffer_address_a)
+
+        self._fill_buffer(points)
+
+    def _fill_buffer(self, points):
+        """
+        Fill buffer specified by `self.addresses` with `points`
+
+        Args:
+            points(dict): Point set to fill with
+
+        """
+
+        num_points = len(points['time'])
+        if num_points > int(self.buffer_length):
+            raise ValueError("Point set cannot be longer than PMAC buffer length")
+        for axis in points.itervalues():
+            if len(axis) != num_points and len(axis) != 0:
+                raise ValueError("Point set must have equal points in all axes")
+
+        for axis in points.iterkeys():
+            address = self.addresses[axis]
+            while len(points[axis]) > 0:
+                command_details = {'mode': 'L', 'address': address, 'points': points[axis]}
+                response = self._construct_write_command_and_remove_used_points(command_details)
+
+                self.sendCommand(response['command'])
+
+                address = self.add_dechex(address, response['num_sent'])
+                points[axis] = response['points']
 
     def set_buffer_fill(self, fill_level, current=False):
         """
@@ -363,6 +468,15 @@ class PmacTestHarness(PmacEthernetInterface):
 
     @staticmethod
     def double_to_pmac_float(value):
+        """
+        Convert `value` to the custom PMAC hex format for a float
+
+        Args:
+            value(float):
+
+        Returns:
+            str: PMAC hex format of `value`
+        """
 
         if value == value*10:
             return '$0'

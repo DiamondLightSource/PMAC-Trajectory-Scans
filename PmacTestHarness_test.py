@@ -16,6 +16,7 @@ class TesterPmacTestHarness(PmacTestHarness):
         self.buffer_length = "50"
         self.buffer_address_a = "30000"
         self.buffer_address_b = "30226"
+        self.addresses = {}
 
         self.prev_buffer_write = 1
 
@@ -272,16 +273,16 @@ class ConvertPointsToPmacFloat(unittest.TestCase):
     def setUp(self):
         self.pmac = TesterPmacTestHarness()
 
-    def test_given_points_convert_to_pmac_float(self):
-        points = {'x': [0.0, 0.099861063292,
-                  0.198723793760,
-                  0.295599839129]}
-        expected_points = ['$0', '$6641fa83e7fc',
-                           '$65bf200647fd', '$4bac6e59c7fe']
+    @patch('PmacTestHarness_test.TesterPmacTestHarness.double_to_pmac_float')
+    def test_given_points_call_convert_function(self, converter_mock):
+        points = {'time': [10, 10, 10, 10],
+                  'x': [0.0, 0.099861063292, 0.198723793760, 0.295599839129]}
 
-        pmac_points = self.pmac.convert_points_to_pmac_float(points)
+        self.pmac.convert_points_to_pmac_float(points)
 
-        self.assertEqual(expected_points, pmac_points['x'])
+        self.assertEqual(4, converter_mock.call_count)
+        call_list = [call[0][0] for call in converter_mock.call_args_list]
+        self.assertEqual(call_list, points['x'])
 
 
 class SendPointsTest(unittest.TestCase):
@@ -319,6 +320,134 @@ class SendPointsTest(unittest.TestCase):
             ("L", self.pmac.add_dechex(root_address, int(self.pmac.buffer_length)), "200"), call_list)
         self.assertIn(
             ("L", self.pmac.add_dechex(root_address, 2*int(self.pmac.buffer_length)), "300"), call_list)
+
+
+class ConstructWriteCommandTest(unittest.TestCase):
+
+    def setUp(self):
+        self.pmac = TesterPmacTestHarness()
+
+    def test_given_points_then_construct_message(self):
+        command_details = {'points': ['$f']*98,
+                           'mode': 'L', 'address': '30386'}
+        expected_response = {'points': ['$f']*16,
+                             'command': 'WL$30386,$f,$f,$f,$f,$f,$f,$f,$f,$f,'
+                                        '$f,$f,$f,$f,$f,$f,$f,$f,$f,$f,$f,$f,'
+                                        '$f,$f,$f,$f,$f,$f,$f,$f,$f,$f,$f,$f,'
+                                        '$f,$f,$f,$f,$f,$f,$f,$f,$f,$f,$f,$f,'
+                                        '$f,$f,$f,$f,$f,$f,$f,$f,$f,$f,$f,$f,'
+                                        '$f,$f,$f,$f,$f,$f,$f,$f,$f,$f,$f,$f,'
+                                        '$f,$f,$f,$f,$f,$f,$f,$f,$f,$f,$f,$f,'
+                                        '$f', 'num_sent': 82}
+
+        response = self.pmac._construct_write_command_and_remove_used_points(command_details)
+
+        self.assertEqual(expected_response, response)
+
+
+@patch('PmacTestHarness_test.TesterPmacTestHarness._fill_buffer')
+@patch('PmacTestHarness_test.TesterPmacTestHarness.update_address_dict')
+class FillIdleBufferTest(unittest.TestCase):
+
+    def setUp(self):
+        self.pmac = TesterPmacTestHarness()
+        self.points = {'time': [10, 10, 10, 10],
+                       'x': [10, 10, 10, 10]}
+
+    def test_given_a_then_update_b_and_fill_buffer(self, update_mock, fill_mock):
+        self.pmac.current_buffer = 0
+
+        self.pmac.fill_idle_buffer(self.points)
+
+        update_mock.assert_called_once_with(self.pmac.buffer_address_b)
+        fill_mock.assert_called_once_with(self.points)
+
+    def test_given_b_then_update_a_and_fill_buffer(self, update_mock, fill_mock):
+        self.pmac.current_buffer = 1
+
+        self.pmac.fill_idle_buffer(self.points)
+
+        update_mock.assert_called_once_with(self.pmac.buffer_address_a)
+        fill_mock.assert_called_once_with(self.points)
+
+
+@patch('PmacTestHarness_test.TesterPmacTestHarness._fill_buffer')
+@patch('PmacTestHarness_test.TesterPmacTestHarness.update_address_dict')
+class FillCurrentBufferTest(unittest.TestCase):
+
+    def setUp(self):
+        self.pmac = TesterPmacTestHarness()
+        self.points = {'time': [10, 10, 10, 10],
+                       'x': [10, 10, 10, 10]}
+
+    def test_given_a_then_update_a_and_fill_buffer(self, update_mock, fill_mock):
+        self.pmac.current_buffer = 0
+
+        self.pmac.fill_current_buffer(self.points)
+
+        update_mock.assert_called_once_with(self.pmac.buffer_address_a)
+        fill_mock.assert_called_once_with(self.points)
+
+    def test_given_b_then_update_b_and_fill_buffer(self, update_mock, fill_mock):
+        self.pmac.current_buffer = 1
+
+        self.pmac.fill_current_buffer(self.points)
+
+        update_mock.assert_called_once_with(self.pmac.buffer_address_b)
+        fill_mock.assert_called_once_with(self.points)
+
+
+class FillBufferTest(unittest.TestCase):
+
+    def setUp(self):
+        self.pmac = TesterPmacTestHarness()
+
+    def test_given_points_longer_than_buffer_length_then_error(self):
+        points = {'time': [10]*51, 'x': [10]*51}
+        expected_error_message = \
+            "Point set cannot be longer than PMAC buffer length"
+
+        with self.assertRaises(ValueError) as error:
+            self.pmac._fill_buffer(points)
+
+        self.assertEqual(expected_error_message, error.exception.message)
+
+    def test_given_different_length_axes_then_error(self):
+        points = {'time': [10]*50, 'x': [10]*51}
+        expected_error_message = \
+            "Point set must have equal points in all axes"
+
+        with self.assertRaises(ValueError) as error:
+            self.pmac._fill_buffer(points)
+
+        self.assertEqual(expected_error_message, error.exception.message)
+
+    @patch('PmacTestHarness_test.TesterPmacTestHarness.'
+           '_construct_write_command_and_remove_used_points')
+    @patch('PmacTestHarness_test.TesterPmacTestHarness.sendCommand')
+    def test_given_valid_points_then_fill_buffer(self, send_mock, construct_mock):
+        self.pmac.addresses = {'time': '30000', 'x': '30032'}
+        points = {'time': ['10']*50, 'x': ['20']*50}
+        time_construct_call = {'mode': 'L', 'address': '30000', 'points': points['time']}
+        x_construct_call = {'mode': 'L', 'address': '30032', 'points': points['x']}
+        time_cmd = 'WL$30000,10,10,10,10,10,10,10,10,10,10,10,10,10,10,' \
+                   '10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,' \
+                   '10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10'
+        x_cmd = 'WL$30032,20,20,20,20,20,20,20,20,20,20,20,20,20,20,' \
+                '20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,' \
+                '20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20'
+        construct_mock.side_effect = [{'command': time_cmd, 'points': [], 'num_sent': 0},
+                                      {'command': x_cmd, 'points': [], 'num_sent': 0}]
+
+        self.pmac._fill_buffer(points)
+
+        construct_calls = [call[0][0] for call in construct_mock.call_args_list]
+        send_calls = [call[0][0] for call in send_mock.call_args_list]
+
+        self.assertIn(x_construct_call, construct_calls)
+        self.assertIn(time_construct_call, construct_calls)
+        self.assertIn(x_cmd, send_calls)
+        self.assertIn(time_cmd, send_calls)
 
 
 class ReadPointsTest(unittest.TestCase):
