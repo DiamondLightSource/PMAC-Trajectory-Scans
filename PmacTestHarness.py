@@ -355,7 +355,7 @@ class PmacTestHarness(PmacEthernetInterface):
         if num_points > int(self.buffer_length):
             raise ValueError("Point set cannot be longer than PMAC buffer length")
         for axis in points.itervalues():
-            if len(axis) != num_points and len(axis) != 0:
+            if len(axis) != num_points:
                 raise ValueError("Point set must have equal points in all axes")
 
         for axis in points.iterkeys():
