@@ -12,11 +12,11 @@ def generate_lin_points(num_points, move_time):
     points = {'time': [], 'x': [], 'y': []}
 
     for j in range(1, num_points+1, 1):
-        points['time'].append(move_time)
+        points['time'].append(str(move_time))
 
     for j in range(1, num_points+1, 1):
-        points['x'].append(j)
-        points['y'].append(j)
+        points['x'].append(str(j))
+        points['y'].append(str(j))
 
     return points
 
@@ -77,13 +77,13 @@ def generate_snake_scan_w_vel(move_time, reverse=False):
 
 def generate_circle_points():
 
-    time_points = ['$' + hex(60)[2:]]*3600
+    time_points = ['$' + hex(14)[2:]]*3600
     x_points = []
     y_points = []
 
     for angle in numpy.linspace(0.0, 360.0, 3600):
         x_points.append(numpy.sin(angle))
-        y_points.append(numpy.cos(angle))
+        y_points.append(numpy.sin(angle + 180.0))
 
     points = {'time': time_points,
               'x': x_points,
@@ -221,6 +221,7 @@ def trajectory_scan_3():
 
     pmac = PmacTestHarness("172.23.243.169")
 
+    pmac.force_abort()
     pmac.assign_motors()
     pmac.home_motors()
     # pmac.reset_buffers()
@@ -228,6 +229,9 @@ def trajectory_scan_3():
 
     circle_points = generate_circle_points()
     print(circle_points)
+    print(len(circle_points['time']))
+    print(len(circle_points['x']))
+    print(len(circle_points['y']))
     circle_points = pmac.convert_points_to_pmac_float(circle_points)
 
     buffer_length = 1000
@@ -235,12 +239,13 @@ def trajectory_scan_3():
     current_points, end = grab_buffer_of_points(current_start, buffer_length, circle_points)
     current_start = end + 1
 
-    pmac.send_points(circle_points, current=True)
+    pmac.fill_current_buffer(current_points)
     pmac.set_buffer_fill(buffer_length, current=True)
     pmac.prev_buffer_write = 0
 
+    start_time = time.time()
     pmac.run_motion_program(1)
-    time.sleep(3)
+    time.sleep(1)
 
     pmac.update_status_variables()
     print("Status: " + str(pmac.status))
@@ -251,7 +256,7 @@ def trajectory_scan_3():
             current_points, end = grab_buffer_of_points(current_start, 1000, circle_points)
             current_start = end + 1
 
-            pmac.send_points(current_points)
+            pmac.fill_idle_buffer(current_points)
             pmac.set_buffer_fill(buffer_length)
             pmac.prev_buffer_write = 0
 
@@ -259,23 +264,26 @@ def trajectory_scan_3():
             current_points, end = grab_buffer_of_points(current_start, 1000, circle_points)
             current_start = end + 1
 
-            pmac.send_points(current_points)
+            pmac.fill_idle_buffer(current_points)
             pmac.set_buffer_fill(buffer_length)
             pmac.prev_buffer_write = 1
 
-        time.sleep(0.25)
+        time.sleep(0.1)
 
         if 1 > 2:
             pmac.setVar("P4007", 1)  # End Program
 
         pmac.update_status_variables()
+        scan_time = str(numpy.round(time.time() - start_time, 2))
 
         if pmac.current_buffer == 0:
             print("Status: " + str(pmac.status) + " - Buffer: A" + " - Index: " +
-                  str(pmac.current_index) + " - Total Points: " + str(pmac.total_points))
+                  str(pmac.current_index) + " - Total Points: " + str(pmac.total_points) +
+                  " - Scan Time: " + scan_time)
         else:
             print("Status: " + str(pmac.status) + " - Buffer: B" + " - Index: " +
-                  str(pmac.current_index) + " - Total Points: " + str(pmac.total_points))
+                  str(pmac.current_index) + " - Total Points: " + str(pmac.total_points) +
+                  " - Scan Time: " + scan_time)
 
 
 def main():
