@@ -193,7 +193,7 @@ While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS 
 		Next_Time = Next_Time_N/4			; Convert 1/4s of a ms into ms
 		GoSub2								; Shift values through Next_* -> *_Coord -> Prev_*
 		
-		; Increment addresses		    
+		; Increment addresses
 		GoSub6
 		
 		PVT (Time)
@@ -218,13 +218,7 @@ While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS 
 		
 	End While
 	
-	GoSub2					; Increment addresses to move to final Next_* point
-	GoSub8					; Calculate velocities
-	GoSub7					; Move axes
-	
-	If(User > 0)
-		GoSub(User)
-	End If
+	GoSub2					; Shift previous and current coords to N-1th and Nth points in buffer
 	
 	If(CurrentBufferFill != BufferLength)				; Abort if buffer wasn't completely full
 		Abort = 1
@@ -246,7 +240,13 @@ While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS 
 
 End While
 
-Status = 2
+If(Status = 1)				; Move to final point if no error occured
+	GoSub2					; Shift to final points in buffer
+	PVT (Time)
+	GoSub3					; Prev->Current velocity calculation
+	GoSub7					; Move axes
+	Status = 2
+End If
 
 Dwell 0			; Force CMD lines to execute
 CMD"End Gat"	; Send On-line command to stop data gathering
