@@ -348,11 +348,11 @@ Return
 
 N3
 	If(Time = 0)
-			Status = 4
-			Abort = 1
-			CMD"A"
-			Dwell 0
-			Time = 1000
+		Status = 4
+		Abort = 1
+		CMD"A"
+		Dwell 0
+		Time = 1000
 	End If
 	X_Vel = 1000*(X_Coord - Prev_X)/Time
 	Y_Vel = 1000*(Y_Coord - Prev_Y)/Time
@@ -367,11 +367,11 @@ Return
 
 N4
 	If(Time = 0)
-			Status = 4
-			Abort = 1
-			CMD"A"
-			Dwell 0
-			Time = 1000
+		Status = 4
+		Abort = 1
+		CMD"A"
+		Dwell 0
+		Time = 1000
 	End If
 	X_Vel = 1000*(Next_X - Prev_X)/(Time + Next_Time)
 	Y_Vel = 1000*(Next_Y - Prev_Y)/(Time + Next_Time)
@@ -386,11 +386,11 @@ Return
 
 N5
 	If(Time = 0)
-			Status = 4
-			Abort = 1
-			CMD"A"
-			Dwell 0
-			Time = 1000
+		Status = 4
+		Abort = 1
+		CMD"A"
+		Dwell 0
+		Time = 1000
 	End If
 	X_Vel = 1000*(Next_X - X_Coord)/Next_Time
 	Y_Vel = 1000*(Next_Y - Y_Coord)/Next_Time
