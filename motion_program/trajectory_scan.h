@@ -26,15 +26,15 @@
 
 ; Motion Program Variables
 
-#define X_Axis              P(RootVar + 101)        ; Specifiers for what axes are to be used
-#define Y_Axis              P(RootVar + 102)
-#define Z_Axis              P(RootVar + 103)
-#define U_Axis              P(RootVar + 104)
-#define V_Axis              P(RootVar + 105)
-#define W_Axis              P(RootVar + 106)
-#define A_Axis              P(RootVar + 107)
-#define B_Axis              P(RootVar + 108)
-#define C_Axis              P(RootVar + 109)
+;#define X_Axis              P(RootVar + 101)        ; Specifiers for what axes are to be used
+;#define Y_Axis              P(RootVar + 102)
+;#define Z_Axis              P(RootVar + 103)
+;#define U_Axis              P(RootVar + 104)
+;#define V_Axis              P(RootVar + 105)
+;#define W_Axis              P(RootVar + 106)
+;#define A_Axis              P(RootVar + 107)
+;#define B_Axis              P(RootVar + 108)
+;#define C_Axis              P(RootVar + 109)
 
 #define Time                P(RootVar + 110)        ; Current coordinate values
 #define X_Coord             P(RootVar + 111)
@@ -127,5 +127,27 @@ C_Adr->Y:$4FA9,0,24
 User_Adr->Y:$4FAA,0,24
 VelMode_Adr->Y:$4FAB,0,24
 
-#define RTE                 M4041
+#define RTE                 M4035
 RTE->Y:$203F,22
+
+#define AxesParser          M4040               ; Specifiers for what axes are to be used
+#define X_Axis              M4041
+#define Y_Axis              M4042
+#define Z_Axis              M4043
+#define U_Axis              M4044
+#define V_Axis              M4045
+#define W_Axis              M4046
+#define A_Axis              M4047
+#define B_Axis              M4048
+#define C_Axis              M4049
+
+AxesParser->Y:$3FFFE,0,24                       ; Pointers to bits of Axes value
+X_Axis->Y:$3FFFE,8
+Y_Axis->Y:$3FFFE,7
+Z_Axis->Y:$3FFFE,6
+U_Axis->Y:$3FFFE,5
+V_Axis->Y:$3FFFE,4
+W_Axis->Y:$3FFFE,3
+A_Axis->Y:$3FFFE,2
+B_Axis->Y:$3FFFE,1
+C_Axis->Y:$3FFFE,0

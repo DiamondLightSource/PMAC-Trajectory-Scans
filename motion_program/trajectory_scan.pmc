@@ -126,59 +126,14 @@ While(1=1)
 End While
 
 ; Subroutine 1 ************************************************************************************
-; Convert <Axes> to binary values for each axis to decide which axes to use
+; Check that axes value is valid
 ; *************************************************************************************************
 N1
     If(Axes > 511 or Axes < 1)
         Status = 3
         Abort = 1
     Else
-        X_Axis = 0
-        Y_Axis = 0
-        Z_Axis = 0
-        U_Axis = 0
-        V_Axis = 0
-        W_Axis = 0
-        A_Axis = 0
-        B_Axis = 0
-        C_Axis = 0
-
-        If(Axes > 255)
-            X_Axis = 1
-            Axes = Axes - 256
-        End If
-        If(Axes > 127)
-            Y_Axis = 1
-            Axes = Axes - 128
-        End If
-        If(Axes > 63)
-            Z_Axis = 1
-            Axes = Axes - 64
-        End If
-        If(Axes > 31)
-            U_Axis = 1
-            Axes = Axes - 32
-        End If
-        If(Axes > 15)
-            V_Axis = 1
-            Axes = Axes - 16
-        End If
-        If(Axes > 7)
-            W_Axis = 1
-            Axes = Axes - 8
-        End If
-        If(Axes > 3)
-            A_Axis = 1
-            Axes = Axes - 4
-        End If
-        If(Axes > 1)
-            B_Axis = 1
-            Axes = Axes - 2
-        End If
-        If(Axes > 0)
-            C_Axis = 1
-            Axes = Axes - 1
-        End If
+        AxesParser = Axes   ; Set bit parsed address to set required axes
     End If
 Return
 
