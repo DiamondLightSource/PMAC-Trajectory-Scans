@@ -258,7 +258,7 @@ def trajectory_scan_3():
     # pmac.reset_buffers()
     pmac.set_axes(384)
 
-    circle_points = generate_circle_points()
+    circle_points = generate_circle_points(500)
     print(circle_points)
     print(len(circle_points['time']))
     print(len(circle_points['x']))
