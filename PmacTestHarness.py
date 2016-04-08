@@ -33,6 +33,10 @@ class PmacTestHarness(PmacEthernetInterface):
 
         self.prev_buffer_write = 1
 
+        self.max_velocities = {'x': 0, 'y': 0, 'z': 0,
+                               'u': 0, 'v': 0, 'w': 0,
+                               'a': 0, 'b': 0, 'c': 0}
+
     def update_status_variables(self):
         """
         Update status, total points scanned, current index and current buffer specifier from the pmac
@@ -64,6 +68,16 @@ class PmacTestHarness(PmacEthernetInterface):
                           'b': self.add_dechex(root_address, 8*int(self.buffer_length)),
                           'c': self.add_dechex(root_address, 9*int(self.buffer_length))}
 
+    def update_max_velocities(self):
+
+        velocities = []
+        for i in range(0, 9):
+            velocities.append(self.sendCommand("i{axis}16".format(axis=i)))
+
+        self.max_velocities = {'x': velocities[0], 'y': velocities[1], 'z': velocities[2],
+                               'u': velocities[3], 'v': velocities[4], 'w': velocities[5],
+                               'a': velocities[6], 'b': velocities[7], 'c': velocities[8]}
+
     def assign_motors(self):
         """
         Send command to assign motors to the required axes
@@ -71,6 +85,7 @@ class PmacTestHarness(PmacEthernetInterface):
         """
 
         self.sendCommand("&1 #1->100X #2->100Y #3->Z #4->U #5->V #6->W #7->A #8->B")
+        # self.sendCommand("&1 #1->100X #2->100Y")
 
     def home_motors(self):
         """
@@ -91,6 +106,8 @@ class PmacTestHarness(PmacEthernetInterface):
 
         self.sendCommand("#1J/ #2J/ #3J/ #4J/ #5J/ #6J/ #7J/ #8J/ &{num} B{num} R".format(
                 num=str(program_num)))
+        # self.sendCommand("#1J/ #2J/ &{num} B{num} R".format(
+        #         num=str(program_num)))
 
     def force_abort(self):
         """
@@ -335,10 +352,10 @@ class PmacTestHarness(PmacEthernetInterface):
 
         """
 
-        if self.current_buffer == 1:
-            self.update_address_dict(self.buffer_address_b)
-        else:
+        if self.current_buffer == 0:
             self.update_address_dict(self.buffer_address_a)
+        else:
+            self.update_address_dict(self.buffer_address_b)
 
         self._fill_buffer(points)
 
@@ -355,7 +372,7 @@ class PmacTestHarness(PmacEthernetInterface):
         if num_points > int(self.buffer_length):
             raise ValueError("Point set cannot be longer than PMAC buffer length")
         for axis in points.itervalues():
-            if len(axis) != num_points:
+            if axis and len(axis) != num_points:
                 raise ValueError("Point set must have equal points in all axes")
 
         for axis in points.iterkeys():

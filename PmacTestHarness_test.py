@@ -105,6 +105,29 @@ class UpdateAddressesTest(unittest.TestCase):
         self.assertEqual(expected_address, self.pmac.addresses)
 
 
+class UpdateVelocitiesTest(unittest.TestCase):
+
+    def setUp(self):
+        self.pmac = TesterPmacTestHarness()
+
+    @patch('PmacTestHarness_test.TesterPmacTestHarness.sendCommand',
+           side_effect=['10', '20', '30', '40', '50', '60', '70', '80', '90'])
+    def test_given_buffer_A_then_update(self, _):
+        expected_address = {'a': '70',
+                            'b': '80',
+                            'c': '90',
+                            'u': '40',
+                            'v': '50',
+                            'w': '60',
+                            'x': '10',
+                            'y': '20',
+                            'z': '30'}
+
+        self.pmac.update_max_velocities()
+
+        self.assertEqual(expected_address, self.pmac.max_velocities)
+
+
 class CommandsTest(unittest.TestCase):
 
     def setUp(self):
