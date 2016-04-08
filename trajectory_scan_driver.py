@@ -6,17 +6,34 @@ from pkg_resources import require
 require('numpy')
 import numpy
 
+# IP_ADDRESS = "172.23.243.169"
+IP_ADDRESS = "172.23.253.15"
+
+
+def check_max_velocity_of_points(points, max_velocities):
+
+    for axis, axis_points in points.itervalues():
+        for point_num in range(1, len(axis)):
+            next_point = axis_points[point_num]
+            prev_point = axis_points[point_num - 1]
+            move_time = points['time'][point_num]
+            max_velocity = max_velocities[axis]
+
+            if (next_point - prev_point)/move_time > max_velocity:
+                raise ValueError(
+                    "Points set will exceed maximum velocity for motor {}".format(axis))
+
 
 def generate_lin_points(num_points, move_time):
 
     points = {'time': [], 'x': [], 'y': []}
 
     for j in range(1, num_points+1, 1):
-        points['time'].append(str(move_time))
+        points['time'].append(hex(move_time)[2:])
 
     for j in range(1, num_points+1, 1):
-        points['x'].append(str(j))
-        points['y'].append(str(j))
+        points['x'].append(j)
+        points['y'].append(j)
 
     return points
 
@@ -75,19 +92,33 @@ def generate_snake_scan_w_vel(move_time, reverse=False):
     return points
 
 
-def generate_circle_points():
+def generate_circle_points(move_time):
 
-    time_points = ['$' + hex(14)[2:]]*3600
+    time_points = ['$' + hex(move_time)[2:]]*3600
     x_points = []
     y_points = []
 
     for angle in numpy.linspace(0.0, 360.0, 3600):
         x_points.append(numpy.sin(angle))
-        y_points.append(numpy.sin(angle + 180.0))
+        y_points.append(numpy.cos(angle))
 
     points = {'time': time_points,
               'x': x_points,
               'y': y_points}
+
+    return points
+
+
+def generate_sine_points(move_time, num_points):
+
+    time_points = ['$' + hex(move_time)[2:]]*1000
+    x_points = []
+
+    for angle in numpy.linspace(0.0, 360.0, num_points):
+        x_points.append(numpy.sin(angle))
+
+    points = {'time': time_points,
+              'x': x_points}
 
     return points
 
@@ -114,7 +145,7 @@ def grab_buffer_of_points(start, length, points):
 
 def trajectory_scan():
 
-    pmac = PmacTestHarness("172.23.243.169")
+    pmac = PmacTestHarness(IP_ADDRESS)
 
     pmac.assign_motors()
     pmac.home_motors()
@@ -179,7 +210,7 @@ def trajectory_scan():
 
 def trajectory_scan_2():
 
-    pmac = PmacTestHarness("172.23.243.169")
+    pmac = PmacTestHarness(IP_ADDRESS)
 
     pmac.force_abort()
     pmac.assign_motors()
@@ -219,7 +250,7 @@ def trajectory_scan_2():
 
 def trajectory_scan_3():
 
-    pmac = PmacTestHarness("172.23.243.169")
+    pmac = PmacTestHarness(IP_ADDRESS)
 
     pmac.force_abort()
     pmac.assign_motors()
