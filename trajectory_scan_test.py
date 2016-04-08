@@ -3,7 +3,8 @@ import trajectory_scan_driver as driver
 import unittest
 import time
 
-PMAC_IP = "172.23.243.169"
+# PMAC_IP = "172.23.243.169"
+PMAC_IP = "172.23.253.15"
 PROG_NUM = 1
 
 
@@ -111,108 +112,115 @@ class TrajectoryScanTest(unittest.TestCase):
         self.pmac.assign_motors()
         self.pmac.home_motors()
         self.pmac.set_axes(384)
+        # self.pmac.reset_buffers()
+        self.move_time = 250
 
     def tearDown(self):
         self.pmac.force_abort()
         self.pmac.disconnect()
 
-    def test_given_single_point_then_move_and_abort(self):
+    def test_given_single_point_then_move(self):
 
         buffer_fill = 1
-        move_time = 40
 
-        line_points = driver.generate_lin_points(buffer_fill, move_time)
+        circle_points = driver.generate_circle_points(self.move_time)
+        circle_points = self.pmac.convert_points_to_pmac_float(circle_points)
+        current_points, _ = driver.grab_buffer_of_points(0, buffer_fill, circle_points)
 
-        self.pmac.send_points(line_points, current=True)
+        self.pmac.fill_current_buffer(current_points)
         self.pmac.set_buffer_fill(buffer_fill, current=True)
 
         self.pmac.run_motion_program(PROG_NUM)
-        scan_time = (move_time/4*buffer_fill)/1000
-        time.sleep(scan_time + 1)
-
-        self.assertEqual(self.pmac.read_variable("P4001"), "2")
-        self.assertEqual(self.pmac.read_variable("P4002"), "1")
-        self.assertEqual(self.pmac.read_variable("P4005"), str(buffer_fill))
-
-    def test_given_one_partial_buffer_then_complete_and_abort(self):
-
-        buffer_fill = 25
-        move_time = 20
-
-        line_points = driver.generate_lin_points(buffer_fill, move_time)
-
-        self.pmac.fill_current_buffer(line_points)
-        self.pmac.set_buffer_fill(buffer_fill, current=True)
-
-        self.pmac.run_motion_program(PROG_NUM)
-        scan_time = (move_time/4*buffer_fill)/1000
-        time.sleep(scan_time + 2)
-
-        self.assertEqual("2", self.pmac.read_variable("P4001"))
-        self.assertEqual("1", self.pmac.read_variable("P4002"))
-        self.assertEqual(str(buffer_fill), self.pmac.read_variable("P4005"))
-
-    def test_given_one_full_buffer_then_complete(self):
-
-        buffer_length = self.pmac.buffer_length
-        buffer_fill = int(buffer_length)
-        move_time = 20
-
-        line_points = driver.generate_lin_points(buffer_fill, move_time)
-        self.pmac.fill_current_buffer(line_points)
-        self.pmac.set_buffer_fill(buffer_fill, current=True)
-
-        self.pmac.run_motion_program(PROG_NUM)
-        scan_time = (move_time/4*buffer_fill)/1000
+        scan_time = (self.move_time/4*buffer_fill)/1000
         time.sleep(scan_time + 1)
 
         self.assertEqual("2", self.pmac.read_variable("P4001"))
         self.assertEqual("0", self.pmac.read_variable("P4002"))
         self.assertEqual(str(buffer_fill), self.pmac.read_variable("P4005"))
 
-    def test_given_second_partial_buffer_then_complete_and_abort(self):
+    def test_given_one_partial_buffer_then_complete(self):
 
-        buffer_length = self.pmac.buffer_length
-        buffer_fill_a = int(buffer_length)
+        buffer_fill = 25
+
+        circle_points = driver.generate_circle_points(self.move_time)
+        circle_points = self.pmac.convert_points_to_pmac_float(circle_points)
+        current_points, _ = driver.grab_buffer_of_points(0, buffer_fill, circle_points)
+
+        self.pmac.fill_current_buffer(current_points)
+        self.pmac.set_buffer_fill(buffer_fill, current=True)
+
+        self.pmac.run_motion_program(PROG_NUM)
+        scan_time = (self.move_time/4*buffer_fill)/1000
+        time.sleep(scan_time + 2)
+
+        self.assertEqual("2", self.pmac.read_variable("P4001"))
+        self.assertEqual("0", self.pmac.read_variable("P4002"))
+        self.assertEqual(str(buffer_fill), self.pmac.read_variable("P4005"))
+
+    def test_given_one_full_buffer_then_complete(self):
+
+        buffer_fill = int(self.pmac.buffer_length)
+
+        circle_points = driver.generate_circle_points(self.move_time)
+        circle_points = self.pmac.convert_points_to_pmac_float(circle_points)
+        current_points, _ = driver.grab_buffer_of_points(0, buffer_fill, circle_points)
+
+        self.pmac.fill_current_buffer(current_points)
+        self.pmac.set_buffer_fill(buffer_fill, current=True)
+
+        self.pmac.run_motion_program(PROG_NUM)
+        scan_time = (self.move_time/4*buffer_fill)/1000
+        time.sleep(scan_time + 1)
+
+        self.assertEqual("2", self.pmac.read_variable("P4001"))
+        self.assertEqual("0", self.pmac.read_variable("P4002"))
+        self.assertEqual(str(buffer_fill), self.pmac.read_variable("P4005"))
+
+    def test_given_second_partial_buffer_then_complete(self):
+
+        buffer_fill_a = int(self.pmac.buffer_length)
         buffer_fill_b = 25
-        move_time = 20
 
-        line_points = driver.generate_lin_points(buffer_fill_a, move_time)
-        self.pmac.fill_current_buffer(line_points)
+        circle_points = driver.generate_circle_points(self.move_time)
+        circle_points = self.pmac.convert_points_to_pmac_float(circle_points)
+        a_points, _ = driver.grab_buffer_of_points(0, buffer_fill_a, circle_points)
+        b_points, _ = driver.grab_buffer_of_points(buffer_fill_a, buffer_fill_b, circle_points)
+
+        self.pmac.fill_current_buffer(a_points)
         self.pmac.set_buffer_fill(buffer_fill_a, current=True)
 
-        line_points = driver.generate_lin_points(buffer_fill_b, move_time)
-        self.pmac.fill_idle_buffer(line_points)
+        self.pmac.fill_idle_buffer(b_points)
         self.pmac.set_buffer_fill(buffer_fill_b)
 
         self.pmac.run_motion_program(PROG_NUM)
 
-        scan_time = (move_time/4*buffer_fill_a + move_time/4*buffer_fill_b)/1000
+        scan_time = (self.move_time/4*buffer_fill_a + self.move_time/4*buffer_fill_b)/1000
         time.sleep(scan_time + 1)
 
         self.assertEqual("2", self.pmac.read_variable("P4001"))
-        self.assertEqual("1", self.pmac.read_variable("P4002"))
+        self.assertEqual("0", self.pmac.read_variable("P4002"))
         self.assertEqual(str(buffer_fill_a + buffer_fill_b),
                          self.pmac.read_variable("P4005"))
 
     def test_given_two_full_buffers_then_complete(self):
 
-        buffer_length = self.pmac.buffer_length
-        buffer_fill_a = int(buffer_length)
-        buffer_fill_b = int(buffer_length)
-        move_time = 20
+        buffer_fill_a = int(self.pmac.buffer_length)
+        buffer_fill_b = int(self.pmac.buffer_length)
 
-        line_points = driver.generate_lin_points(buffer_fill_a, move_time)
-        self.pmac.fill_current_buffer(line_points)
+        circle_points = driver.generate_circle_points(self.move_time)
+        circle_points = self.pmac.convert_points_to_pmac_float(circle_points)
+        a_points, _ = driver.grab_buffer_of_points(0, buffer_fill_a, circle_points)
+        b_points, _ = driver.grab_buffer_of_points(buffer_fill_a, buffer_fill_b, circle_points)
+
+        self.pmac.fill_current_buffer(a_points)
         self.pmac.set_buffer_fill(buffer_fill_a, current=True)
 
-        line_points = driver.generate_lin_points(buffer_fill_b, move_time)
-        self.pmac.fill_idle_buffer(line_points)
+        self.pmac.fill_idle_buffer(b_points)
         self.pmac.set_buffer_fill(buffer_fill_b)
 
         self.pmac.run_motion_program(PROG_NUM)
 
-        scan_time = (move_time/4*buffer_fill_a + move_time/4*buffer_fill_b)/1000
+        scan_time = (self.move_time/4*buffer_fill_a + self.move_time/4*buffer_fill_b)/1000
         time.sleep(scan_time + 1)
 
         self.assertEqual("2", self.pmac.read_variable("P4001"))
@@ -221,14 +229,19 @@ class TrajectoryScanTest(unittest.TestCase):
 
     def test_given_five_full_buffers_then_complete(self):
 
-        buffer_length = self.pmac.buffer_length
-        buffer_fill_a = int(buffer_length)
-        buffer_fill_b = int(buffer_length)
-        move_time = 20
+        buffer_fill_a = int(self.pmac.buffer_length)
+        buffer_fill_b = buffer_fill_a
 
-        line_points = driver.generate_lin_points(buffer_fill_a, move_time)
-        self.pmac.fill_current_buffer(line_points)
+        circle_points = driver.generate_circle_points(self.move_time)
+        circle_points = self.pmac.convert_points_to_pmac_float(circle_points)
+        a_points, end = driver.grab_buffer_of_points(0, buffer_fill_a, circle_points)
+        b_points, end = driver.grab_buffer_of_points(end, buffer_fill_b, circle_points)
+
+        self.pmac.fill_current_buffer(a_points)
         self.pmac.set_buffer_fill(buffer_fill_a, current=True)
+
+        self.pmac.fill_idle_buffer(b_points)
+        self.pmac.set_buffer_fill(buffer_fill_b)
 
         self.pmac.run_motion_program(PROG_NUM)
 
@@ -237,26 +250,31 @@ class TrajectoryScanTest(unittest.TestCase):
         while num_buffers < 5:
 
             if self.pmac.prev_buffer_write == 1 and int(self.pmac.current_buffer) == 1:
-                self.pmac.fill_idle_buffer(line_points)
+                a_points, end = driver.grab_buffer_of_points(end, buffer_fill_a, circle_points)
+                self.pmac.fill_idle_buffer(a_points)
                 self.pmac.set_buffer_fill(buffer_fill_a)
                 self.pmac.prev_buffer_write = 0
                 num_buffers += 1
+                print("Filled buffer A")
             elif self.pmac.prev_buffer_write == 0 and int(self.pmac.current_buffer) == 0:
-                self.pmac.fill_idle_buffer(line_points)
+                b_points, end = driver.grab_buffer_of_points(end, buffer_fill_b, circle_points)
+                self.pmac.fill_idle_buffer(b_points)
                 self.pmac.set_buffer_fill(buffer_fill_b)
                 self.pmac.prev_buffer_write = 1
                 num_buffers += 1
+                print("Filled buffer B")
 
-            time.sleep(move_time/4/1000)
+            time.sleep(self.move_time/4/1000)
 
             self.pmac.update_status_variables()
 
-        scan_time = (move_time/4*buffer_fill_a + move_time/4*buffer_fill_b)/1000
+        scan_time = (self.move_time/4*buffer_fill_a + self.move_time/4*buffer_fill_b)/1000
         time.sleep(scan_time + 1)
 
-        self.assertEqual(self.pmac.read_variable("P4001"), "2")
-        self.assertEqual(self.pmac.read_variable("P4002"), "0")
-        self.assertEqual(self.pmac.read_variable("P4005"), str(3*buffer_fill_a + 2*buffer_fill_b))
+        self.assertEqual("2", self.pmac.read_variable("P4001"))
+        self.assertEqual("0", self.pmac.read_variable("P4002"))
+        self.assertEqual(str(3*buffer_fill_a + 2*buffer_fill_b),
+                         self.pmac.read_variable("P4005"))
 
 
 class WriteTest(unittest.TestCase):
