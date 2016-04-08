@@ -71,6 +71,11 @@
 #define BlankAddress        M4015                   ; Address storing a zero for unused axes to point to
 BlankAddress->D:$BlankAdr,0,48
 
+#define Trigger             M4016
+
+#define RTE                 M4017
+RTE->Y:$203F,22
+
 #define Next_Time_N         M4000                   ; Next coordinate values
 #define Next_X              M4001
 #define Next_Y              M4002
@@ -122,9 +127,6 @@ B_Adr->Y:$4FA8,0,24
 C_Adr->Y:$4FA9,0,24
 User_Adr->Y:$4FAA,0,24
 VelMode_Adr->Y:$4FAB,0,24
-
-#define RTE                 M4035
-RTE->Y:$203F,22
 
 #define AxesParser          M4040                   ; Specifiers for what axes are to be used
 #define X_Axis              M4041
