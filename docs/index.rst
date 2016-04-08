@@ -16,6 +16,7 @@ Contents:
    :maxdepth: 2
 
    test_harness
+   trajectory_scan
 
 Indices and tables
 ==================
