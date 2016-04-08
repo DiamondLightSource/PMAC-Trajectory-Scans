@@ -2,7 +2,12 @@
 ; Variables
 ; *****************************************************************************************
 
-#define RootVar 4000
+; Change these values for your PMAC
+#define BlankAdr            30000           ; Start of User Buffer
+#define AxisAdr             30001           ; BlankAdr + 1
+#define BufferAdr           30010           ; BlankAdr + 10
+
+#define RootVar     4000
 
 ; EPICS Required Variables
 
@@ -26,15 +31,15 @@
 
 ; Motion Program Variables
 
-;#define X_Axis              P(RootVar + 101)        ; Specifiers for what axes are to be used
-;#define Y_Axis              P(RootVar + 102)
-;#define Z_Axis              P(RootVar + 103)
-;#define U_Axis              P(RootVar + 104)
-;#define V_Axis              P(RootVar + 105)
-;#define W_Axis              P(RootVar + 106)
-;#define A_Axis              P(RootVar + 107)
-;#define B_Axis              P(RootVar + 108)
-;#define C_Axis              P(RootVar + 109)
+#define Prev_X              P(RootVar + 101)        ; Specifiers for what axes are to be used
+#define Prev_Y              P(RootVar + 102)
+#define Prev_Z              P(RootVar + 103)
+#define Prev_U              P(RootVar + 104)
+#define Prev_V              P(RootVar + 105)
+#define Prev_W              P(RootVar + 106)
+#define Prev_A              P(RootVar + 107)
+#define Prev_B              P(RootVar + 108)
+#define Prev_C              P(RootVar + 109)
 
 #define Time                P(RootVar + 110)        ; Current coordinate values
 #define X_Coord             P(RootVar + 111)
@@ -48,32 +53,23 @@
 #define C_Coord             P(RootVar + 119)
 #define User                P(RootVar + 120)
 #define VelMode             P(RootVar + 121)
-#define Next_Time           (RootVar + 122)
 
-#define Prev_X              P(RootVar + 131)        ; Previous coordinate values
-#define Prev_Y              P(RootVar + 132)
-#define Prev_Z              P(RootVar + 133)
-#define Prev_U              P(RootVar + 134)
-#define Prev_V              P(RootVar + 135)
-#define Prev_W              P(RootVar + 136)
-#define Prev_A              P(RootVar + 137)
-#define Prev_B              P(RootVar + 138)
-#define Prev_C              P(RootVar + 139)
+#define Next_Time           P(RootVar + 122)        ; Time converted from Next_Time_N in 1/4ms
 
-#define X_Vel               P(RootVar + 141)        ; Move velocities
-#define Y_Vel               P(RootVar + 142)
-#define Z_Vel               P(RootVar + 143)
-#define U_Vel               P(RootVar + 144)
-#define V_Vel               P(RootVar + 145)
-#define W_Vel               P(RootVar + 146)
-#define A_Vel               P(RootVar + 147)
-#define B_Vel               P(RootVar + 148)
-#define C_Vel               P(RootVar + 149)
+#define X_Vel               P(RootVar + 131)        ; Previous coordinate values
+#define Y_Vel               P(RootVar + 132)
+#define Z_Vel               P(RootVar + 133)
+#define U_Vel               P(RootVar + 134)
+#define V_Vel               P(RootVar + 135)
+#define W_Vel               P(RootVar + 136)
+#define A_Vel               P(RootVar + 137)
+#define B_Vel               P(RootVar + 138)
+#define C_Vel               P(RootVar + 139)
 
 ; Address-Based Variables
 
 #define BlankAddress        M4015                   ; Address storing a zero for unused axes to point to
-BlankAddress->D:$3FFFF,0,48
+BlankAddress->D:$BlankAdr,0,48
 
 #define Next_Time_N         M4000                   ; Next coordinate values
 #define Next_X              M4001
@@ -88,18 +84,18 @@ BlankAddress->D:$3FFFF,0,48
 #define Next_User           M4010
 #define NextVelMode         M4011
 
-NextVelMode->X:$3FFFF,4,4                           ; Set initial pointers and type
-Next_User->X:$3FFFF,0,4
-Next_Time_N->Y:$3FFFF,0,24
-Next_X->L:$3FFFF,0,48
-Next_Y->L:$3FFFF,0,48
-Next_Z->L:$3FFFF,0,48
-Next_U->L:$3FFFF,0,48
-Next_V->L:$3FFFF,0,48
-Next_W->L:$3FFFF,0,48
-Next_A->L:$3FFFF,0,48
-Next_B->L:$3FFFF,0,48
-Next_C->L:$3FFFF,0,48
+NextVelMode->X:$BlankAdr,4,4                         ; Set initial pointers and type
+Next_User->X:$BlankAdr,0,4
+Next_Time_N->Y:$BlankAdr,0,24
+Next_X->L:$BlankAdr,0,48
+Next_Y->L:$BlankAdr,0,48
+Next_Z->L:$BlankAdr,0,48
+Next_U->L:$BlankAdr,0,48
+Next_V->L:$BlankAdr,0,48
+Next_W->L:$BlankAdr,0,48
+Next_A->L:$BlankAdr,0,48
+Next_B->L:$BlankAdr,0,48
+Next_C->L:$BlankAdr,0,48
 
 #define Time_Adr            M4020                   ; Pointers to Next_* coordinate addresses
 #define X_Adr               M4021
@@ -130,7 +126,7 @@ VelMode_Adr->Y:$4FAB,0,24
 #define RTE                 M4035
 RTE->Y:$203F,22
 
-#define AxesParser          M4040               ; Specifiers for what axes are to be used
+#define AxesParser          M4040                   ; Specifiers for what axes are to be used
 #define X_Axis              M4041
 #define Y_Axis              M4042
 #define Z_Axis              M4043
@@ -141,13 +137,13 @@ RTE->Y:$203F,22
 #define B_Axis              M4048
 #define C_Axis              M4049
 
-AxesParser->Y:$3FFFE,0,24                       ; Pointers to bits of Axes value
-X_Axis->Y:$3FFFE,8
-Y_Axis->Y:$3FFFE,7
-Z_Axis->Y:$3FFFE,6
-U_Axis->Y:$3FFFE,5
-V_Axis->Y:$3FFFE,4
-W_Axis->Y:$3FFFE,3
-A_Axis->Y:$3FFFE,2
-B_Axis->Y:$3FFFE,1
-C_Axis->Y:$3FFFE,0
+AxesParser->Y:$AxisAdr,0,24                         ; Pointers to bits of Axes value
+X_Axis->Y:$AxisAdr,8
+Y_Axis->Y:$AxisAdr,7
+Z_Axis->Y:$AxisAdr,6
+U_Axis->Y:$AxisAdr,5
+V_Axis->Y:$AxisAdr,4
+W_Axis->Y:$AxisAdr,3
+A_Axis->Y:$AxisAdr,2
+B_Axis->Y:$AxisAdr,1
+C_Axis->Y:$AxisAdr,0

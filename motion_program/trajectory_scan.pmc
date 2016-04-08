@@ -8,8 +8,8 @@ Del Gat
 
 ; Set Initial Values
 BufferLength = 1000
-BufferAdr_A = $30000
-BufferAdr_B = BufferAdr_A + 11*BufferLength
+BufferAdr_A = $BufferAdr                        ; Set in header file (Default = 30000)
+BufferAdr_B = BufferAdr_A + 10*BufferLength
 BlankAddress = 0
 Status = 0
 Abort = 0
