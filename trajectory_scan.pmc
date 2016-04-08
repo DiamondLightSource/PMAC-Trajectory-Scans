@@ -6,89 +6,89 @@
 
 ; EPICS Required Variables - (P4000 address = $6FA0)
 
-#define Status				P(RootVar + 1)			; Status of motion program for EPICS - 0: Initialised, 1: Active, 2: Idle, 3: Error
-#define Abort				P(RootVar + 2)			; Abort trigger for EPICS
-#define Axes				P(RootVar + 3)			; An int between 1 and 511 specifying which axes to use
-#define BufferLength		P(RootVar + 4)			; Length of a single buffer e.g. AX, AY...
-#define TotalPoints			P(RootVar + 5)			; Total number of points scanned through
+#define Status              P(RootVar + 1)          ; Status of motion program for EPICS - 0: Initialised, 1: Active, 2: Idle, 3: Error
+#define Abort               P(RootVar + 2)          ; Abort trigger for EPICS
+#define Axes                P(RootVar + 3)          ; An int between 1 and 511 specifying which axes to use
+#define BufferLength        P(RootVar + 4)          ; Length of a single buffer e.g. AX, AY...
+#define TotalPoints         P(RootVar + 5)          ; Total number of points scanned through
 
-#define CurrentIndex		P(RootVar + 6)			; Current index position in buffer
-#define CurrentBuffer		P(RootVar + 7)			; Current buffer specifier - 0: A, 1: B
+#define CurrentIndex        P(RootVar + 6)          ; Current index position in buffer
+#define CurrentBuffer       P(RootVar + 7)          ; Current buffer specifier - 0: A, 1: B
 
-#define BufferAdr_A			P(RootVar + 8)			; Start index of buffer A
-#define BufferAdr_B			P(RootVar + 9)			; Start index of buffer B
-#define CurrentBufferAdr	P(RootVar + 10)			; A or B buffer address
+#define BufferAdr_A         P(RootVar + 8)          ; Start index of buffer A
+#define BufferAdr_B         P(RootVar + 9)          ; Start index of buffer B
+#define CurrentBufferAdr    P(RootVar + 10)         ; A or B buffer address
 
-#define BufferFill_A		P(RootVar + 11)			; Fill level of buffer A
-#define BufferFill_B		P(RootVar + 12)			; Fill level of buffer B
-#define CurrentBufferFill	P(RootVar + 13)			; A or B buffer fill level
-#define PrevBufferFill		P(RootVar + 14)			; Fill level of previous buffer
+#define BufferFill_A        P(RootVar + 11)         ; Fill level of buffer A
+#define BufferFill_B        P(RootVar + 12)         ; Fill level of buffer B
+#define CurrentBufferFill   P(RootVar + 13)         ; A or B buffer fill level
+#define PrevBufferFill      P(RootVar + 14)         ; Fill level of previous buffer
 
 ; Motion Program Variables
 
-#define X_Axis				P(RootVar + 101)		; Specifiers for what axes are to be used
-#define Y_Axis				P(RootVar + 102)
-#define Z_Axis				P(RootVar + 103)
-#define U_Axis				P(RootVar + 104)
-#define V_Axis				P(RootVar + 105)
-#define W_Axis				P(RootVar + 106)
-#define A_Axis				P(RootVar + 107)
-#define B_Axis				P(RootVar + 108)
-#define C_Axis				P(RootVar + 109)
+#define X_Axis              P(RootVar + 101)        ; Specifiers for what axes are to be used
+#define Y_Axis              P(RootVar + 102)
+#define Z_Axis              P(RootVar + 103)
+#define U_Axis              P(RootVar + 104)
+#define V_Axis              P(RootVar + 105)
+#define W_Axis              P(RootVar + 106)
+#define A_Axis              P(RootVar + 107)
+#define B_Axis              P(RootVar + 108)
+#define C_Axis              P(RootVar + 109)
 
-#define Time				P(RootVar + 110)		; Current coordinate values
-#define X_Coord				P(RootVar + 111)
-#define Y_Coord				P(RootVar + 112)
-#define Z_Coord				P(RootVar + 113)
-#define U_Coord				P(RootVar + 114)
-#define V_Coord				P(RootVar + 115)
-#define W_Coord				P(RootVar + 116)
-#define A_Coord				P(RootVar + 117)
-#define B_Coord				P(RootVar + 118)
-#define C_Coord				P(RootVar + 119)
-#define User				P(RootVar + 120)
-#define VelMode				P(RootVar + 121)
-#define Next_Time			P(RootVar + 122)
+#define Time                P(RootVar + 110)        ; Current coordinate values
+#define X_Coord             P(RootVar + 111)
+#define Y_Coord             P(RootVar + 112)
+#define Z_Coord             P(RootVar + 113)
+#define U_Coord             P(RootVar + 114)
+#define V_Coord             P(RootVar + 115)
+#define W_Coord             P(RootVar + 116)
+#define A_Coord             P(RootVar + 117)
+#define B_Coord             P(RootVar + 118)
+#define C_Coord             P(RootVar + 119)
+#define User                P(RootVar + 120)
+#define VelMode             P(RootVar + 121)
+#define Next_Time           (RootVar + 122)
 
-#define Prev_X				P(RootVar + 131)		; Previous coordinate values
-#define Prev_Y				P(RootVar + 132)
-#define Prev_Z				P(RootVar + 133)
-#define Prev_U				P(RootVar + 134)
-#define Prev_V				P(RootVar + 135)
-#define Prev_W				P(RootVar + 136)
-#define Prev_A				P(RootVar + 137)
-#define Prev_B				P(RootVar + 138)
-#define Prev_C				P(RootVar + 139)
+#define Prev_X              P(RootVar + 131)        ; Previous coordinate values
+#define Prev_Y              P(RootVar + 132)
+#define Prev_Z              P(RootVar + 133)
+#define Prev_U              P(RootVar + 134)
+#define Prev_V              P(RootVar + 135)
+#define Prev_W              P(RootVar + 136)
+#define Prev_A              P(RootVar + 137)
+#define Prev_B              P(RootVar + 138)
+#define Prev_C              P(RootVar + 139)
 
-#define X_Vel				P(RootVar + 141)		; Move velocities
-#define Y_Vel				P(RootVar + 142)
-#define Z_Vel				P(RootVar + 143)
-#define U_Vel				P(RootVar + 144)
-#define V_Vel				P(RootVar + 145)
-#define W_Vel				P(RootVar + 146)
-#define A_Vel				P(RootVar + 147)
-#define B_Vel				P(RootVar + 148)
-#define C_Vel				P(RootVar + 149)
+#define X_Vel               P(RootVar + 141)        ; Move velocities
+#define Y_Vel               P(RootVar + 142)
+#define Z_Vel               P(RootVar + 143)
+#define U_Vel               P(RootVar + 144)
+#define V_Vel               P(RootVar + 145)
+#define W_Vel               P(RootVar + 146)
+#define A_Vel               P(RootVar + 147)
+#define B_Vel               P(RootVar + 148)
+#define C_Vel               P(RootVar + 149)
 
 ; Address-Based Variables
 
-#define BlankAddress		M4015					; Address storing a zero for unused axes to point to
+#define BlankAddress        M4015                   ; Address storing a zero for unused axes to point to
 BlankAddress->D:$3FFFF,0,48
 
-#define Next_Time_N			M4000  					; Next coordinate values
-#define Next_X				M4001
-#define Next_Y				M4002
-#define Next_Z				M4003
-#define Next_U				M4004
-#define Next_V				M4005
-#define Next_W				M4006
-#define Next_A				M4007
-#define Next_B				M4008
-#define Next_C				M4009
-#define Next_User			M4010
-#define NextVelMode			M4011
+#define Next_Time_N         M4000                   ; Next coordinate values
+#define Next_X              M4001
+#define Next_Y              M4002
+#define Next_Z              M4003
+#define Next_U              M4004
+#define Next_V              M4005
+#define Next_W              M4006
+#define Next_A              M4007
+#define Next_B              M4008
+#define Next_C              M4009
+#define Next_User           M4010
+#define NextVelMode         M4011
 
-NextVelMode->X:$3FFFF,4,4							; Set initial pointers and type
+NextVelMode->X:$3FFFF,4,4                           ; Set initial pointers and type
 Next_User->X:$3FFFF,0,4
 Next_Time_N->Y:$3FFFF,0,24
 Next_X->L:$3FFFF,0,48
@@ -101,21 +101,21 @@ Next_A->L:$3FFFF,0,48
 Next_B->L:$3FFFF,0,48
 Next_C->L:$3FFFF,0,48
 
-#define Time_Adr			M4020					; Pointers to Next_* coordinate addresses
-#define X_Adr				M4021
-#define Y_Adr				M4022
-#define Z_Adr				M4023
-#define U_Adr				M4024
-#define V_Adr				M4025
-#define W_Adr				M4026
-#define A_Adr				M4027
-#define B_Adr				M4028
-#define C_Adr				M4029
-#define User_Adr			M4030
-#define VelMode_Adr			M4031
+#define Time_Adr            M4020                   ; Pointers to Next_* coordinate addresses
+#define X_Adr               M4021
+#define Y_Adr               M4022
+#define Z_Adr               M4023
+#define U_Adr               M4024
+#define V_Adr               M4025
+#define W_Adr               M4026
+#define A_Adr               M4027
+#define B_Adr               M4028
+#define C_Adr               M4029
+#define User_Adr            M4030
+#define VelMode_Adr         M4031
 
-Time_Adr->Y$4FA0,0,24								; Assignments for pointers to M address locations
-X_Adr->Y:$4FA1,0,24									; M0 = $4000 -> M4000 = $4FA0
+Time_Adr->Y$4FA0,0,24                               ; Assignments for pointers to M address locations
+X_Adr->Y:$4FA1,0,24                                 ; M0 = $4000 -> M4000 = $4FA0
 Y_Adr->Y:$4FA2,0,24
 Z_Adr->Y:$4FA3,0,24
 U_Adr->Y:$4FA4,0,24
@@ -127,7 +127,7 @@ C_Adr->Y:$4FA9,0,24
 User_Adr->Y:$4FAA,0,24
 VelMode_Adr->Y:$4FAB,0,24
 
-#define RTE					M4041
+#define RTE                 M4041
 RTE->Y:$203F,22
 
 ; *****************************************************************************************
@@ -168,87 +168,87 @@ PrevBufferFill = BufferLength
 CurrentBuffer = 0
 M4500 = 0
 
-GoSub1			; Check which axes are required
-GoSub6			; Set addresses for required axes
+GoSub1          ; Check which axes are required
+GoSub6          ; Set addresses for required axes
 
 P4201 = 0
 P4202 = 0
 
 ; <<< Allow EPICS to assign any values here, so they won't be reset - Or just don't set variables that EPICS will set?
 
-CMD"End Gat"	; Stop gathering
-CMD"Del Gat"	; Deletes the gather buffer
-CMD"Def Gat"	; Allocates all the available memory as gather buffer
-Dwell 0			; Force CMD lines to execute
-CMD"Gat"		; Starts gathering of the data
+CMD"End Gat"    ; Stop gathering
+CMD"Del Gat"    ; Deletes the gather buffer
+CMD"Def Gat"    ; Allocates all the available memory as gather buffer
+Dwell 0         ; Force CMD lines to execute
+CMD"Gat"        ; Starts gathering of the data
 
 While(Abort != 1 and CurrentBufferFill > 0 and PrevBufferFill = BufferLength) ; Run indefinitely, but allow EPICS to stop program
 
-	P4201 = P4201 + 1
+    P4201 = P4201 + 1
 
-	If(P4201>1)
-		If(CurrentBuffer = 0)
-			CurrentBufferAdr = BufferAdr_B
-			CurrentBufferFill = BufferFill_B
-			BufferFill_A = 0
-			CurrentBuffer = 1
-		Else
-			CurrentBufferAdr = BufferAdr_A
-			CurrentBufferFill = BufferFill_A
-			BufferFill_B = 0
-			CurrentBuffer = 0
-		End If
-	End If
+    If(P4201>1)
+        If(CurrentBuffer = 0)
+            CurrentBufferAdr = BufferAdr_B
+            CurrentBufferFill = BufferFill_B
+            BufferFill_A = 0
+            CurrentBuffer = 1
+        Else
+            CurrentBufferAdr = BufferAdr_A
+            CurrentBufferFill = BufferFill_A
+            BufferFill_B = 0
+            CurrentBuffer = 0
+        End If
+    End If
 
-	CurrentIndex = 0
-	While(Abort != 1 and CurrentIndex < CurrentBufferFill)
-				
-		P4202 = P4202 + 1
-				
-		Next_Time = Next_Time_N/4			; Convert 1/4s of a ms into ms
-		GoSub2								; Shift values through Next_* -> *_Coord -> Prev_*
-		
-		; Increment addresses
-		GoSub6
-		
-		PVT (Time)
-		; Calculate velocities
-		GoSub8
-		
-		; Move axes
-		GoSub7
-				
-		; Run any required subroutine >>> Do we need to be able to run more than one?
-		If(User > 0)
-			GoSub(User)
-		End If
-				
-		CurrentIndex = CurrentIndex + 1
-		TotalPoints = TotalPoints + 1
-		
-		If(M141 = 1 or M241 = 1 or RTE = 1)
-			Abort = 1
-			Status = 3
-		End If
-		
-	End While
-	
-	PrevBufferFill = CurrentBufferFill
-	GoSub2					; Shift previous and current coords to N-1th and Nth points in buffer
+    CurrentIndex = 0
+    While(Abort != 1 and CurrentIndex < CurrentBufferFill)
+
+        P4202 = P4202 + 1
+
+        Next_Time = Next_Time_N/4           ; Convert 1/4s of a ms into ms
+        GoSub2                              ; Shift values through Next_* -> *_Coord -> Prev_*
+
+        ; Increment addresses
+        GoSub6
+
+        PVT (Time)
+        ; Calculate velocities
+        GoSub8
+
+        ; Move axes
+        GoSub7
+
+        ; Run any required subroutine >>> Do we need to be able to run more than one?
+        If(User > 0)
+            GoSub(User)
+        End If
+
+        CurrentIndex = CurrentIndex + 1
+        TotalPoints = TotalPoints + 1
+
+        If(M141 = 1 or M241 = 1 or RTE = 1)
+            Abort = 1
+            Status = 3
+        End If
+
+    End While
+
+    PrevBufferFill = CurrentBufferFill
+    GoSub2                  ; Shift previous and current coords to N-1th and Nth points in buffer
 
 End While
 
-If(Status = 1)				; Move to final point if no error occured
-	GoSub2					; Shift to final points in buffer
-	PVT (Time)
-	GoSub3					; Prev->Current velocity calculation
-	GoSub7					; Move axes
-	Status = 2
+If(Status = 1)              ; Move to final point if no error occured
+    GoSub2                  ; Shift to final points in buffer
+    PVT (Time)
+    GoSub3                  ; Prev->Current velocity calculation
+    GoSub7                  ; Move axes
+    Status = 2
 End If
 
-Dwell 0			; Force CMD lines to execute
-CMD"End Gat"	; Send On-line command to stop data gathering
-Dwell 0			; Force CMD lines to execute
+Dwell 0         ; Force CMD lines to execute
+CMD"End Gat"    ; Send On-line command to stop data gathering
+Dwell 0         ; Force CMD lines to execute
 
 CMD"A"
 While(1=1)
@@ -258,58 +258,57 @@ End While
 ; Convert <Axes> to binary values for each axis to decide which axes to use
 ; *************************************************************************************************
 N1
-	If(Axes > 511 or Axes < 1)
-		Status = 3
+    If(Axes > 511 or Axes < 1)
+        Status = 3
+        Abort = 1
+    Else
+        X_Axis = 0
+        Y_Axis = 0
+        Z_Axis = 0
+        U_Axis = 0
+        V_Axis = 0
+        W_Axis = 0
+        A_Axis = 0
+        B_Axis = 0
+        C_Axis = 0
 
-		Abort = 1
-	Else
-		X_Axis = 0
-		Y_Axis = 0
-		Z_Axis = 0
-		U_Axis = 0
-		V_Axis = 0
-		W_Axis = 0
-		A_Axis = 0
-		B_Axis = 0
-		C_Axis = 0
-			
-		If(Axes > 255)
-			X_Axis = 1
-			Axes = Axes - 256
-		End If
-		If(Axes > 127)
-			Y_Axis = 1
-			Axes = Axes - 128
-		End If
-		If(Axes > 63)
-			Z_Axis = 1
-			Axes = Axes - 64
-		End If
-		If(Axes > 31)
-			U_Axis = 1
-			Axes = Axes - 32
-		End If
-		If(Axes > 15)
-			V_Axis = 1
-			Axes = Axes - 16
-		End If
-		If(Axes > 7)
-			W_Axis = 1
-			Axes = Axes - 8
-		End If
-		If(Axes > 3)
-			A_Axis = 1
-			Axes = Axes - 4
-		End If
-		If(Axes > 1)
-			B_Axis = 1
-			Axes = Axes - 2
-		End If
-		If(Axes > 0)
-			C_Axis = 1
-			Axes = Axes - 1
-		End If
-	End If
+        If(Axes > 255)
+            X_Axis = 1
+            Axes = Axes - 256
+        End If
+        If(Axes > 127)
+            Y_Axis = 1
+            Axes = Axes - 128
+        End If
+        If(Axes > 63)
+            Z_Axis = 1
+            Axes = Axes - 64
+        End If
+    If(Axes > 31)
+            U_Axis = 1
+            Axes = Axes - 32
+        End If
+        If(Axes > 15)
+            V_Axis = 1
+            Axes = Axes - 16
+        End If
+        If(Axes > 7)
+            W_Axis = 1
+            Axes = Axes - 8
+        End If
+        If(Axes > 3)
+            A_Axis = 1
+            Axes = Axes - 4
+        End If
+        If(Axes > 1)
+            B_Axis = 1
+            Axes = Axes - 2
+        End If
+        If(Axes > 0)
+            C_Axis = 1
+            Axes = Axes - 1
+        End If
+    End If
 Return
 
 ; Subroutine 2 ************************************************************************************
@@ -317,27 +316,27 @@ Return
 ; *************************************************************************************************
 
 N2
-	Time = Next_Time
-	Prev_X = X_Coord
-	X_Coord = Next_X
-	Prev_Y = Y_Coord
-	Y_Coord = Next_Y
-	Prev_Z = Z_Coord
-	Z_Coord = Next_Z
-	Prev_U = U_Coord
-	U_Coord = Next_U
-	Prev_V = V_Coord
-	V_Coord = Next_V
-	Prev_W = W_Coord
-	W_Coord = Next_W
-	Prev_A = A_Coord
-	A_Coord = Next_A
-	Prev_B = B_Coord
-	B_Coord = Next_B
-	Prev_C = C_Coord
-	C_Coord = Next_C
-	User = Next_User
-	VelMode = NextVelMode
+    Time = Next_Time
+    Prev_X = X_Coord
+    X_Coord = Next_X
+    Prev_Y = Y_Coord
+    Y_Coord = Next_Y
+    Prev_Z = Z_Coord
+    Z_Coord = Next_Z
+    Prev_U = U_Coord
+    U_Coord = Next_U
+    Prev_V = V_Coord
+    V_Coord = Next_V
+    Prev_W = W_Coord
+    W_Coord = Next_W
+    Prev_A = A_Coord
+    A_Coord = Next_A
+    Prev_B = B_Coord
+    B_Coord = Next_B
+    Prev_C = C_Coord
+    C_Coord = Next_C
+    User = Next_User
+    VelMode = NextVelMode
 Return
 
 ; Subroutines 3-5 *********************************************************************************
@@ -346,60 +345,60 @@ Return
 ; Multiply velocities by 1000 because units(Time): msec and units(velocity): sec in PVT move def
 
 N3
-	If(Time = 0)
-		Status = 4
-		Abort = 1
-		CMD"A"
-		Dwell 0
-		Time = 1000
-	End If
-	X_Vel = 1000*(X_Coord - Prev_X)/Time
-	Y_Vel = 1000*(Y_Coord - Prev_Y)/Time
-	Z_Vel = 1000*(Z_Coord - Prev_Z)/Time
-	U_Vel = 1000*(U_Coord - Prev_U)/Time
-	V_Vel = 1000*(V_Coord - Prev_V)/Time
-	W_Vel = 1000*(W_Coord - Prev_W)/Time
-	A_Vel = 1000*(A_Coord - Prev_A)/Time
-	B_Vel = 1000*(B_Coord - Prev_B)/Time
-	C_Vel = 1000*(C_Coord - Prev_C)/Time
+    If(Time = 0)
+    Status = 4
+    Abort = 1
+    CMD"A"
+    Dwell 0
+    Time = 1000
+    End If
+    X_Vel = 1000*(X_Coord - Prev_X)/Time
+    Y_Vel = 1000*(Y_Coord - Prev_Y)/Time
+    Z_Vel = 1000*(Z_Coord - Prev_Z)/Time
+    U_Vel = 1000*(U_Coord - Prev_U)/Time
+    V_Vel = 1000*(V_Coord - Prev_V)/Time
+    W_Vel = 1000*(W_Coord - Prev_W)/Time
+    A_Vel = 1000*(A_Coord - Prev_A)/Time
+    B_Vel = 1000*(B_Coord - Prev_B)/Time
+    C_Vel = 1000*(C_Coord - Prev_C)/Time
 Return
 
 N4
-	If(Time = 0)
-		Status = 4
-		Abort = 1
-		CMD"A"
-		Dwell 0
-		Time = 1000
-	End If
-	X_Vel = 1000*(Next_X - Prev_X)/(Time + Next_Time)
-	Y_Vel = 1000*(Next_Y - Prev_Y)/(Time + Next_Time)
-	Z_Vel = 1000*(Next_Z - Prev_Z)/(Time + Next_Time)
-	U_Vel = 1000*(Next_U - Prev_U)/(Time + Next_Time)
-	V_Vel = 1000*(Next_V - Prev_V)/(Time + Next_Time)
-	W_Vel = 1000*(Next_W - Prev_W)/(Time + Next_Time)
-	A_Vel = 1000*(Next_A - Prev_A)/(Time + Next_Time)
-	B_Vel = 1000*(Next_B - Prev_B)/(Time + Next_Time)
-	C_Vel = 1000*(Next_C - Prev_C)/(Time + Next_Time)
+    If(Time = 0)
+        Status = 4
+        Abort = 1
+        CMD"A"
+        Dwell 0
+        Time = 1000
+    End If
+    X_Vel = 1000*(Next_X - Prev_X)/(Time + Next_Time)
+    Y_Vel = 1000*(Next_Y - Prev_Y)/(Time + Next_Time)
+    Z_Vel = 1000*(Next_Z - Prev_Z)/(Time + Next_Time)
+    U_Vel = 1000*(Next_U - Prev_U)/(Time + Next_Time)
+    V_Vel = 1000*(Next_V - Prev_V)/(Time + Next_Time)
+    W_Vel = 1000*(Next_W - Prev_W)/(Time + Next_Time)
+    A_Vel = 1000*(Next_A - Prev_A)/(Time + Next_Time)
+    B_Vel = 1000*(Next_B - Prev_B)/(Time + Next_Time)
+    C_Vel = 1000*(Next_C - Prev_C)/(Time + Next_Time)
 Return
 
 N5
-	If(Time = 0)
-		Status = 4
-		Abort = 1
-		CMD"A"
-		Dwell 0
-		Time = 1000
-	End If
-	X_Vel = 1000*(Next_X - X_Coord)/Next_Time
-	Y_Vel = 1000*(Next_Y - Y_Coord)/Next_Time
-	Z_Vel = 1000*(Next_Z - Z_Coord)/Next_Time
-	U_Vel = 1000*(Next_U - U_Coord)/Next_Time
-	V_Vel = 1000*(Next_V - V_Coord)/Next_Time
-	W_Vel = 1000*(Next_W - W_Coord)/Next_Time
-	A_Vel = 1000*(Next_A - A_Coord)/Next_Time
-	B_Vel = 1000*(Next_B - B_Coord)/Next_Time
-	C_Vel = 1000*(Next_C - C_Coord)/Next_Time
+    If(Time = 0)
+        Status = 4
+        Abort = 1
+        CMD"A"
+        Dwell 0
+        Time = 1000
+    End If
+    X_Vel = 1000*(Next_X - X_Coord)/Next_Time
+    Y_Vel = 1000*(Next_Y - Y_Coord)/Next_Time
+    Z_Vel = 1000*(Next_Z - Z_Coord)/Next_Time
+    U_Vel = 1000*(Next_U - U_Coord)/Next_Time
+    V_Vel = 1000*(Next_V - V_Coord)/Next_Time
+    W_Vel = 1000*(Next_W - W_Coord)/Next_Time
+    A_Vel = 1000*(Next_A - A_Coord)/Next_Time
+    B_Vel = 1000*(Next_B - B_Coord)/Next_Time
+    C_Vel = 1000*(Next_C - C_Coord)/Next_Time
 Return
 
 ; Subroutine 6 ************************************************************************************
@@ -407,36 +406,36 @@ Return
 ; *************************************************************************************************
 
 N6
-	VelMode_Adr = CurrentBufferAdr + CurrentIndex
-	User_Adr = CurrentBufferAdr + CurrentIndex
-	Time_Adr = CurrentBufferAdr + CurrentIndex
-	If(X_Axis = 1) 
-		X_Adr = CurrentBufferAdr + CurrentIndex + BufferLength
-	End If
-	If(Y_Axis = 1)
-		Y_Adr = CurrentBufferAdr + CurrentIndex + 2*BufferLength
-	End If
-	If(Z_Axis = 1)
-		Z_Adr = CurrentBufferAdr + CurrentIndex + 3*BufferLength
-	End If
-	If(U_Axis = 1)
-		U_Adr = CurrentBufferAdr + CurrentIndex + 4*BufferLength
-	End If
-	If(V_Axis = 1)
-		V_Adr = CurrentBufferAdr + CurrentIndex + 5*BufferLength
-	End If
-	If(W_Axis = 1)
-		W_Adr = CurrentBufferAdr + CurrentIndex + 6*BufferLength
-	End If
-	If(A_Axis = 1)
-		A_Adr = CurrentBufferAdr + CurrentIndex + 7*BufferLength
-	End If
-	If(B_Axis = 1)
-		B_Adr = CurrentBufferAdr + CurrentIndex + 8*BufferLength
-	End If
-	If(C_Axis = 1)
-		C_Adr = CurrentBufferAdr + CurrentIndex + 9*BufferLength
-	End If
+    VelMode_Adr = CurrentBufferAdr + CurrentIndex
+    User_Adr = CurrentBufferAdr + CurrentIndex
+    Time_Adr = CurrentBufferAdr + CurrentIndex
+    If(X_Axis = 1)
+        X_Adr = CurrentBufferAdr + CurrentIndex + BufferLength
+    End If
+    If(Y_Axis = 1)
+        Y_Adr = CurrentBufferAdr + CurrentIndex + 2*BufferLength
+    End If
+    If(Z_Axis = 1)
+        Z_Adr = CurrentBufferAdr + CurrentIndex + 3*BufferLength
+    End If
+    If(U_Axis = 1)
+        U_Adr = CurrentBufferAdr + CurrentIndex + 4*BufferLength
+    End If
+    If(V_Axis = 1)
+        V_Adr = CurrentBufferAdr + CurrentIndex + 5*BufferLength
+    End If
+    If(W_Axis = 1)
+        W_Adr = CurrentBufferAdr + CurrentIndex + 6*BufferLength
+    End If
+    If(A_Axis = 1)
+        A_Adr = CurrentBufferAdr + CurrentIndex + 7*BufferLength
+    End If
+    If(B_Axis = 1)
+        B_Adr = CurrentBufferAdr + CurrentIndex + 8*BufferLength
+    End If
+    If(C_Axis = 1)
+        C_Adr = CurrentBufferAdr + CurrentIndex + 9*BufferLength
+    End If
 Return
 
 ; Subroutine 7 ************************************************************************************
@@ -444,44 +443,44 @@ Return
 ; *************************************************************************************************
 
 N7
-	; Set to Q Variables before move call to shorten command
-	Q1 = X_Coord
-	Q2 = X_Vel
-	Q3 = Y_Coord
-	Q4 = Y_Vel
-	Q5 = Z_Coord
-	Q6 = Z_Vel
-	Q7 = U_Coord
-	Q8 = U_Vel
-	Q9 = V_Coord
-	Q10 = V_Vel
-	Q11 = W_Coord
-	Q12 = W_Vel
-	Q13 = A_Coord
-	Q14 = A_Vel
-	Q15 = B_Coord
-	Q16 = B_Vel
-	Q17 = C_Coord
-	Q18 = C_Vel
+    ; Set to Q Variables before move call to shorten command
+    Q1 = X_Coord
+    Q2 = X_Vel
+    Q3 = Y_Coord
+    Q4 = Y_Vel
+    Q5 = Z_Coord
+    Q6 = Z_Vel
+    Q7 = U_Coord
+    Q8 = U_Vel
+    Q9 = V_Coord
+    Q10 = V_Vel
+    Q11 = W_Coord
+    Q12 = W_Vel
+    Q13 = A_Coord
+    Q14 = A_Vel
+    Q15 = B_Coord
+    Q16 = B_Vel
+    Q17 = C_Coord
+    Q18 = C_Vel
 
-	X(Q1):(Q2) Y(Q3):(Q4) Z(Q5):(Q6) U(Q7):(Q8) V(Q9):(Q10) W(Q11):(Q12) A(Q13):(Q14) B(Q15):(Q16) ;C(Q17):(Q18)
+    X(Q1):(Q2) Y(Q3):(Q4) Z(Q5):(Q6) U(Q7):(Q8) V(Q9):(Q10) W(Q11):(Q12) A(Q13):(Q14) B(Q15):(Q16) ;C(Q17):(Q18)
 Return
 
 N8
-	If(VelMode = 1)
-		GoSub3						; Prev -> Current
-		P4500 = P4500 + 1
-	EndIf
-	If(VelMode = 0 or VelMode > 2)
-		GoSub4						; Prev -> Next
-	EndIf
-	If(VelMode = 2)
-		GoSub5					; Current -> Next
-	EndIf
+    If(VelMode = 1)
+        GoSub3                          ; Prev -> Current
+        P4500 = P4500 + 1
+    EndIf
+    If(VelMode = 0 or VelMode > 2)
+        GoSub4                          ; Prev -> Next
+    EndIf
+    If(VelMode = 2)
+    GoSub5                              ; Current -> Next
+    EndIf
 Return
 
 N10
-	M4500 = 1
+    M4500 = 1
 Return
 
 Close
