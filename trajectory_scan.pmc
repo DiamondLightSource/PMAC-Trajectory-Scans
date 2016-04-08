@@ -22,6 +22,7 @@
 #define BufferFill_A		P(RootVar + 11)			; Fill level of buffer A
 #define BufferFill_B		P(RootVar + 12)			; Fill level of buffer B
 #define CurrentBufferFill	P(RootVar + 13)			; A or B buffer fill level
+#define PrevBufferFill		P(RootVar + 14)			; Fill level of previous buffer
 
 ; Motion Program Variables
 
@@ -163,6 +164,7 @@ CurrentBufferAdr = BufferAdr_A
 CurrentIndex = 0
 TotalPoints = 0
 CurrentBufferFill = BufferFill_A
+PrevBufferFill = BufferLength
 CurrentBuffer = 0
 M4500 = 0
 
@@ -180,23 +182,22 @@ CMD"Def Gat"	; Allocates all the available memory as gather buffer
 Dwell 0			; Force CMD lines to execute
 CMD"Gat"		; Starts gathering of the data
 
-While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS to stop program
+While(Abort != 1 and CurrentBufferFill > 0 and PrevBufferFill = BufferLength) ; Run indefinitely, but allow EPICS to stop program
 
 	P4201 = P4201 + 1
-	; <<< EPICS to set BUFFER_FILL here
 
-  If(P4201>1)
-    If(CurrentBuffer = 0)
-  		CurrentBufferAdr = BufferAdr_B
-  		CurrentBufferFill = BufferFill_B
-  		BufferFill_A = 0
-  		CurrentBuffer = 1
-  	Else
-  		CurrentBufferAdr = BufferAdr_A
-  		CurrentBufferFill = BufferFill_A
-  		BufferFill_B = 0
-  		CurrentBuffer = 0
-  	End If
+	If(P4201>1)
+		If(CurrentBuffer = 0)
+			CurrentBufferAdr = BufferAdr_B
+			CurrentBufferFill = BufferFill_B
+			BufferFill_A = 0
+			CurrentBuffer = 1
+		Else
+			CurrentBufferAdr = BufferAdr_A
+			CurrentBufferFill = BufferFill_A
+			BufferFill_B = 0
+			CurrentBuffer = 0
+		End If
 	End If
 
 	CurrentIndex = 0
@@ -232,14 +233,8 @@ While(Abort != 1 and CurrentBufferFill > 0) ; Run indefinitely, but allow EPICS 
 		
 	End While
 	
+	PrevBufferFill = CurrentBufferFill
 	GoSub2					; Shift previous and current coords to N-1th and Nth points in buffer
-	
-	If(CurrentBufferFill != BufferLength)				; Abort if buffer wasn't completely full
-		Abort = 1
-	End If
-	
-	; >>> Might need second move call because of double endif statements - won't merge otherwise
-		
 
 End While
 
