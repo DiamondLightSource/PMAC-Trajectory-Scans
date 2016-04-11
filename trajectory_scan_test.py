@@ -104,7 +104,7 @@ class AbortTests(unittest.TestCase):
         time.sleep(0.1)
 
         self.assertEqual(self.pmac.read_variable("P4001"), "3")
-        self.assertEqual(self.pmac.read_variable("P4002"), "1")
+        self.assertEqual(self.pmac.read_variable("P4002"), "0")
 
 
 class TrajectoryScanTest(unittest.TestCase):

@@ -11,7 +11,8 @@
 
 ; EPICS Required Variables
 
-#define Status              P(RootVar + 1)          ; Status of motion program for EPICS - 0: Initialised, 1: Active, 2: Idle, 3: Error
+#define Status              P(RootVar + 1)          ; Status of motion program for EPICS
+                                                    ; 0: Initialised, 1: Active, 2: Idle, 3: Error
 #define Abort               P(RootVar + 2)          ; Abort trigger for EPICS
 #define Axes                P(RootVar + 3)          ; An int between 1 and 511 specifying which axes to use
 #define BufferLength        P(RootVar + 4)          ; Length of a single buffer e.g. AX, AY...
@@ -28,6 +29,9 @@
 #define BufferFill_B        P(RootVar + 12)         ; Fill level of buffer B
 #define CurrentBufferFill   P(RootVar + 13)         ; A or B buffer fill level
 #define PrevBufferFill      P(RootVar + 14)         ; Fill level of previous buffer
+#define Error               P(RootVar + 15)         ; Error code
+                                                    ; 0: No error, 1: Invalid axes value,
+                                                    ; 2: Move time of 0, 3: Following error/ Run-time error
 
 ; Motion Program Variables
 
