@@ -52,7 +52,7 @@ CMD"Def Gat"    ; Allocates all the available memory as gather buffer
 Dwell 0         ; Force CMD lines to execute
 CMD"Gat"        ; Starts gathering of the data
 
-While(Abort = 0 and Error = 0 and CurrentBufferFill > 0 and PrevBufferFill = BufferLength) ; Run indefinitely, but allow EPICS to stop program
+While(Abort = 0 and Error = 0 and CurrentBufferFill > 0 and PrevBufferFill = BufferLength)
 
     P4201 = P4201 + 1
 
@@ -77,17 +77,12 @@ While(Abort = 0 and Error = 0 and CurrentBufferFill > 0 and PrevBufferFill = Buf
         P4202 = P4202 + 1
 
         Next_Time = Next_Time_N/4           ; Convert 1/4s of a ms into ms
+
         GoSub2                              ; Shift values through Next_* -> *_Coord -> Prev_*
-
-        ; Update Next_* addresses based on incremented `CurrentIndex`
-        GoSub3
-
-        PVT (Time)
-        ; Calculate velocities
-        GoSub4
-
-        ; Move axes
-        GoSub8
+        GoSub3                              ; Update Next_* addresses based on incremented `CurrentIndex`
+        PVT (Time)                          ; Set move time
+        GoSub4                              ; Calculate velocities
+        GoSub8                              ; Move axes
 
         ; Run any required subroutine
         If(User > 0)
@@ -106,7 +101,7 @@ While(Abort = 0 and Error = 0 and CurrentBufferFill > 0 and PrevBufferFill = Buf
     End While
 
     PrevBufferFill = CurrentBufferFill      ; Update previous buffer fill level to finish scan if it wasn't full
-    GoSub2                                  ; Shift previous and current coords to N-1th and Nth points in buffer
+    GoSub2                                  ; Shift previous/current coordinates to N-1th/Nth points in buffer
 
 End While
 
@@ -114,11 +109,11 @@ End While
 If(Status = 1)
     If(Abort = 0)
         GoSub2                  ; Shift to final points in buffer
-        PVT (Time)
+        PVT (Time)              ; Set move time
         GoSub7                  ; Prev->Current velocity calculation
         GoSub8                  ; Move axes
     End If
-    Status = 2              ; Set program finished (Idle status)
+    Status = 2                  ; Set program finished (Idle status)
 End If
 
 Dwell 0         ; Force CMD lines to execute
@@ -130,7 +125,7 @@ While(1=1)
 End While
 
 ; Subroutine 1 ************************************************************************************
-; Check that axes value is valid
+; Check that axes value is valid and assign required axes
 ; *************************************************************************************************
 N1
     If(Axes > 511 or Axes < 1)
@@ -211,7 +206,9 @@ Return
 ; Subroutines 4-7 *********************************************************************************
 ; Calculate velocities for next move - 4: Master, 5: Prev->Current, 6: Prev->Next, 7: Current->Next
 ; *************************************************************************************************
-; Multiply velocities by 1000 because units(Time): msec and units(velocity): sec in PVT move def
+
+; Velocities are multiplied by 1000 because the units of Time is milliseconds and the units
+; of velocity is user units/second in the PVT move definition
 
 N4
     If(VelMode = 1)
@@ -311,6 +308,10 @@ N8
     X(Q1):(Q2) Y(Q3):(Q4) Z(Q5):(Q6) U(Q7):(Q8) V(Q9):(Q10) W(Q11):(Q12) A(Q13):(Q14) B(Q15):(Q16) ;C(Q17):(Q18)
 Return
 
+; User Subroutines ********************************************************************************
+; Subroutines to be used via the user buffer - 10: Set Trigger High, 11: Set Trigger Low
+; *************************************************************************************************
+
 N10
     Trigger = 1
 Return
@@ -320,4 +321,3 @@ N11
 Return
 
 Close
-
