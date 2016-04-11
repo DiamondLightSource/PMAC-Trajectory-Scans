@@ -110,9 +110,9 @@ class UpdateVelocitiesTest(unittest.TestCase):
     def setUp(self):
         self.pmac = TesterPmacTestHarness()
 
-    @patch('PmacTestHarness_test.TesterPmacTestHarness.sendCommand',
+    @patch('PmacTestHarness_test.TesterPmacTestHarness.read_variable',
            side_effect=['10', '20', '30', '40', '50', '60', '70', '80', '90'])
-    def test_given_buffer_A_then_update(self, _):
+    def test_update_velocities(self, _):
         expected_address = {'a': '70',
                             'b': '80',
                             'c': '90',
@@ -135,11 +135,11 @@ class CommandsTest(unittest.TestCase):
 
     @patch('PmacTestHarness_test.TesterPmacTestHarness.sendCommand')
     def test_assign_motors_command(self, send_command_mock):
+        axis_map = ["100X", "", "100Y", "", "", "", "", "", ""]
 
-        self.pmac.assign_motors()
+        self.pmac.assign_motors(axis_map)
 
-        send_command_mock.assert_called_once_with(
-            "&1 #1->100X #2->100Y #3->Z #4->U #5->V #6->W #7->A #8->B")
+        send_command_mock.assert_called_once_with("&1 #1->100X #3->100Y")
 
     @patch('PmacTestHarness_test.TesterPmacTestHarness.sendCommand')
     def test_home_motors_command(self, send_command_mock):

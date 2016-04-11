@@ -72,20 +72,29 @@ class PmacTestHarness(PmacEthernetInterface):
 
         velocities = []
         for i in range(0, 9):
-            velocities.append(self.sendCommand("i{axis}16".format(axis=i)))
+            velocities.append(self.read_variable("i{axis}16".format(axis=i)))
 
         self.max_velocities = {'x': velocities[0], 'y': velocities[1], 'z': velocities[2],
                                'u': velocities[3], 'v': velocities[4], 'w': velocities[5],
                                'a': velocities[6], 'b': velocities[7], 'c': velocities[8]}
 
-    def assign_motors(self):
+    def assign_motors(self, axis_map):
         """
         Send command to assign motors to the required axes
 
+        Args:
+            axis_map(list(str)): List of axes to assign to motor, with scaling.
+            Index corresponds to motor number. e.g. ["100X", "", "25Y"] => &1 #1->100X #3->25Y
+
         """
 
-        self.sendCommand("&1 #1->100X #2->100Y #3->Z #4->U #5->V #6->W #7->A #8->B")
-        # self.sendCommand("&1 #1->100X #2->100Y")
+        command = "&1"
+
+        for axis_num, axis in enumerate(axis_map):
+            if axis:
+                command += " #{axis_num}->{axis}".format(axis_num=axis_num + 1, axis=axis)
+
+        self.sendCommand(command)
 
     def home_motors(self):
         """
@@ -104,7 +113,7 @@ class PmacTestHarness(PmacEthernetInterface):
 
         """
 
-        self.sendCommand("#1J/ #2J/ #3J/ #4J/ #5J/ #6J/ #7J/ #8J/ &{num} B{num} R".format(
+        self.sendCommand("#1J/ #2J/ #3J/ #4J/ #5J/ #6J/ #7J/ #8J/ &1 B{num} R".format(
                 num=str(program_num)))
         # self.sendCommand("#1J/ #2J/ &{num} B{num} R".format(
         #         num=str(program_num)))
