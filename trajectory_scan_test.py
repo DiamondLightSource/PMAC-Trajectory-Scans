@@ -38,14 +38,16 @@ class InitialisationTest(unittest.TestCase):
         self.pmac.run_motion_program(PROG_NUM)
 
         self.assertEqual(self.pmac.read_variable("P4001"), "3")
-        self.assertEqual(self.pmac.read_variable("P4002"), "1")
+        self.assertEqual(self.pmac.read_variable("P4002"), "0")
+        self.assertEqual(self.pmac.read_variable("P4015"), "1")
 
     def test_given_axes_too_low_then_error_status_and_abort(self):
         self.pmac.set_axes(0)
         self.pmac.run_motion_program(PROG_NUM)
 
         self.assertEqual(self.pmac.read_variable("P4001"), "3")
-        self.assertEqual(self.pmac.read_variable("P4002"), "1")
+        self.assertEqual(self.pmac.read_variable("P4002"), "0")
+        self.assertEqual(self.pmac.read_variable("P4015"), "1")
 
 
 class FillBuffersTest(unittest.TestCase):
@@ -117,6 +119,9 @@ class TrajectoryScanTest(unittest.TestCase):
         # self.pmac.reset_buffers()
         self.move_time = 250
 
+        self.circle_points = driver.generate_circle_points(self.move_time, 3600)
+        self.circle_points = self.pmac.convert_points_to_pmac_float(self.circle_points)
+
     def tearDown(self):
         self.pmac.force_abort()
         self.pmac.disconnect()
@@ -124,10 +129,7 @@ class TrajectoryScanTest(unittest.TestCase):
     def test_given_single_point_then_move(self):
 
         buffer_fill = 1
-
-        circle_points = driver.generate_circle_points(self.move_time)
-        circle_points = self.pmac.convert_points_to_pmac_float(circle_points)
-        current_points, _ = driver.grab_buffer_of_points(0, buffer_fill, circle_points)
+        current_points, _ = driver.grab_buffer_of_points(0, buffer_fill, self.circle_points)
 
         self.pmac.fill_current_buffer(current_points)
         self.pmac.set_buffer_fill(buffer_fill, current=True)
@@ -144,9 +146,7 @@ class TrajectoryScanTest(unittest.TestCase):
 
         buffer_fill = 25
 
-        circle_points = driver.generate_circle_points(self.move_time)
-        circle_points = self.pmac.convert_points_to_pmac_float(circle_points)
-        current_points, _ = driver.grab_buffer_of_points(0, buffer_fill, circle_points)
+        current_points, _ = driver.grab_buffer_of_points(0, buffer_fill, self.circle_points)
 
         self.pmac.fill_current_buffer(current_points)
         self.pmac.set_buffer_fill(buffer_fill, current=True)
@@ -163,9 +163,7 @@ class TrajectoryScanTest(unittest.TestCase):
 
         buffer_fill = int(self.pmac.buffer_length)
 
-        circle_points = driver.generate_circle_points(self.move_time)
-        circle_points = self.pmac.convert_points_to_pmac_float(circle_points)
-        current_points, _ = driver.grab_buffer_of_points(0, buffer_fill, circle_points)
+        current_points, _ = driver.grab_buffer_of_points(0, buffer_fill, self.circle_points)
 
         self.pmac.fill_current_buffer(current_points)
         self.pmac.set_buffer_fill(buffer_fill, current=True)
@@ -183,10 +181,8 @@ class TrajectoryScanTest(unittest.TestCase):
         buffer_fill_a = int(self.pmac.buffer_length)
         buffer_fill_b = 25
 
-        circle_points = driver.generate_circle_points(self.move_time)
-        circle_points = self.pmac.convert_points_to_pmac_float(circle_points)
-        a_points, _ = driver.grab_buffer_of_points(0, buffer_fill_a, circle_points)
-        b_points, _ = driver.grab_buffer_of_points(buffer_fill_a, buffer_fill_b, circle_points)
+        a_points, _ = driver.grab_buffer_of_points(0, buffer_fill_a, self.circle_points)
+        b_points, _ = driver.grab_buffer_of_points(buffer_fill_a, buffer_fill_b, self.circle_points)
 
         self.pmac.fill_current_buffer(a_points)
         self.pmac.set_buffer_fill(buffer_fill_a, current=True)
@@ -209,10 +205,8 @@ class TrajectoryScanTest(unittest.TestCase):
         buffer_fill_a = int(self.pmac.buffer_length)
         buffer_fill_b = int(self.pmac.buffer_length)
 
-        circle_points = driver.generate_circle_points(self.move_time)
-        circle_points = self.pmac.convert_points_to_pmac_float(circle_points)
-        a_points, _ = driver.grab_buffer_of_points(0, buffer_fill_a, circle_points)
-        b_points, _ = driver.grab_buffer_of_points(buffer_fill_a, buffer_fill_b, circle_points)
+        a_points, _ = driver.grab_buffer_of_points(0, buffer_fill_a, self.circle_points)
+        b_points, _ = driver.grab_buffer_of_points(buffer_fill_a, buffer_fill_b, self.circle_points)
 
         self.pmac.fill_current_buffer(a_points)
         self.pmac.set_buffer_fill(buffer_fill_a, current=True)
@@ -232,12 +226,10 @@ class TrajectoryScanTest(unittest.TestCase):
     def test_given_five_full_buffers_then_complete(self):
 
         buffer_fill_a = int(self.pmac.buffer_length)
-        buffer_fill_b = buffer_fill_a
+        buffer_fill_b = int(self.pmac.buffer_length)
 
-        circle_points = driver.generate_circle_points(self.move_time)
-        circle_points = self.pmac.convert_points_to_pmac_float(circle_points)
-        a_points, end = driver.grab_buffer_of_points(0, buffer_fill_a, circle_points)
-        b_points, end = driver.grab_buffer_of_points(end, buffer_fill_b, circle_points)
+        a_points, end = driver.grab_buffer_of_points(0, buffer_fill_a, self.circle_points)
+        b_points, end = driver.grab_buffer_of_points(end, buffer_fill_b, self.circle_points)
 
         self.pmac.fill_current_buffer(a_points)
         self.pmac.set_buffer_fill(buffer_fill_a, current=True)
@@ -252,14 +244,14 @@ class TrajectoryScanTest(unittest.TestCase):
         while num_buffers < 5:
 
             if self.pmac.prev_buffer_write == 1 and int(self.pmac.current_buffer) == 1:
-                a_points, end = driver.grab_buffer_of_points(end, buffer_fill_a, circle_points)
+                a_points, end = driver.grab_buffer_of_points(end, buffer_fill_a, self.circle_points)
                 self.pmac.fill_idle_buffer(a_points)
                 self.pmac.set_buffer_fill(buffer_fill_a)
                 self.pmac.prev_buffer_write = 0
                 num_buffers += 1
                 print("Filled buffer A")
             elif self.pmac.prev_buffer_write == 0 and int(self.pmac.current_buffer) == 0:
-                b_points, end = driver.grab_buffer_of_points(end, buffer_fill_b, circle_points)
+                b_points, end = driver.grab_buffer_of_points(end, buffer_fill_b, self.circle_points)
                 self.pmac.fill_idle_buffer(b_points)
                 self.pmac.set_buffer_fill(buffer_fill_b)
                 self.pmac.prev_buffer_write = 1
