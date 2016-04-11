@@ -92,9 +92,9 @@ def generate_snake_scan_w_vel(move_time, reverse=False):
     return points
 
 
-def generate_circle_points(move_time):
+def generate_circle_points(move_time, num_points):
 
-    time_points = ['$' + hex(move_time)[2:]]*3600
+    time_points = ["$" + PmacTestHarness.add_hex(hex(move_time)[2:], "20000000")]*3600
     x_points = []
     y_points = []
 
@@ -109,9 +109,9 @@ def generate_circle_points(move_time):
     return points
 
 
-def generate_sine_points(move_time, num_points):
+def generate_sine_points_one_axis(move_time, num_points):
 
-    time_points = ['$' + hex(move_time)[2:]]*1000
+    time_points = ['$' + hex(move_time)[2:]]*num_points
     x_points = []
 
     for angle in numpy.linspace(0.0, 360.0, num_points):
@@ -119,6 +119,29 @@ def generate_sine_points(move_time, num_points):
 
     points = {'time': time_points,
               'x': x_points}
+
+    return points
+
+
+def generate_sine_points_all_axes(move_time, num_points):
+
+    time_points = ["$" + PmacTestHarness.add_hex(hex(move_time)[2:], "20000000")]*num_points
+
+    points = []
+
+    for angle in numpy.linspace(0.0, 360.0, num_points):
+        points.append(numpy.sin(angle))
+
+    points = {'time': time_points,
+              'x': points,
+              'y': points,
+              'z': points,
+              'u': points,
+              'v': points,
+              'w': points,
+              'a': points,
+              'b': points,
+              'c': points}
 
     return points
 
@@ -253,12 +276,12 @@ def trajectory_scan_3():
     pmac = PmacTestHarness(IP_ADDRESS)
 
     pmac.force_abort()
-    pmac.assign_motors()
+    pmac.assign_motors(["100X", "100Y"])
     pmac.home_motors()
     # pmac.reset_buffers()
     pmac.set_axes(384)
 
-    circle_points = generate_circle_points(500)
+    circle_points = generate_circle_points(500, 3600)
     print(circle_points)
     print(len(circle_points['time']))
     print(len(circle_points['x']))

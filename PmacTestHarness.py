@@ -71,7 +71,7 @@ class PmacTestHarness(PmacEthernetInterface):
     def update_max_velocities(self):
 
         velocities = []
-        for i in range(0, 9):
+        for i in range(1, 10):
             velocities.append(self.read_variable("i{axis}16".format(axis=i)))
 
         self.max_velocities = {'x': velocities[0], 'y': velocities[1], 'z': velocities[2],
