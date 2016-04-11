@@ -4,6 +4,15 @@ import sys, re, socket, select, random, struct
 import threading, time
 import telnetlib
 
+
+def counted(fn):
+    def wrapper(*args, **kwargs):
+        wrapper.called += 1
+        return fn(*args, **kwargs)
+    wrapper.called = 0
+    wrapper.__name__ = fn.__name__
+    return wrapper
+
 class IOPmacSentNullError(IOError):
         pass
 
@@ -66,6 +75,7 @@ class RemotePmacInterface(object):
 	#								  Note that PMAC may still return an "ERRxxx" code; this function will still
 	#								  consider that a successful transmission.
 	#		  * response (str): is either a string returned by the PMAC (on success), or an error message (on failure)
+	@counted
 	def sendCommand(self, command, shouldWait = True):
 		# Submit the command to the low level function _sendCommand().
 		# If I/O with the PMAC fails, return as a failure case.
