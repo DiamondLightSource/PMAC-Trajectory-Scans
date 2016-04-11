@@ -12,7 +12,7 @@ class InitialisationTest(unittest.TestCase):
 
     def setUp(self):
         self.pmac = PmacTestHarness(PMAC_IP)
-        self.pmac.assign_motors()
+        self.pmac.assign_motors(["100X", "100Y"])
 
     def tearDown(self):
         self.pmac.force_abort()
@@ -72,7 +72,7 @@ class AbortTests(unittest.TestCase):
 
     def setUp(self):
         self.pmac = PmacTestHarness(PMAC_IP)
-        self.pmac.assign_motors()
+        self.pmac.assign_motors(["100X", "100Y"])
         self.pmac.home_motors()
         self.pmac.set_axes(256)
 
@@ -81,7 +81,8 @@ class AbortTests(unittest.TestCase):
         self.pmac.disconnect()
 
     def test_given_running_and_abort_command_then_abort(self):
-        self.pmac.send_points(driver.generate_lin_points(50, 500), current=True)
+        points = self.pmac.convert_points_to_pmac_float({'time': ['$190', '$190', '$190'], 'x': [1, 2, 3]})
+        self.pmac.fill_current_buffer(points)
         self.pmac.set_buffer_fill(50, current=True)
         self.pmac.run_motion_program(PROG_NUM)
 
@@ -96,7 +97,8 @@ class AbortTests(unittest.TestCase):
         self.assertEqual(self.pmac.read_variable("P4002"), "1")
 
     def test_given_time_0_then_abort_and_status_3(self):
-        self.pmac.send_points({'time': [0, 0, 0], 'x': [1, 2, 3]}, current=True)
+        points = self.pmac.convert_points_to_pmac_float({'time': ['$0', '$0', '$0'], 'x': [1, 2, 3]})
+        self.pmac.fill_current_buffer(points)
         self.pmac.set_buffer_fill(3, current=True)
         self.pmac.run_motion_program(PROG_NUM)
         time.sleep(0.1)
@@ -109,7 +111,7 @@ class TrajectoryScanTest(unittest.TestCase):
 
     def setUp(self):
         self.pmac = PmacTestHarness(PMAC_IP)
-        self.pmac.assign_motors()
+        self.pmac.assign_motors(["100X", "100Y"])
         self.pmac.home_motors()
         self.pmac.set_axes(384)
         # self.pmac.reset_buffers()
@@ -275,176 +277,3 @@ class TrajectoryScanTest(unittest.TestCase):
         self.assertEqual("0", self.pmac.read_variable("P4002"))
         self.assertEqual(str(3*buffer_fill_a + 2*buffer_fill_b),
                          self.pmac.read_variable("P4005"))
-
-
-class WriteTest(unittest.TestCase):
-
-    def setUp(self):
-        self.pmac = PmacTestHarness(PMAC_IP)
-        self.pmac.assign_motors()
-        self.pmac.home_motors()
-        self.pmac.set_axes(384)
-        self.pmac.reset_buffers()
-
-    def tearDown(self):
-        self.pmac.force_abort()
-        self.pmac.disconnect()
-
-    def test_message_length(self):
-        values = ""
-        num_values = 16
-        pmac_10 = self.pmac.double_to_pmac_float(10)
-
-        for _ in range(0, num_values - 1):
-            values += pmac_10 + ","
-        values += pmac_10
-        buffer_set = "P4011=1000"
-
-        command = "WL$30000," + values + buffer_set
-
-        print(command)
-        print(len(command))
-
-        self.pmac.sendCommand(command)
-        points = self.pmac.read_points(num_values)
-
-        print(points)
-
-    def test_message_speed(self):
-        values = ""
-        num_values = 16
-
-        for _ in range(0, num_values - 1):
-            values += self.pmac.double_to_pmac_float(10)
-        values += "$500000000803"
-        buffer_set = "P4011=1000"
-
-        command1 = "WL$30000," + values + buffer_set
-        print(len(command1))
-
-        times = []
-        for i in range(0, 20):
-            start_time = time.time()
-            for j in range(0, 100):
-                self.pmac.sendCommand(command1)
-                # print(j)
-            times.append(time.time() - start_time)
-
-        print(times)
-
-    def test_buffer_fill_time_one_axis(self):
-        time_values = ""
-        x_values = ""
-        num_values = 8
-        buffer_length = 1000
-        buffer_fill = 0
-        time_address = "30000"
-        x_address = self.pmac.add_dechex("30000", buffer_length)
-        pmac_10 = self.pmac.double_to_pmac_float(10)
-
-        for _ in range(0, num_values - 1):
-            time_values += pmac_10 + ","
-        time_values += pmac_10
-        for _ in range(0, num_values - 1):
-            x_values += pmac_10 + ","
-        x_values += pmac_10
-
-        start_time = time.time()
-        while buffer_length - buffer_fill >= num_values:
-            buffer_fill += num_values
-            buffer_set = "P4011=" + str(buffer_fill)
-            command = "WL$" + time_address + "," + time_values + \
-                      "WL$" + x_address + "," + x_values + buffer_set
-            self.pmac.sendCommand(command)
-            time_address = self.pmac.add_dechex(time_address, num_values)
-            x_address = self.pmac.add_dechex(x_address, num_values)
-
-        print(command)
-        print(len(command))
-
-        time_values = ""
-        x_values = ""
-        num_values = buffer_fill - buffer_length
-
-        for _ in range(0, num_values - 1):
-            time_values += "100,"
-        time_values += "100"
-        for _ in range(0, num_values - 1):
-            x_values += pmac_10 + ","
-        x_values += pmac_10
-
-        buffer_set = "P4011=1000"
-        command = "WL$" + time_address + "," + time_values + "WL$" + x_address + "," + x_values
-        self.pmac.sendCommand(command + " " + buffer_set)
-
-        print(time.time() - start_time)
-        self.pmac.buffer_length = 1000
-        points = self.pmac.read_points(1000)
-        print(points)
-
-    def test_buffer_fill_time_nine_axes(self):
-        num_values = 1
-        buffer_length = 1000
-        buffer_fill = 0
-
-        time_values = ""
-        values = ""
-        pmac_10 = self.pmac.double_to_pmac_float(10)
-
-        time_address = "30000"
-        x_address = self.pmac.add_dechex("30000", buffer_length)
-        y_address = self.pmac.add_dechex("30000", 2*buffer_length)
-        z_address = self.pmac.add_dechex("30000", 3*buffer_length)
-        u_address = self.pmac.add_dechex("30000", 4*buffer_length)
-        v_address = self.pmac.add_dechex("30000", 5*buffer_length)
-        w_address = self.pmac.add_dechex("30000", 6*buffer_length)
-        a_address = self.pmac.add_dechex("30000", 7*buffer_length)
-        b_address = self.pmac.add_dechex("30000", 8*buffer_length)
-        c_address = self.pmac.add_dechex("30000", 9*buffer_length)
-
-        for _ in range(0, num_values - 1):
-            time_values += "100,"
-        time_values += "100"
-        for _ in range(0, num_values - 1):
-            values += pmac_10 + ","
-        values += pmac_10
-
-        start_time = time.time()
-        while buffer_length - buffer_fill >= num_values:
-            buffer_fill += num_values
-            buffer_set = "P4011=" + str(buffer_fill)
-            command = "WL$" + time_address + "," + time_values + "WL$" + x_address + "," + values + \
-                      "WL$" + y_address + "," + values + "WL$" + z_address + "," + values + \
-                      "WL$" + u_address + "," + values + "WL$" + v_address + "," + values + \
-                      "WL$" + w_address + "," + values + "WL$" + a_address + "," + values + \
-                      "WL$" + b_address + "," + values + "WL$" + c_address + "," + values + buffer_set
-
-            self.pmac.sendCommand(command + buffer_set)
-            time_address = self.pmac.add_dechex(time_address, num_values)
-            x_address = self.pmac.add_dechex(x_address, num_values)
-            y_address = self.pmac.add_dechex(y_address, num_values)
-            z_address = self.pmac.add_dechex(z_address, num_values)
-            u_address = self.pmac.add_dechex(u_address, num_values)
-            v_address = self.pmac.add_dechex(v_address, num_values)
-            w_address = self.pmac.add_dechex(w_address, num_values)
-            a_address = self.pmac.add_dechex(a_address, num_values)
-            b_address = self.pmac.add_dechex(b_address, num_values)
-            c_address = self.pmac.add_dechex(c_address, num_values)
-
-        print(command)
-        print(len(command))
-        print(time.time() - start_time)
-        self.pmac.buffer_length = 1000
-        # points = self.pmac.read_points(1000, num_axes=9)
-        # print(points)
-        # print(len(points))
-
-    def test_float_parsing(self):
-        self.pmac.sendCommand("M4500->L:$30000,0,48")
-
-        value = 10
-        pmac_float = self.pmac.double_to_pmac_float(value)
-        print(str(value) + ' : ' + str(pmac_float))
-        self.pmac.write_to_address("L", "30000", pmac_float)
-        self.assertAlmostEqual(value, float(self.pmac.read_variable("M4500")), places=5)
-
