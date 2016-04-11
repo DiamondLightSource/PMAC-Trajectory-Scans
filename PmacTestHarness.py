@@ -69,6 +69,10 @@ class PmacTestHarness(PmacEthernetInterface):
                           'c': self.add_dechex(root_address, 9*int(self.buffer_length))}
 
     def update_max_velocities(self):
+        """
+        Read the maximum allowed velocities from variables ix16 on the PMAC
+
+        """
 
         velocities = []
         for i in range(1, 10):
@@ -244,11 +248,14 @@ class PmacTestHarness(PmacEthernetInterface):
 
         """
 
-        current_address = self.buffer_address_a
+        zeroes = ['$0']*int(self.buffer_length)
+        reset_points = {'time': zeroes[:],
+                        'x': zeroes[:], 'y': zeroes[:], 'z': zeroes[:],
+                        'u': zeroes[:], 'v': zeroes[:], 'w': zeroes[:],
+                        'a': zeroes[:], 'b': zeroes[:], 'c': zeroes[:]}
 
-        for _ in range(0, int(self.buffer_length)*10*2):
-            self.write_to_address("L", current_address, "0")
-            current_address = self.inc_hex(current_address)
+        self.fill_current_buffer(reset_points)
+        self.fill_idle_buffer(reset_points)
 
     def convert_points_to_pmac_float(self, points):
         """
@@ -384,16 +391,16 @@ class PmacTestHarness(PmacEthernetInterface):
             if axis and len(axis) != num_points:
                 raise ValueError("Point set must have equal points in all axes")
 
-        for axis in points.iterkeys():
-            address = self.addresses[axis]
-            while len(points[axis]) > 0:
-                command_details = {'mode': 'L', 'address': address, 'points': points[axis]}
+        for axis_num, axis_points in points.iteritems():
+            address = self.addresses[axis_num]
+            while len(axis_points) > 0:
+                command_details = {'mode': 'L', 'address': address, 'points': axis_points}
                 response = self._construct_write_command_and_remove_used_points(command_details)
 
                 self.sendCommand(response['command'])
 
                 address = self.add_dechex(address, response['num_sent'])
-                points[axis] = response['points']
+                axis_points = response['points']
 
     def set_buffer_fill(self, fill_level, current=False):
         """

@@ -280,15 +280,25 @@ class ResetBuffersTest(unittest.TestCase):
 
     def setUp(self):
         self.pmac = TesterPmacTestHarness()
-        self.num_points = int(self.pmac.buffer_length)*10*2
+        self.pmac.buffer_length = 5
 
-    @patch('PmacTestHarness_test.TesterPmacTestHarness.write_to_address')
-    def test_buffers_set_to_zero(self, write_mock):
+    @patch('PmacTestHarness_test.TesterPmacTestHarness.fill_current_buffer')
+    @patch('PmacTestHarness_test.TesterPmacTestHarness.fill_idle_buffer')
+    def test_buffers_set_to_zero(self, idle_mock, current_mock):
         self.pmac.reset_buffers()
+        expected_call = {'time': ['$0', '$0', '$0', '$0', '$0'],
+                         'x': ['$0', '$0', '$0', '$0', '$0'],
+                         'y': ['$0', '$0', '$0', '$0', '$0'],
+                         'z': ['$0', '$0', '$0', '$0', '$0'],
+                         'u': ['$0', '$0', '$0', '$0', '$0'],
+                         'v': ['$0', '$0', '$0', '$0', '$0'],
+                         'w': ['$0', '$0', '$0', '$0', '$0'],
+                         'a': ['$0', '$0', '$0', '$0', '$0'],
+                         'b': ['$0', '$0', '$0', '$0', '$0'],
+                         'c': ['$0', '$0', '$0', '$0', '$0']}
 
-        self.assertEqual(write_mock.call_args_list[0][0], ("L", "30000", "0"))
-        self.assertEqual(write_mock.call_args_list[-1][0], ("L", ANY, "0"))
-        self.assertEqual(write_mock.call_count, self.num_points)
+        current_mock.assert_called_once_with(expected_call)
+        idle_mock.assert_called_once_with(expected_call)
 
 
 class ConvertPointsToPmacFloat(unittest.TestCase):
