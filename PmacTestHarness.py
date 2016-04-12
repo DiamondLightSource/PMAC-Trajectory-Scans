@@ -313,11 +313,49 @@ class PmacTestHarness(PmacEthernetInterface):
 
         print("Points sent to " + self.addresses['time'])
 
-    def set_point_vel_mode(self, coord, num):
-        raise NotImplementedError
+    @staticmethod
+    def set_point_vel_mode(coord, velocity_mode):
+        """
+        Add velocity mode to time coordinate
 
-    def set_subroutine(self, coord, num):
-        raise NotImplementedError
+        Args:
+            coord(str): Time coordinate
+            velocity_mode(int): Velocity mode to set; 0, 1 or 2
+
+        Returns:
+            Updated time coordinate
+
+        """
+
+        if velocity_mode in [0, 1, 2]:
+            velocity_specifier = "{vel_mode}0000000".format(vel_mode=velocity_mode)
+            new_coord = "$" + PmacTestHarness.add_hex(coord[1:], velocity_specifier)
+        else:
+            raise ValueError("Velocity mode must be 0, 1 or 2")
+
+        return new_coord
+
+    @staticmethod
+    def set_point_subroutine(coord, subroutine):
+        """
+        Add subroutine call to time coordinate
+
+        Args:
+            coord(str): Time coordinate
+            subroutine(str): Subroutine to set; A, B, C, D, E or F
+
+        Returns:
+            Updated time coordinate
+
+        """
+
+        if subroutine in ["A", "B", "C", "D", "E", "F"]:
+            velocity_specifier = "{vel_mode}000000".format(vel_mode=subroutine)
+            new_coord = "$" + PmacTestHarness.add_hex(coord[1:], velocity_specifier)
+        else:
+            raise ValueError("Subroutine must be A, B, C, D, E or F")
+
+        return new_coord
 
     @staticmethod
     def _construct_write_command_and_remove_used_points(command_details):

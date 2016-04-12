@@ -183,7 +183,7 @@ class SetAbortTest(unittest.TestCase):
         self.pmac = TesterPmacTestHarness()
 
     @patch('PmacTestHarness_test.TesterPmacTestHarness.set_variable')
-    def test_axes_set(self, set_variable_mock):
+    def test_abort_set(self, set_variable_mock):
         self.pmac.set_abort()
 
         set_variable_mock.assert_called_once_with("P4002", "1")
@@ -518,6 +518,50 @@ class SetBufferFill(unittest.TestCase):
         self.pmac.set_buffer_fill(50, current=False)
 
         set_variable_mock.assert_called_once_with("P4012", "50")
+
+
+class SetPointSpecifiersTest(unittest.TestCase):
+
+    def setUp(self):
+        self.pmac = TesterPmacTestHarness()
+
+    def test_given_valid_vel_mode_then_set(self):
+        vel_mode = 1
+        time = "$10"
+        expected_new_time = "$10000010"
+
+        new_time = self.pmac.set_point_vel_mode(time, vel_mode)
+
+        self.assertEqual(expected_new_time, new_time)
+
+    def test_given_invalid_vel_mode_then_error(self):
+        vel_mode = 3
+        time = "$10"
+        expected_error = "Velocity mode must be 0, 1 or 2"
+
+        with self.assertRaises(ValueError) as error:
+            self.pmac.set_point_vel_mode(time, vel_mode)
+
+        self.assertEqual(expected_error, error.exception.message)
+
+    def test_given_valid_subroutine_then_set(self):
+        subroutine = "A"
+        time = "$10"
+        expected_new_time = "$a000010"
+
+        new_time = self.pmac.set_point_subroutine(time, subroutine)
+
+        self.assertEqual(expected_new_time, new_time)
+
+    def test_given_invalid_subroutine_then_error(self):
+        vel_mode = 3
+        time = "$10"
+        expected_error = "Subroutine must be A, B, C, D, E or F"
+
+        with self.assertRaises(ValueError) as error:
+            self.pmac.set_point_subroutine(time, vel_mode)
+
+        self.assertEqual(expected_error, error.exception.message)
 
 
 class DecHexConverterTest(unittest.TestCase):
