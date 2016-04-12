@@ -554,12 +554,12 @@ class SetPointSpecifiersTest(unittest.TestCase):
         self.assertEqual(expected_new_time, new_time)
 
     def test_given_invalid_subroutine_then_error(self):
-        vel_mode = 3
+        subroutine = "3"
         time = "$10"
         expected_error = "Subroutine must be A, B, C, D, E or F"
 
         with self.assertRaises(ValueError) as error:
-            self.pmac.set_point_subroutine(time, vel_mode)
+            self.pmac.set_point_subroutine(time, subroutine)
 
         self.assertEqual(expected_error, error.exception.message)
 

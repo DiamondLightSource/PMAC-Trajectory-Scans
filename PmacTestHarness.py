@@ -23,6 +23,7 @@ class PmacTestHarness(PmacEthernetInterface):
         self.connect()
 
         self.status = self.read_variable("P4001")  # Change to int() ?
+        self.error = self.read_variable("P4015")
         self.total_points = 0
         self.current_index = 0
         self.current_buffer = 0
@@ -44,6 +45,7 @@ class PmacTestHarness(PmacEthernetInterface):
         """
 
         self.status = int(self.read_variable("P4001"))
+        self.error = int(self.read_variable("P4015"))
         self.total_points = int(self.read_variable("P4005"))
         self.current_index = int(self.read_variable("P4006"))
         self.current_buffer = int(self.read_variable("P4007"))
@@ -119,8 +121,6 @@ class PmacTestHarness(PmacEthernetInterface):
 
         self.sendCommand("#1J/ #2J/ #3J/ #4J/ #5J/ #6J/ #7J/ #8J/ &1 B{num} R".format(
                 num=str(program_num)))
-        # self.sendCommand("#1J/ #2J/ &{num} B{num} R".format(
-        #         num=str(program_num)))
 
     def force_abort(self):
         """
@@ -143,7 +143,7 @@ class PmacTestHarness(PmacEthernetInterface):
         Send number of require axes
 
         Args:
-            axes(int): Int between 1 and 510 that will be split into 8 bits specifying the
+            axes(int): Int between 1 and 511 that will be split into 9 bits specifying the
             required motors
             e.g. X, Y and Z = 256 + 128 + 64 = 448; X, Y and U = 256 + 128 + 32 = 416
         """
@@ -319,7 +319,7 @@ class PmacTestHarness(PmacEthernetInterface):
         Add velocity mode to time coordinate
 
         Args:
-            coord(str): Time coordinate
+            coord(str): Time coordinate in hex
             velocity_mode(int): Velocity mode to set; 0, 1 or 2
 
         Returns:
@@ -341,7 +341,7 @@ class PmacTestHarness(PmacEthernetInterface):
         Add subroutine call to time coordinate
 
         Args:
-            coord(str): Time coordinate
+            coord(str): Time coordinate in hex
             subroutine(str): Subroutine to set; A, B, C, D, E or F
 
         Returns:
