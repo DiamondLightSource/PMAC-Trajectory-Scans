@@ -42,7 +42,7 @@ def generate_snake_scan(move_time, reverse=False):
 
     points = {'time': [], 'x': [], 'y': []}
 
-    for i in range(0, 50):
+    for _ in range(0, 50):
         points['time'].append(move_time)
 
     if reverse:
