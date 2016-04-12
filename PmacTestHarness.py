@@ -440,23 +440,33 @@ class PmacTestHarness(PmacEthernetInterface):
                 address = self.add_dechex(address, response['num_sent'])
                 axis_points = response['points']
 
-    def set_buffer_fill(self, fill_level, current=False):
+    def set_idle_buffer_fill(self, fill_level):
         """
-        Set the buffer fill level of a buffer. If current is False, the currently unused buffer will
-        be set. If current is True, the current buffer will be set.
+        Set the buffer fill level of the idle buffer.
 
         Args:
             fill_level(int): Number of coordinate sets in buffer
-            current(int): A 1 or 0 to specify which buffer to set
 
         """
 
-        buffer_toggle = int(current)
-
-        if self.current_buffer == buffer_toggle:
+        if self.current_buffer == 0:
             self.set_variable("P4012", str(fill_level))
         else:
             self.set_variable("P4011", str(fill_level))
+
+    def set_current_buffer_fill(self, fill_level):
+        """
+        Set the buffer fill level of the current buffer.
+
+        Args:
+            fill_level(int): Number of coordinate sets in buffer
+
+        """
+
+        if self.current_buffer == 0:
+            self.set_variable("P4011", str(fill_level))
+        else:
+            self.set_variable("P4012", str(fill_level))
 
     def read_points(self, num_points, buffer_num=0, num_axes=1):
         """

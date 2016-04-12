@@ -501,8 +501,21 @@ class ReadPointsTest(unittest.TestCase):
            side_effect=[100, 100, 100, 200, 200, 200, 300, 300, 300,
                         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                         0, 0, 0, 0, 0, 0, 0, 0, 0])
-    def test_read_points(self, _):
-        pmac_buffer = self.pmac.read_points(3, num_axes=2)
+    def test_given_buffer_A_then_read(self, _):
+        pmac_buffer = self.pmac.read_points(3, buffer_num=0, num_axes=2)
+
+        points = [100, 100, 100,
+                  200, 200, 200,
+                  300, 300, 300]
+
+        self.assertEqual(pmac_buffer[:9], points)
+
+    @patch('PmacTestHarness_test.TesterPmacTestHarness.read_address',
+           side_effect=[100, 100, 100, 200, 200, 200, 300, 300, 300,
+                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                        0, 0, 0, 0, 0, 0, 0, 0, 0])
+    def test_given_buffer_A_then_read(self, _):
+        pmac_buffer = self.pmac.read_points(3, buffer_num=1, num_axes=2)
 
         points = [100, 100, 100,
                   200, 200, 200,
@@ -511,22 +524,38 @@ class ReadPointsTest(unittest.TestCase):
         self.assertEqual(pmac_buffer[:9], points)
 
 
-class SetBufferFill(unittest.TestCase):
+class SetBufferFillTest(unittest.TestCase):
 
     def setUp(self):
         self.pmac = TesterPmacTestHarness()
 
     @patch('PmacTestHarness_test.TesterPmacTestHarness.set_variable')
-    def test_given_current_True_then_A_buffer_set(self, set_variable_mock):
-        self.pmac.set_buffer_fill(50, current=True)
+    def test_current_given_A_active_then_A_buffer_set(self, set_variable_mock):
+        self.pmac.current_buffer = 0
+        self.pmac.set_current_buffer_fill(50)
 
         set_variable_mock.assert_called_once_with("P4011", "50")
 
     @patch('PmacTestHarness_test.TesterPmacTestHarness.set_variable')
-    def test_given_current_True_then_A_buffer_set(self, set_variable_mock):
-        self.pmac.set_buffer_fill(50, current=False)
+    def test_current_given_B_active_then_B_buffer_set(self, set_variable_mock):
+        self.pmac.current_buffer = 1
+        self.pmac.set_current_buffer_fill(50)
 
         set_variable_mock.assert_called_once_with("P4012", "50")
+
+    @patch('PmacTestHarness_test.TesterPmacTestHarness.set_variable')
+    def test_idle_given_A_active_then_B_buffer_set(self, set_variable_mock):
+        self.pmac.current_buffer = 0
+        self.pmac.set_idle_buffer_fill(50)
+
+        set_variable_mock.assert_called_once_with("P4012", "50")
+
+    @patch('PmacTestHarness_test.TesterPmacTestHarness.set_variable')
+    def test_current_given_B_active_then_A_buffer_set(self, set_variable_mock):
+        self.pmac.current_buffer = 1
+        self.pmac.set_idle_buffer_fill(50)
+
+        set_variable_mock.assert_called_once_with("P4011", "50")
 
 
 class SetPointSpecifiersTest(unittest.TestCase):
@@ -610,6 +639,13 @@ class DecHexConverterTest(unittest.TestCase):
 
 
 class DoubleToPmacFloatTest(unittest.TestCase):
+
+    def test_given_zero_then_return_zero(self):
+
+        value = '$0'
+        pmac_float = PmacTestHarness.double_to_pmac_float(0)
+
+        self.assertEqual(pmac_float, value)
 
     def test_given_positive_then_convert(self):
 
