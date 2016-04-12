@@ -136,7 +136,7 @@ def format_point_set(points):
 
 def generate_circle_points(move_time, num_points):
 
-    time_points = ["$" + PmacTestHarness.add_hex(hex(move_time)[2:], "20000000")]*num_points
+    time_points = ["$" + hex(move_time)[2:]]*num_points
     x_points = []
     y_points = []
 
