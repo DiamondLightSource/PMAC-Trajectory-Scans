@@ -62,27 +62,40 @@ def generate_snake_scan(move_time, reverse=False):
     return points
 
 
-def generate_snake_scan_w_vel(move_time, reverse=False):
+def generate_snake_scan_w_vel(trajectory):
+
+    move_time = trajectory['move_time']
+    width = trajectory['width']
+    length = trajectory['length']
+    direction = trajectory['direction']
 
     points = {'time': [], 'x': [], 'y': []}
+    trigger = 0
 
-    for i in range(0, 50):
-        if (i+1) % 5 == 0 and i > 0:
-            points['time'].append("$" + PmacTestHarness.add_hex(hex(move_time)[2:], "10000000"))
-        elif i % 5 == 0 and i > 0:
-            points['time'].append("$" + PmacTestHarness.add_hex(hex(move_time)[2:], "20000000"))
-        else:
-            if i == 60:
-                points['time'].append("$" + PmacTestHarness.add_hex(hex(move_time)[2:], "A000000"))
+    for i in range(0, width*length):
+        time_point = "$" + hex(move_time)[2:]
+
+        if (i+1) % width == 0 and i > 0:
+            time_point = PmacTestHarness.set_point_vel_mode(time_point, 1)
+        elif i % width == 0 and i > 0:
+            time_point = PmacTestHarness.set_point_vel_mode(time_point, 2)
+
+        if (i+1) % width == width/2:
+            if trigger == 0:
+                time_point = PmacTestHarness.set_point_subroutine(time_point, "A")
+                trigger = 1
             else:
-                points['time'].append("$" + hex(move_time)[2:])
+                time_point = PmacTestHarness.set_point_subroutine(time_point, "B")
+                trigger = 0
 
-    if reverse:
-        raise NotImplementedError("Reverse not implemented")
-    else:
-        xs = LineGenerator("x", "mm", 0, 10, 5)
-        ys = LineGenerator("y", "mm", 0, 10, 5)
+        points['time'].append(time_point)
+
+    if direction == 0:
+        xs = LineGenerator("x", "mm", 0, 10, width)
+        ys = LineGenerator("y", "mm", 0, 10, length)
         gen = NestedGenerator(ys, xs, snake=True)
+    else:
+        raise NotImplementedError("Reverse not implemented")
 
     for point in gen.iterator():
         points['x'].append(PmacTestHarness.double_to_pmac_float(int(point.positions['x'])))
@@ -94,11 +107,11 @@ def generate_snake_scan_w_vel(move_time, reverse=False):
 
 def generate_circle_points(move_time, num_points):
 
-    time_points = ["$" + PmacTestHarness.add_hex(hex(move_time)[2:], "20000000")]*3600
+    time_points = ["$" + PmacTestHarness.add_hex(hex(move_time)[2:], "20000000")]*num_points
     x_points = []
     y_points = []
 
-    for angle in numpy.linspace(0.0, 360.0, 3600):
+    for angle in numpy.linspace(0.0, 360.0, num_points):
         x_points.append(numpy.sin(angle))
         y_points.append(numpy.cos(angle))
 
@@ -231,22 +244,28 @@ def trajectory_scan():
                   str(pmac.current_index) + " - Total Points: " + str(pmac.total_points))
 
 
-def trajectory_scan_2():
+def snake_scan():
 
     pmac = PmacTestHarness(IP_ADDRESS)
 
     pmac.force_abort()
-    pmac.assign_motors()
+    pmac.assign_motors(["5X", "5Y"])
     pmac.home_motors()
-    # pmac.reset_buffers()
+    pmac.reset_buffers()
     pmac.set_axes(384)
 
-    snake_points = generate_snake_scan_w_vel(1003)
-    for axis in snake_points:
+    width = 10
+    length = 10
+    trajectory = {'move_time': 4000,
+                  'width': width,
+                  'length': length,
+                  'direction': 0}
+    snake_points = generate_snake_scan_w_vel(trajectory)
+    for axis in snake_points.iteritems():
         print(axis)
 
-    buffer_fill = 50
-    pmac.send_points(snake_points, current=True)
+    buffer_fill = width * length
+    pmac.fill_current_buffer(snake_points)
     pmac.set_buffer_fill(buffer_fill, current=True)
 
     pmac.run_motion_program(1)
@@ -258,20 +277,21 @@ def trajectory_scan_2():
 
     while int(pmac.status) == 1:
 
-        time.sleep(0.25)
+        time.sleep(1)
 
         pmac.update_status_variables()
         print(pmac.read_variable("M4011"))
+        print(pmac.read_variable("M4016"))
 
         if pmac.current_buffer == 0:
-            print("Status: " + str(pmac.status) + " - Buffer: A" + " - Index: " +
+            print("Status: " + str(pmac.status) + " - Error: " + str(pmac.error) + " - Buffer: A" + " - Index: " +
                   str(pmac.current_index) + " - Total Points: " + str(pmac.total_points))
         else:
-            print("Status: " + str(pmac.status) + " - Buffer: B" + " - Index: " +
+            print("Status: " + str(pmac.status) + " - Error: " + str(pmac.error) + " - Buffer: B" + " - Index: " +
                   str(pmac.current_index) + " - Total Points: " + str(pmac.total_points))
 
 
-def trajectory_scan_3():
+def circle_scan():
 
     pmac = PmacTestHarness(IP_ADDRESS)
 
@@ -343,8 +363,8 @@ def trajectory_scan_3():
 def main():
 
     # trajectory_scan()
-    # trajectory_scan_2()
-    trajectory_scan_3()
+    snake_scan()
+    # circle_scan()
 
 if __name__ == "__main__":
     main()
