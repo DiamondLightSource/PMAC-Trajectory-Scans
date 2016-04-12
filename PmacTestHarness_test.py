@@ -10,6 +10,7 @@ class TesterPmacTestHarness(PmacTestHarness):
     def __init__(self):
 
         self.status = "1"
+        self.status = "0"
         self.total_points = 0
         self.current_index = 0
         self.current_buffer = 0
@@ -28,9 +29,10 @@ class InitTest(unittest.TestCase):
         self.pmac = PmacTestHarness("test")
 
         self.assertEqual(read_variable_mock.call_args_list[0][0][0], "P4001")
-        self.assertEqual(read_variable_mock.call_args_list[1][0][0], "P4004")
-        self.assertEqual(read_variable_mock.call_args_list[2][0][0], "P4008")
-        self.assertEqual(read_variable_mock.call_args_list[3][0][0], "P4009")
+        self.assertEqual(read_variable_mock.call_args_list[1][0][0], "P4015")
+        self.assertEqual(read_variable_mock.call_args_list[2][0][0], "P4004")
+        self.assertEqual(read_variable_mock.call_args_list[3][0][0], "P4008")
+        self.assertEqual(read_variable_mock.call_args_list[4][0][0], "P4009")
 
 
 class UpdateStatusVariablesTest(unittest.TestCase):
@@ -46,25 +48,32 @@ class UpdateStatusVariablesTest(unittest.TestCase):
         self.assertEqual(read_variable_mock.call_args_list[0][0][0], "P4001")
 
     @patch('PmacTestHarness_test.TesterPmacTestHarness.read_variable', return_value="0")
+    def test_error_updated(self, read_variable_mock):
+
+        self.pmac.update_status_variables()
+        self.assertEqual(self.pmac.total_points, 0)
+        self.assertEqual(read_variable_mock.call_args_list[1][0][0], "P4015")
+
+    @patch('PmacTestHarness_test.TesterPmacTestHarness.read_variable', return_value="0")
     def test_total_points_updated(self, read_variable_mock):
 
         self.pmac.update_status_variables()
         self.assertEqual(self.pmac.total_points, 0)
-        self.assertEqual(read_variable_mock.call_args_list[1][0][0], "P4005")
+        self.assertEqual(read_variable_mock.call_args_list[2][0][0], "P4005")
 
     @patch('PmacTestHarness_test.TesterPmacTestHarness.read_variable', return_value="0")
     def test_current_index_updated(self, read_variable_mock):
 
         self.pmac.update_status_variables()
         self.assertEqual(self.pmac.current_index, 0)
-        self.assertEqual(read_variable_mock.call_args_list[2][0][0], "P4006")
+        self.assertEqual(read_variable_mock.call_args_list[3][0][0], "P4006")
 
     @patch('PmacTestHarness_test.TesterPmacTestHarness.read_variable', return_value="0")
     def test_current_buffer_updated(self, read_variable_mock):
 
         self.pmac.update_status_variables()
         self.assertEqual(self.pmac.current_buffer, 0)
-        self.assertEqual(read_variable_mock.call_args_list[3][0][0], "P4007")
+        self.assertEqual(read_variable_mock.call_args_list[4][0][0], "P4007")
 
 
 class UpdateAddressesTest(unittest.TestCase):
@@ -545,7 +554,7 @@ class SetPointSpecifiersTest(unittest.TestCase):
         self.assertEqual(expected_error, error.exception.message)
 
     def test_given_valid_subroutine_then_set(self):
-        subroutine = "A"
+        subroutine = 10
         time = "$10"
         expected_new_time = "$a000010"
 
@@ -554,9 +563,9 @@ class SetPointSpecifiersTest(unittest.TestCase):
         self.assertEqual(expected_new_time, new_time)
 
     def test_given_invalid_subroutine_then_error(self):
-        subroutine = "3"
+        subroutine = 3
         time = "$10"
-        expected_error = "Subroutine must be A, B, C, D, E or F"
+        expected_error = "Subroutine must be in range 10 - 16"
 
         with self.assertRaises(ValueError) as error:
             self.pmac.set_point_subroutine(time, subroutine)

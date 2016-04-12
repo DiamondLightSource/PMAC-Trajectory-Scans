@@ -342,18 +342,18 @@ class PmacTestHarness(PmacEthernetInterface):
 
         Args:
             coord(str): Time coordinate in hex
-            subroutine(str): Subroutine to set; A, B, C, D, E or F
+            subroutine(int): Subroutine to set; 10-16
 
         Returns:
             Updated time coordinate
 
         """
 
-        if subroutine in ["A", "B", "C", "D", "E", "F"]:
-            velocity_specifier = "{vel_mode}000000".format(vel_mode=subroutine)
+        if subroutine in range(10, 16):
+            velocity_specifier = "{vel_mode}000000".format(vel_mode=hex(subroutine)[2:])
             new_coord = "$" + PmacTestHarness.add_hex(coord[1:], velocity_specifier)
         else:
-            raise ValueError("Subroutine must be A, B, C, D, E or F")
+            raise ValueError("Subroutine must be in range 10 - 16")
 
         return new_coord
 
