@@ -153,7 +153,7 @@ def generate_circle_points(move_time, num_points):
 
 def generate_sine_points_one_axis(move_time, num_points):
 
-    time_points = ['$' + hex(move_time)[2:]]*num_points
+    time_points = ["$" + PmacTestHarness.add_hex(hex(move_time)[2:], "20000000")]*num_points
     x_points = []
 
     for angle in numpy.linspace(0.0, 360.0, num_points):
@@ -212,7 +212,7 @@ def trajectory_scan():
 
     pmac = PmacTestHarness(IP_ADDRESS)
 
-    pmac.assign_motors()
+    pmac.assign_motors(["5X", "5Y"])
     pmac.home_motors()
     pmac.reset_buffers()
     pmac.set_axes(384)
@@ -226,8 +226,8 @@ def trajectory_scan():
     buffer_fill_b = 50
     pmac.send_points(line_points, current=True)
     pmac.send_points(snake_points)
-    pmac.set_buffer_fill(buffer_fill_a, current=True)
-    pmac.set_buffer_fill(buffer_fill_b)
+    pmac.set_current_buffer_fill(buffer_fill_a)
+    pmac.set_idle_buffer_fill(buffer_fill_b)
 
     pmac.run_motion_program(1)
 
@@ -247,7 +247,7 @@ def trajectory_scan():
             else:
                 a_points = line_points
             pmac.send_points(a_points)
-            pmac.set_buffer_fill(buffer_fill_a)
+            pmac.set_idle_buffer_fill(buffer_fill_a)
             pmac.prev_buffer_write = 0
         elif pmac.prev_buffer_write == 0 and int(pmac.current_buffer) == 0:
             if b_points == line_points:
@@ -255,7 +255,7 @@ def trajectory_scan():
             else:
                 b_points = line_points
             pmac.send_points(b_points)
-            pmac.set_buffer_fill(buffer_fill_b)
+            pmac.set_idle_buffer_fill(buffer_fill_b)
             pmac.prev_buffer_write = 1
 
         time.sleep(0.25)
@@ -298,7 +298,7 @@ def snake_scan():
 
     buffer_fill = width * length
     pmac.fill_current_buffer(snake_points)
-    pmac.set_buffer_fill(buffer_fill, current=True)
+    pmac.set_current_buffer_fill(buffer_fill)
 
     pmac.run_motion_program(1)
 
@@ -316,11 +316,13 @@ def snake_scan():
         print(pmac.read_variable("M4016"))
 
         if pmac.current_buffer == 0:
-            print("Status: " + str(pmac.status) + " - Error: " + str(pmac.error) + " - Buffer: A" + " - Index: " +
-                  str(pmac.current_index) + " - Total Points: " + str(pmac.total_points))
+            print("Status: " + str(pmac.status) + " - Error: " + str(pmac.error) +
+                  " - Buffer: A" + " - Index: " + str(pmac.current_index) +
+                  " - Total Points: " + str(pmac.total_points))
         else:
-            print("Status: " + str(pmac.status) + " - Error: " + str(pmac.error) + " - Buffer: B" + " - Index: " +
-                  str(pmac.current_index) + " - Total Points: " + str(pmac.total_points))
+            print("Status: " + str(pmac.status) + " - Error: " + str(pmac.error) +
+                  " - Buffer: B" + " - Index: " + str(pmac.current_index) +
+                  " - Total Points: " + str(pmac.total_points))
 
 
 def circle_scan():
@@ -330,7 +332,7 @@ def circle_scan():
     pmac.force_abort()
     pmac.assign_motors(["100X", "100Y"])
     pmac.home_motors()
-    # pmac.reset_buffers()
+    pmac.reset_buffers()
     pmac.set_axes(384)
 
     circle_points = generate_circle_points(500, 3600)
@@ -346,7 +348,7 @@ def circle_scan():
     current_start = end + 1
 
     pmac.fill_current_buffer(current_points)
-    pmac.set_buffer_fill(buffer_length, current=True)
+    pmac.set_current_buffer_fill(buffer_length)
     pmac.prev_buffer_write = 0
 
     start_time = time.time()
@@ -363,7 +365,7 @@ def circle_scan():
             current_start = end + 1
 
             pmac.fill_idle_buffer(current_points)
-            pmac.set_buffer_fill(buffer_length)
+            pmac.set_idle_buffer_fill(buffer_length)
             pmac.prev_buffer_write = 0
 
         elif pmac.prev_buffer_write == 0 and int(pmac.current_buffer) == 0:
@@ -371,7 +373,7 @@ def circle_scan():
             current_start = end + 1
 
             pmac.fill_idle_buffer(current_points)
-            pmac.set_buffer_fill(buffer_length)
+            pmac.set_idle_buffer_fill(buffer_length)
             pmac.prev_buffer_write = 1
 
         time.sleep(0.1)

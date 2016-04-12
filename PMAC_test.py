@@ -41,7 +41,7 @@ class WriteTest(unittest.TestCase):
 
         start_time = time.time()
         self.pmac.fill_current_buffer(sine_points)
-        self.pmac.set_buffer_fill(buffer_fill)
+        self.pmac.set_current_buffer_fill(buffer_fill)
         print("Time to fill buffers: " + str(time.time() - start_time))
         print("Messages sent: " + str(self.pmac.sendCommand.called))
 
@@ -49,18 +49,18 @@ class WriteTest(unittest.TestCase):
 
         buffer_fill = int(self.pmac.buffer_length)
 
-        circle_points = driver.generate_circle_points(400, 3600)
-        circle_points = self.pmac.convert_points_to_pmac_float(circle_points)
-        buffer_points, _ = driver.grab_buffer_of_points(0, buffer_fill, circle_points)
+        sine_points = driver.generate_sine_points_one_axis(400, 1000)
+        sine_points = self.pmac.convert_points_to_pmac_float(sine_points)
+        sine_points['y'] = sine_points['x'][:]
 
         length = 0
-        for axis in buffer_points.itervalues():
+        for axis in sine_points.itervalues():
             length += length_str_in_list(axis)
         print("Total message length: " + str(length))
 
         start_time = time.time()
-        self.pmac.fill_current_buffer(buffer_points)
-        self.pmac.set_buffer_fill(buffer_fill)
+        self.pmac.fill_current_buffer(sine_points)
+        self.pmac.set_current_buffer_fill(buffer_fill)
         print("Time to fill buffers: " + str(time.time() - start_time))
         print("Messages sent: " + str(self.pmac.sendCommand.called))
 
@@ -78,7 +78,7 @@ class WriteTest(unittest.TestCase):
 
         start_time = time.time()
         self.pmac.fill_current_buffer(sine_points)
-        self.pmac.set_buffer_fill(buffer_fill)
+        self.pmac.set_current_buffer_fill(buffer_fill)
         print("Time to fill buffers: " + str(time.time() - start_time))
         print("Messages sent: " + str(self.pmac.sendCommand.called))
 
