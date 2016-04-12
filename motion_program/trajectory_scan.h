@@ -76,6 +76,7 @@
 BlankAddress->D:$BlankAdr,0,48
 
 #define Trigger             M4016
+Trigger->Y:$30005,0,24
 
 #define RTE                 M4017
 RTE->Y:$203F,22
