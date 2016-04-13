@@ -1,10 +1,11 @@
 from dls_pmacremote import PmacEthernetInterface
+from PmacCoordinateSystem import PmacCoordinateSystem as PmacCS
 
 
 class PmacTestHarness(PmacEthernetInterface):
     """
-    A pmac controller that can interface with and control the `trajectory_scan` motion program
-    as the EPICS driver does.
+    A pmac controller that can interface with and control the `trajectory_scan` motion
+    program as the EPICS driver does.
     """
 
     def __init__(self, ip_address):
@@ -31,6 +32,7 @@ class PmacTestHarness(PmacEthernetInterface):
         self.buffer_address_a = str(hex(int(self.read_variable("P4008")))[2:])
         self.buffer_address_b = str(hex(int(self.read_variable("P4009")))[2:])
         self.addresses = {}
+        self.coordinate_system = PmacCS(1)
 
         self.prev_buffer_write = 1
 
@@ -38,9 +40,26 @@ class PmacTestHarness(PmacEthernetInterface):
                                'u': 0, 'v': 0, 'w': 0,
                                'a': 0, 'b': 0, 'c': 0}
 
+    def add_coordinate_system(self, cs_instance):
+
+        self.coordinate_system = cs_instance
+
+    def read_cs_max_velocities(self):
+        """
+        Read the maximum allowed velocities from variables ix16 on the PMAC
+
+        """
+
+        velocities = []
+        for i in range(1, 10):
+            velocities.append(self.read_variable("i{axis}16".format(axis=i)))
+
+        self.coordinate_system.set_max_velocities(velocities)
+
     def update_status_variables(self):
         """
-        Update status, total points scanned, current index and current buffer specifier from the pmac
+        Update status, total points scanned, current index and current buffer specifier
+        from the pmac
 
         """
 
@@ -70,35 +89,22 @@ class PmacTestHarness(PmacEthernetInterface):
                           'b': self.add_dechex(root_address, 8*int(self.buffer_length)),
                           'c': self.add_dechex(root_address, 9*int(self.buffer_length))}
 
-    def update_max_velocities(self):
-        """
-        Read the maximum allowed velocities from variables ix16 on the PMAC
-
-        """
-
-        velocities = []
-        for i in range(1, 10):
-            velocities.append(self.read_variable("i{axis}16".format(axis=i)))
-
-        self.max_velocities = {'x': velocities[0], 'y': velocities[1], 'z': velocities[2],
-                               'u': velocities[3], 'v': velocities[4], 'w': velocities[5],
-                               'a': velocities[6], 'b': velocities[7], 'c': velocities[8]}
-
     def assign_motors(self, axis_map):
         """
         Send command to assign motors to the required axes
 
         Args:
             axis_map(list(str)): List of axes to assign to motor, with scaling.
-            Index corresponds to motor number. e.g. ["100X", "", "25Y"] => &1 #1->100X #3->25Y
+            e.g. [(1, "X", 100), (3, "Y", 25)] => &1 #1->100X #3->25Y
 
         """
 
         command = "&1"
-
-        for axis_num, axis in enumerate(axis_map):
-            if axis:
-                command += " #{axis_num}->{axis}".format(axis_num=axis_num + 1, axis=axis)
+        for motor, axis, scaling in axis_map:
+            self.coordinate_system.add_motor_assignment(motor, axis, scaling)
+            command += \
+                " #{motor_num}->{scaling}{axis}".format(
+                    motor_num=motor, scaling=scaling, axis=axis)
 
         self.sendCommand(command)
 
@@ -108,7 +114,11 @@ class PmacTestHarness(PmacEthernetInterface):
 
         """
 
-        self.sendCommand("#1HMZ #2HMZ #3HMZ #4HMZ #5HMZ #6HMZ #7HMZ #8HMZ #9HMZ")
+        command = ""
+        for motor in self.coordinate_system.axis_map.iterkeys():
+            command += "#{motor}HMZ".format(motor=motor)
+
+        self.sendCommand(command)
 
     def run_motion_program(self, program_num):
         """
@@ -119,8 +129,22 @@ class PmacTestHarness(PmacEthernetInterface):
 
         """
 
-        self.sendCommand("#1J/ #2J/ #3J/ #4J/ #5J/ #6J/ #7J/ #8J/ &1 B{num} R".format(
-                num=str(program_num)))
+        command = ""
+        for motor in self.coordinate_system.axis_map.iterkeys():
+            command += "#{motor}J/".format(motor=motor)
+        command += "&" + str(self.coordinate_system.cs_number)
+        command += "B" + str(program_num) + "R"
+
+        self.sendCommand(command)
+
+    # def check_program_exists(self):
+    #
+    #     response, _ = self.sendCommand("List Prog 1")
+    #
+    #     if len(response) > 50:
+    #         return True
+    #     else:
+    #         return False
 
     def force_abort(self):
         """
@@ -144,8 +168,8 @@ class PmacTestHarness(PmacEthernetInterface):
 
         Args:
             axes(int): Int between 1 and 511 that will be split into 9 bits specifying the
-            required motors
-            e.g. X, Y and Z = 256 + 128 + 64 = 448; X, Y and U = 256 + 128 + 32 = 416
+            required motors e.g. X, Y and Z = 256 + 128 + 64 = 448;
+            X, Y and U = 256 + 128 + 32 = 416
         """
 
         self.set_variable("P4003", str(axes))
@@ -282,9 +306,9 @@ class PmacTestHarness(PmacEthernetInterface):
 
     def send_points(self, points, current=False):
         """
-        Send points to fill a buffer. If current is False, the currently unused buffer will be filled.
-        If current is True, the current buffer will be filled (e.g. for filling both buffers before
-        program is run).
+        Send points to fill a buffer. If current is False, the currently unused buffer
+        will be filled. If current is True, the current buffer will be filled
+        (e.g. for filling both buffers before program is run).
 
         Args:
             points(list(list(int))): List of lists of the time and coordinates for each move
@@ -367,7 +391,8 @@ class PmacTestHarness(PmacEthernetInterface):
             command_details(dict): The write mode, address and point set to send
 
         Returns:
-            dict: The resulting command, the remaining point set and the number of points sent
+            dict: The resulting command, the remaining point set and the number of
+            points sent
         """
 
         command = 'W' + command_details['mode'] + '$' + command_details['address']
@@ -433,7 +458,8 @@ class PmacTestHarness(PmacEthernetInterface):
             address = self.addresses[axis_num]
             while len(axis_points) > 0:
                 command_details = {'mode': 'L', 'address': address, 'points': axis_points}
-                response = self._construct_write_command_and_remove_used_points(command_details)
+                response = self._construct_write_command_and_remove_used_points(
+                    command_details)
 
                 self.sendCommand(response['command'])
 

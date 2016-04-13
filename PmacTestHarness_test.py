@@ -1,4 +1,5 @@
 from PmacTestHarness import PmacTestHarness
+from PmacCoordinateSystem import PmacCoordinateSystem
 import unittest
 from pkg_resources import require
 require("mock")
@@ -18,6 +19,7 @@ class TesterPmacTestHarness(PmacTestHarness):
         self.buffer_address_a = "30000"
         self.buffer_address_b = "30226"
         self.addresses = {}
+        self.coordinate_system = PmacCoordinateSystem(1)
 
         self.prev_buffer_write = 1
 
@@ -118,20 +120,13 @@ class UpdateVelocitiesTest(unittest.TestCase):
 
     @patch('PmacTestHarness_test.TesterPmacTestHarness.read_variable',
            side_effect=['10', '20', '30', '40', '50', '60', '70', '80', '90'])
-    def test_update_velocities(self, _):
-        expected_address = {'a': '70',
-                            'b': '80',
-                            'c': '90',
-                            'u': '40',
-                            'v': '50',
-                            'w': '60',
-                            'x': '10',
-                            'y': '20',
-                            'z': '30'}
+    @patch('PmacCoordinateSystem.PmacCoordinateSystem.set_max_velocities')
+    def test_update_velocities(self, set_max_vel_mock, _):
+        expected_call = ['10', '20', '30', '40', '50', '60', '70', '80', '90']
 
-        self.pmac.update_max_velocities()
+        self.pmac.read_cs_max_velocities()
 
-        self.assertEqual(expected_address, self.pmac.max_velocities)
+        set_max_vel_mock.assert_called_once_with(expected_call)
 
 
 @patch('PmacTestHarness_test.TesterPmacTestHarness.sendCommand')
@@ -140,26 +135,33 @@ class CommandsTest(unittest.TestCase):
     def setUp(self):
         self.pmac = TesterPmacTestHarness()
 
-    def test_assign_motors_command(self, send_command_mock):
-        axis_map = ["100X", "", "100Y", "", "", "", "", "", ""]
+    @patch('PmacCoordinateSystem.PmacCoordinateSystem.add_motor_assignment')
+    def test_assign_motors_command(self, add_motor_mock, send_command_mock):
+        axis_map = [(1, "X", 100), (3, "Y", 25)]
 
         self.pmac.assign_motors(axis_map)
 
-        send_command_mock.assert_called_once_with("&1 #1->100X #3->100Y")
+        call_list = [call[0] for call in add_motor_mock.call_args_list]
+        self.assertIn(axis_map[0], call_list)
+        self.assertIn(axis_map[1], call_list)
+        send_command_mock.assert_called_once_with("&1 #1->100X #3->25Y")
 
     def test_home_motors_command(self, send_command_mock):
-
+        self.pmac.coordinate_system.add_motor_assignment(1, "X", 1)
+        self.pmac.coordinate_system.add_motor_assignment(2, "Y", 1)
         self.pmac.home_motors()
 
         send_command_mock.assert_called_once_with(
-            "#1HMZ #2HMZ #3HMZ #4HMZ #5HMZ #6HMZ #7HMZ #8HMZ #9HMZ")
+            "#1HMZ#2HMZ")
 
     def test_run_motion_program_command(self, send_command_mock):
+        self.pmac.coordinate_system.add_motor_assignment(1, "X", 1)
+        self.pmac.coordinate_system.add_motor_assignment(2, "Y", 1)
 
         self.pmac.run_motion_program(1)
 
         send_command_mock.assert_called_once_with(
-            "#1J/ #2J/ #3J/ #4J/ #5J/ #6J/ #7J/ #8J/ &1 B1 R")
+            "#1J/#2J/&1B1R")
 
     def test_abort_command(self, send_command_mock):
 
@@ -167,6 +169,18 @@ class CommandsTest(unittest.TestCase):
 
         send_command_mock.assert_called_once_with("A")
 
+#
+# class CheckProgramExistsTest(unittest.TestCase):
+#
+#     def setUp(self):
+#         self.pmac = TesterPmacTestHarness()
+#
+#     def test_check_program_exists(self):
+#
+#         exists = self.pmac.check_program_exists()
+#
+#         self.assertTrue(exists)
+#
 
 class SetAxesTest(unittest.TestCase):
 
