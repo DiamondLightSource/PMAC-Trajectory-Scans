@@ -10,18 +10,24 @@ import numpy
 IP_ADDRESS = "172.23.253.15"
 
 
-def check_max_velocity_of_points(points, max_velocities):
+def check_max_velocity_of_points(points, cs):
 
-    for axis, axis_points in points.itervalues():
-        for point_num in range(1, len(axis)):
-            next_point = axis_points[point_num]
-            prev_point = axis_points[point_num - 1]
-            move_time = points['time'][point_num]
-            max_velocity = max_velocities[axis]
+    for axis, axis_points in points.iteritems():
 
-            if (next_point - prev_point)/move_time > max_velocity:
-                raise ValueError(
-                    "Points set will exceed maximum velocity for motor {}".format(axis))
+        if axis_points and axis != 'time':
+            max_velocity = float(cs.max_velocities[axis])               # cts/ms
+            max_vel_egu = max_velocity / cs.axis_map[axis.upper()][1]   # egus/ms
+
+            for point_num in range(1, len(axis_points)):
+                next_point = float(axis_points[point_num])
+                prev_point = float(axis_points[point_num - 1])
+                move_time = float(points['time'][point_num]['time_val'])/4  # 1/4s of a ms -> ms
+
+                velocity = (next_point - prev_point)/move_time
+                if velocity > max_vel_egu:
+                    raise ValueError(
+                        "Points set will exceed maximum velocity for motor {}".format(axis))
+    print("Velocities OK!")
 
 
 def generate_lin_points(num_points, move_time):
@@ -278,7 +284,7 @@ def snake_scan():
     pmac = PmacTestHarness(IP_ADDRESS)
 
     pmac.force_abort()
-    pmac.assign_motors(["5X", "5Y"])
+    pmac.assign_motors([(1, "X", 5), (2, "Y", 5)])
     pmac.home_motors()
     pmac.reset_buffers()
     pmac.set_axes(384)
@@ -292,6 +298,7 @@ def snake_scan():
     snake_points = generate_snake_scan_w_vel(trajectory)
     for axis in snake_points.iteritems():
         print(axis)
+    check_max_velocity_of_points(snake_points, pmac.coordinate_system)
     snake_points = format_point_set(snake_points)
     for axis in snake_points.iteritems():
         print(axis)
