@@ -12,6 +12,7 @@ class InitTest(unittest.TestCase):
         self.pmacCS = PmacCoordinateSystem(cs_num)
 
         self.assertEqual(self.pmacCS.cs_number, cs_num)
+        self.assertEqual(self.pmacCS.motor_map, {})
         self.assertEqual(self.pmacCS.axis_map, {})
         self.assertEqual(self.pmacCS.max_velocities, {'x': 0, 'y': 0, 'z': 0,
                                                       'u': 0, 'v': 0, 'w': 0,
@@ -30,7 +31,8 @@ class AddMotorAssignmentTest(unittest.TestCase):
 
         self.PmacCS.add_motor_assignment(motor, axis, scaling)
 
-        self.assertEqual((axis, scaling), self.PmacCS.axis_map[str(motor)])
+        self.assertEqual((axis, scaling), self.PmacCS.motor_map[str(motor)])
+        self.assertEqual((motor, scaling), self.PmacCS.axis_map[str(axis)])
 
 
 class SetMaxVelocitiesTest(unittest.TestCase):

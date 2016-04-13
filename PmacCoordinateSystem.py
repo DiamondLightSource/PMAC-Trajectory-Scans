@@ -6,6 +6,7 @@ class PmacCoordinateSystem(object):
 
         self.cs_number = cs_num
 
+        self.motor_map = {}
         self.axis_map = {}
 
         self.max_velocities = {'x': 0, 'y': 0, 'z': 0,
@@ -14,7 +15,8 @@ class PmacCoordinateSystem(object):
 
     def add_motor_assignment(self, motor, axis, scaling):
 
-        self.axis_map[str(motor)] = (axis, scaling)
+        self.motor_map[str(motor)] = (axis, scaling)
+        self.axis_map[str(axis)] = (motor, scaling)
 
     def set_max_velocities(self, velocities):
 

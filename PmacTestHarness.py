@@ -33,6 +33,7 @@ class PmacTestHarness(PmacEthernetInterface):
         self.buffer_address_b = str(hex(int(self.read_variable("P4009")))[2:])
         self.addresses = {}
         self.coordinate_system = PmacCS(1)
+        self.read_cs_max_velocities()
 
         self.prev_buffer_write = 1
 
@@ -115,7 +116,7 @@ class PmacTestHarness(PmacEthernetInterface):
         """
 
         command = ""
-        for motor in self.coordinate_system.axis_map.iterkeys():
+        for motor in self.coordinate_system.motor_map.iterkeys():
             command += "#{motor}HMZ".format(motor=motor)
 
         self.sendCommand(command)
@@ -130,7 +131,7 @@ class PmacTestHarness(PmacEthernetInterface):
         """
 
         command = ""
-        for motor in self.coordinate_system.axis_map.iterkeys():
+        for motor in self.coordinate_system.motor_map.iterkeys():
             command += "#{motor}J/".format(motor=motor)
         command += "&" + str(self.coordinate_system.cs_number)
         command += "B" + str(program_num) + "R"
