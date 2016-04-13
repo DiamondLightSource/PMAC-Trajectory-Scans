@@ -169,7 +169,37 @@ class CommandsTest(unittest.TestCase):
 
         send_command_mock.assert_called_once_with("A")
 
-#
+    def test_read_motor_position_command(self, send_command_mock):
+
+        self.pmac.read_motor_position(1)
+
+        send_command_mock.assert_called_once_with("#1P")
+
+    def test_read_motor_velocity_command(self, send_command_mock):
+
+        self.pmac.read_motor_velocity(1)
+
+        send_command_mock.assert_called_once_with("#1V")
+
+
+class SetCurrentCoordinatesTest(unittest.TestCase):
+
+    def setUp(self):
+        self.pmac = TesterPmacTestHarness()
+
+    @patch('PmacTestHarness_test.TesterPmacTestHarness.read_motor_position',
+           side_effect=["10", "20"])
+    @patch('PmacTestHarness_test.TesterPmacTestHarness.set_variable')
+    def test_set_initial_coordinates_makes_correct_calls(self, set_variable_mock, _):
+        self.pmac.coordinate_system.motor_map = {"1": ("X", 50), "2": ("Y", 20)}
+
+        self.pmac.set_initial_coordinates()
+
+        call_list = [call[0] for call in set_variable_mock.call_args_list]
+        self.assertIn(("P4111", "500"), call_list)
+        self.assertIn(("P4112", "400"), call_list)
+
+
 # class CheckProgramExistsTest(unittest.TestCase):
 #
 #     def setUp(self):
@@ -180,7 +210,7 @@ class CommandsTest(unittest.TestCase):
 #         exists = self.pmac.check_program_exists()
 #
 #         self.assertTrue(exists)
-#
+
 
 class SetAxesTest(unittest.TestCase):
 

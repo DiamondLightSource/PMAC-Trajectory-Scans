@@ -338,6 +338,51 @@ class PmacTestHarness(PmacEthernetInterface):
 
         print("Points sent to " + self.addresses['time'])
 
+    def read_motor_position(self, motor_num):
+        """
+        Request current position of give motor
+
+        Args:
+            motor_num(int): Motor to read position for
+
+        Returns:
+            str: Current position of motor
+
+        """
+
+        position = self.sendCommand("#{motor}P".format(motor=motor_num))
+
+        return position
+
+    def read_motor_velocity(self, motor_num):
+        """
+        Request current velocity of give motor
+
+        Args:
+            motor_num(int): Motor to read velocity for
+
+        Returns:
+            str: Current velocity of motor
+
+        """
+
+        position = self.sendCommand("#{motor}V".format(motor=motor_num))
+
+        return position
+
+    def set_initial_coordinates(self):
+        """
+        Set *_Coord values for required axes to be the actual motor positions; these act
+        as the start positions for the motion program
+
+        """
+
+        for motor_num, axis_assignment in self.coordinate_system.motor_map.iteritems():
+            egu_scaling = axis_assignment[1]
+            current_position = str(int(self.read_motor_position(motor_num)) * egu_scaling)
+
+            self.set_variable("P411" + motor_num, current_position)
+
     @staticmethod
     def set_point_vel_mode(coord, velocity_mode):
         """
