@@ -214,6 +214,30 @@ def grab_buffer_of_points(start, length, points):
     return points_grab, end
 
 
+def make_status_message(pmac, start_time, sleep_time):
+
+    time.sleep(sleep_time)
+
+    pmac.update_status_variables()
+
+    if pmac.current_buffer == 0:
+        status_message = "Buffer: A"
+    else:
+        status_message = "Buffer: B"
+
+    scan_time = str(numpy.round(time.time() - start_time, 2))
+
+    status_message += (" - Status: " + str(pmac.status) +
+                       " - Error: " + str(pmac.error) +
+                       " - Index: " + str(pmac.current_index) +
+                       " - Total Points: " + str(pmac.total_points) +
+                       " - VelMode: " + pmac.read_variable("M4011") +
+                       " - Trigger State: " + pmac.read_variable("M4016") +
+                       " - Scan Time: " + scan_time)
+
+    return status_message
+
+
 def trajectory_scan():
 
     pmac = PmacTestHarness(IP_ADDRESS)
@@ -284,7 +308,7 @@ def snake_scan():
     pmac = PmacTestHarness(IP_ADDRESS)
 
     pmac.force_abort()
-    pmac.assign_motors([(1, "X", 5), (2, "Y", 5)])
+    pmac.assign_motors([(1, "X", 50), (2, "Y", 50)])
     pmac.home_motors()
     pmac.reset_buffers()
     pmac.set_axes(384)
@@ -307,6 +331,7 @@ def snake_scan():
     pmac.fill_current_buffer(snake_points)
     pmac.set_current_buffer_fill(buffer_fill)
 
+    start_time = time.time()
     pmac.run_motion_program(1)
 
     time.sleep(3)
@@ -315,21 +340,8 @@ def snake_scan():
     print("Status: " + str(pmac.status))
 
     while int(pmac.status) == 1:
-
-        time.sleep(1)
-
-        pmac.update_status_variables()
-        print(pmac.read_variable("M4011"))
-        print(pmac.read_variable("M4016"))
-
-        if pmac.current_buffer == 0:
-            print("Status: " + str(pmac.status) + " - Error: " + str(pmac.error) +
-                  " - Buffer: A" + " - Index: " + str(pmac.current_index) +
-                  " - Total Points: " + str(pmac.total_points))
-        else:
-            print("Status: " + str(pmac.status) + " - Error: " + str(pmac.error) +
-                  " - Buffer: B" + " - Index: " + str(pmac.current_index) +
-                  " - Total Points: " + str(pmac.total_points))
+        status_message = make_status_message(pmac, start_time, 1)
+        print(status_message)
 
 
 def circle_scan():
@@ -383,22 +395,8 @@ def circle_scan():
             pmac.set_idle_buffer_fill(buffer_length)
             pmac.prev_buffer_write = 1
 
-        time.sleep(0.1)
-
-        if 1 > 2:
-            pmac.setVar("P4007", 1)  # End Program
-
-        pmac.update_status_variables()
-        scan_time = str(numpy.round(time.time() - start_time, 2))
-
-        if pmac.current_buffer == 0:
-            print("Status: " + str(pmac.status) + " - Buffer: A" + " - Index: " +
-                  str(pmac.current_index) + " - Total Points: " + str(pmac.total_points) +
-                  " - Scan Time: " + scan_time)
-        else:
-            print("Status: " + str(pmac.status) + " - Buffer: B" + " - Index: " +
-                  str(pmac.current_index) + " - Total Points: " + str(pmac.total_points) +
-                  " - Scan Time: " + scan_time)
+        status_message = make_status_message(pmac, start_time, 0.1)
+        print(status_message)
 
 
 def main():
