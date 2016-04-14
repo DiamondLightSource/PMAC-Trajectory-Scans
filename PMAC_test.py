@@ -1,5 +1,5 @@
 from PmacTestHarness import PmacTestHarness
-import trajectory_scan_driver as driver
+from TrajectoryScanGenerator import TrajectoryScanGenerator as ScanGen
 import unittest
 import time
 
@@ -31,16 +31,17 @@ class WriteTest(unittest.TestCase):
 
         buffer_fill = int(self.pmac.buffer_length)
 
-        sine_points = driver.generate_sine_points_one_axis(400, 1000)
-        sine_points = self.pmac.convert_points_to_pmac_float(sine_points)
+        scan = ScanGen()
+        scan.generate_sine_points_one_axis(400, 1000)
+        scan.format_point_set()
 
         length = 0
-        for axis in sine_points.itervalues():
+        for axis in scan.point_set.itervalues():
             length += length_str_in_list(axis)
         print("Total message length: " + str(length))
 
         start_time = time.time()
-        self.pmac.fill_current_buffer(sine_points)
+        self.pmac.fill_current_buffer(scan.point_set)
         self.pmac.set_current_buffer_fill(buffer_fill)
         print("Time to fill buffers: " + str(time.time() - start_time))
         print("Messages sent: " + str(self.pmac.sendCommand.called))
@@ -49,17 +50,18 @@ class WriteTest(unittest.TestCase):
 
         buffer_fill = int(self.pmac.buffer_length)
 
-        sine_points = driver.generate_sine_points_one_axis(400, 1000)
-        sine_points = self.pmac.convert_points_to_pmac_float(sine_points)
-        sine_points['y'] = sine_points['x'][:]
+        scan = ScanGen()
+        scan.generate_sine_points_one_axis(400, 1000)
+        scan.format_point_set()
+        scan.point_set['y'] = scan.point_set['x'][:]
 
         length = 0
-        for axis in sine_points.itervalues():
+        for axis in scan.point_set.itervalues():
             length += length_str_in_list(axis)
         print("Total message length: " + str(length))
 
         start_time = time.time()
-        self.pmac.fill_current_buffer(sine_points)
+        self.pmac.fill_current_buffer(scan.point_set)
         self.pmac.set_current_buffer_fill(buffer_fill)
         print("Time to fill buffers: " + str(time.time() - start_time))
         print("Messages sent: " + str(self.pmac.sendCommand.called))
@@ -68,32 +70,33 @@ class WriteTest(unittest.TestCase):
 
         buffer_fill = int(self.pmac.buffer_length)
 
-        sine_points = driver.generate_sine_points_all_axes(400, 1000)
-        sine_points = self.pmac.convert_points_to_pmac_float(sine_points)
+        scan = ScanGen()
+        scan.generate_sine_points_all_axes(400, 1000)
+        scan.format_point_set()
 
         length = 0
-        for axis in sine_points.itervalues():
+        for axis in scan.point_set.itervalues():
             length += length_str_in_list(axis)
         print("Total message length: " + str(length))
 
         start_time = time.time()
-        self.pmac.fill_current_buffer(sine_points)
+        self.pmac.fill_current_buffer(scan.point_set)
         self.pmac.set_current_buffer_fill(buffer_fill)
         print("Time to fill buffers: " + str(time.time() - start_time))
         print("Messages sent: " + str(self.pmac.sendCommand.called))
 
     def test_read_max_velocities(self):
-        self.pmac.update_max_velocities()
+        self.pmac.read_cs_max_velocities()
 
         print("Max Axis Velocities:")
-        for axis, velocity in self.pmac.max_velocities.iteritems():
-            print(axis + ": " + velocity + "cts/ms")
+        for axis, velocity in self.pmac.coordinate_system.max_velocities.iteritems():
+            print(axis + ": " + str(velocity) + "cts/ms")
 
     def test_float_parsing(self):
         self.pmac.sendCommand("M4500->L:$30000,0,48")
 
         value = 10
-        pmac_float = self.pmac.double_to_pmac_float(value)
+        pmac_float = ScanGen.double_to_pmac_float(value)
         print(str(value) + ' : ' + str(pmac_float))
         self.pmac.write_to_address("L", "30000", pmac_float)
         self.assertAlmostEqual(value, float(self.pmac.read_variable("M4500")), places=5)
