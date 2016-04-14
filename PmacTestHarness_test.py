@@ -349,43 +349,6 @@ class ConvertPointsToPmacFloat(unittest.TestCase):
         self.assertEqual(call_list, points['x'])
 
 
-class SendPointsTest(unittest.TestCase):
-
-    def setUp(self):
-        self.pmac = TesterPmacTestHarness()
-        self.points = {'time': [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
-                       'x': [200, 200, 200, 200, 200, 200, 200, 200, 200, 200],
-                       'y': [300, 300, 300, 300, 300, 300, 300, 300, 300, 300]}
-
-    @patch('PmacTestHarness_test.TesterPmacTestHarness.write_to_address')
-    def test_given_current_True_then_points_sent_to_A(self, write_mock):
-
-        self.pmac.send_points(self.points, current=True)
-        root_address = self.pmac.buffer_address_a
-
-        call_list = [call[0] for call in write_mock.call_args_list]
-        self.assertEqual(write_mock.call_count, 30)
-        self.assertIn(("L", root_address, "100"), call_list)
-        self.assertIn(
-            ("L", self.pmac.add_dechex(root_address, int(self.pmac.buffer_length)), "200"),call_list)
-        self.assertIn(
-            ("L", self.pmac.add_dechex(root_address, 2*int(self.pmac.buffer_length)), "300"), call_list)
-
-    @patch('PmacTestHarness_test.TesterPmacTestHarness.write_to_address')
-    def test_given_current_False_points_sent_to_B(self, write_mock):
-
-        self.pmac.send_points(self.points, current=False)
-        root_address = self.pmac.buffer_address_b
-
-        call_list = [call[0] for call in write_mock.call_args_list]
-        self.assertEqual(write_mock.call_count, 30)
-        self.assertIn(("L", root_address, "100"), call_list)
-        self.assertIn(
-            ("L", self.pmac.add_dechex(root_address, int(self.pmac.buffer_length)), "200"), call_list)
-        self.assertIn(
-            ("L", self.pmac.add_dechex(root_address, 2*int(self.pmac.buffer_length)), "300"), call_list)
-
-
 class ConstructWriteCommandTest(unittest.TestCase):
 
     def setUp(self):

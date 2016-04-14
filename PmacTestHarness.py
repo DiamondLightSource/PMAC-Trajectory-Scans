@@ -305,39 +305,6 @@ class PmacTestHarness(PmacEthernetInterface):
 
         return pmac_points
 
-    def send_points(self, points, current=False):
-        """
-        Send points to fill a buffer. If current is False, the currently unused buffer
-        will be filled. If current is True, the current buffer will be filled
-        (e.g. for filling both buffers before program is run).
-
-        Args:
-            points(list(list(int))): List of lists of the time and coordinates for each move
-            current(int): A 1 or 0 to specify which buffer to fill
-
-        Raises:
-            IOError: Write failed
-
-        """
-
-        # Toggle to invert buffer choice logic
-        buffer_toggle = int(current)
-
-        if self.current_buffer == buffer_toggle:
-            self.update_address_dict(self.buffer_address_b)
-        else:
-            self.update_address_dict(self.buffer_address_a)
-
-        axis_num = 0
-        for axis, axis_points in points.iteritems():
-            current_address = self.addresses[axis]
-            for point in axis_points:
-                self.write_to_address("L", current_address, str(point))
-                current_address = self.inc_hex(current_address)
-            axis_num += 1
-
-        print("Points sent to " + self.addresses['time'])
-
     def read_motor_position(self, motor_num):
         """
         Request current position of give motor
