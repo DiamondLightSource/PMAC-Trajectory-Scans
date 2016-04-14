@@ -1,6 +1,6 @@
 import time
 from PmacTestHarness import PmacTestHarness
-from scanpointgenerator import NestedGenerator, LineGenerator
+from TrajectoryScanGenerator import TrajectoryScanGenerator as ScanGen
 
 from pkg_resources import require
 require('numpy')
@@ -8,210 +8,6 @@ import numpy
 
 # IP_ADDRESS = "172.23.243.169"
 IP_ADDRESS = "172.23.253.15"
-
-
-def check_max_velocity_of_points(points, cs):
-
-    for axis, axis_points in points.iteritems():
-
-        if axis_points and axis != 'time':
-            max_velocity = float(cs.max_velocities[axis])               # cts/ms
-            max_vel_egu = max_velocity / cs.axis_map[axis.upper()][1]   # egus/ms
-
-            for point_num in range(1, len(axis_points)):
-                next_point = float(axis_points[point_num])
-                prev_point = float(axis_points[point_num - 1])
-                move_time = float(points['time'][point_num]['time_val'])/4  # 1/4s of a ms -> ms
-
-                velocity = (next_point - prev_point)/move_time
-                if velocity > max_vel_egu:
-                    raise ValueError(
-                        "Points set will exceed maximum velocity for motor {}".format(axis))
-    print("Velocities OK!")
-
-
-def generate_lin_points(num_points, move_time):
-
-    points = {'time': [], 'x': [], 'y': []}
-
-    for j in range(1, num_points+1, 1):
-        points['time'].append(hex(move_time)[2:])
-
-    for j in range(1, num_points+1, 1):
-        points['x'].append(j)
-        points['y'].append(j)
-
-    return points
-
-
-def generate_snake_scan(move_time, reverse=False):
-
-    points = {'time': [], 'x': [], 'y': []}
-
-    for _ in range(0, 50):
-        points['time'].append(move_time)
-
-    if reverse:
-        raise NotImplementedError("Reverse not implemented")
-    else:
-        xs = LineGenerator("x", "mm", 0, 10, 5)
-        ys = LineGenerator("y", "mm", 0, 10, 5)
-        gen = NestedGenerator(ys, xs, snake=True)
-
-    for point in gen.iterator():
-        points['x'].append(int(point.lower['x']))
-        points['x'].append(int(point.upper['x']))
-    for point in gen.iterator():
-        points['y'].append(int(point.lower['y']))
-        points['y'].append(int(point.upper['y']))
-
-    return points
-
-
-def generate_snake_scan_w_vel(trajectory):
-
-    move_time = trajectory['move_time']
-    width = trajectory['width']
-    length = trajectory['length']
-    direction = trajectory['direction']
-
-    points = {'time': [], 'x': [], 'y': []}
-    trigger = 0
-
-    for i in range(0, width*length):
-
-        if (i+1) % width == 0 and i > 0:
-            vel_mode = 1
-        elif i % width == 0 and i > 0:
-            vel_mode = 2
-        else:
-            vel_mode = 0
-
-        if (i+1) % width == width/2:
-            if trigger == 0:
-                subroutine = 10
-                trigger = 1
-            else:
-                subroutine = 11
-                trigger = 0
-        else:
-            subroutine = 0
-
-        points['time'].append({'time_val': move_time, 'vel_mode': vel_mode, 'subroutine': subroutine})
-
-    if direction == 0:
-        xs = LineGenerator("x", "mm", 0, 10, width)
-        ys = LineGenerator("y", "mm", 0, 10, length)
-        gen = NestedGenerator(ys, xs, snake=True)
-    else:
-        raise NotImplementedError("Reverse not implemented")
-
-    for point in gen.iterator():
-        points['x'].append(point.positions['x'])
-    for point in gen.iterator():
-        points['y'].append(point.positions['y'])
-
-    return points
-
-
-def format_point_set(points):
-
-    formatted_points = {'time': [],
-                        'x': [], 'y': [], 'z': [],
-                        'u': [], 'v': [], 'w': [],
-                        'a': [], 'b': [], 'c': []}
-
-    for axis, axis_points in points.iteritems():
-        if axis == 'time':
-            for point in axis_points:
-                time_point = "$" + hex(point['time_val'])[2:]
-
-                if point['subroutine'] > 0:
-                    time_point = PmacTestHarness.set_point_subroutine(time_point, point['subroutine'])
-
-                if point['vel_mode'] > 0:
-                    time_point = PmacTestHarness.set_point_vel_mode(time_point, point['vel_mode'])
-
-                formatted_points['time'].append(time_point)
-        else:
-            for point in axis_points:
-                formatted_points[axis].append(PmacTestHarness.double_to_pmac_float(int(point)))
-
-    return formatted_points
-
-
-def generate_circle_points(move_time, num_points):
-
-    time_points = ["$" + hex(move_time)[2:]]*num_points
-    x_points = []
-    y_points = []
-
-    for angle in numpy.linspace(0.0, 360.0, num_points):
-        x_points.append(numpy.sin(angle))
-        y_points.append(numpy.cos(angle))
-
-    points = {'time': time_points,
-              'x': x_points,
-              'y': y_points}
-
-    return points
-
-
-def generate_sine_points_one_axis(move_time, num_points):
-
-    time_points = ["$" + PmacTestHarness.add_hex(hex(move_time)[2:], "20000000")]*num_points
-    x_points = []
-
-    for angle in numpy.linspace(0.0, 360.0, num_points):
-        x_points.append(numpy.sin(angle))
-
-    points = {'time': time_points,
-              'x': x_points}
-
-    return points
-
-
-def generate_sine_points_all_axes(move_time, num_points):
-
-    time_points = ["$" + PmacTestHarness.add_hex(hex(move_time)[2:], "20000000")]*num_points
-
-    points = []
-
-    for angle in numpy.linspace(0.0, 360.0, num_points):
-        points.append(numpy.sin(angle))
-
-    points = {'time': time_points,
-              'x': points,
-              'y': points,
-              'z': points,
-              'u': points,
-              'v': points,
-              'w': points,
-              'a': points,
-              'b': points,
-              'c': points}
-
-    return points
-
-
-def grab_buffer_of_points(start, length, points):
-
-    end = start + length
-    num_points = len(points['time'])
-    points_grab = {'time': [], 'x': [], 'y': []}
-
-    if end < num_points:
-        points_grab['time'] = points['time'][start:end]
-        points_grab['x'] = points['x'][start:end]
-        points_grab['y'] = points['y'][start:end]
-    else:
-        new_end = end - num_points
-        points_grab['time'] = points['time'][start:num_points] + points['time'][:new_end]
-        points_grab['x'] = points['x'][start:num_points] + points['x'][:new_end]
-        points_grab['y'] = points['y'][start:num_points] + points['y'][:new_end]
-        end = new_end
-
-    return points_grab, end
 
 
 def make_status_message(pmac, start_time, sleep_time):
@@ -238,7 +34,7 @@ def make_status_message(pmac, start_time, sleep_time):
     return status_message
 
 
-def snake_scan():
+def snake_trajectory_scan():
 
     pmac = PmacTestHarness(IP_ADDRESS)
 
@@ -254,16 +50,20 @@ def snake_scan():
                   'width': width,
                   'length': length,
                   'direction': 0}
-    snake_points = generate_snake_scan_w_vel(trajectory)
-    for axis in snake_points.iteritems():
+
+    snake_scan = ScanGen()
+    snake_scan.generate_snake_scan_w_vel(trajectory)
+    for axis in snake_scan.point_set.iteritems():
         print(axis)
-    check_max_velocity_of_points(snake_points, pmac.coordinate_system)
-    snake_points = format_point_set(snake_points)
-    for axis in snake_points.iteritems():
+
+    snake_scan.check_max_velocity_of_points(pmac.coordinate_system)
+
+    snake_scan.format_point_set()
+    for axis in snake_scan.point_set.iteritems():
         print(axis)
 
     buffer_fill = width * length
-    pmac.fill_current_buffer(snake_points)
+    pmac.fill_current_buffer(snake_scan.point_set)
     pmac.set_current_buffer_fill(buffer_fill)
 
     start_time = time.time()
@@ -337,7 +137,7 @@ def circle_scan():
 def main():
 
     # trajectory_scan()
-    snake_scan()
+    snake_trajectory_scan()
     # circle_scan()
 
 if __name__ == "__main__":
