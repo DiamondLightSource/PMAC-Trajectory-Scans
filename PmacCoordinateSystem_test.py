@@ -39,12 +39,15 @@ class SetMaxVelocitiesTest(unittest.TestCase):
 
     def setUp(self):
         self.PmacCS = PmacCoordinateSystem(1)
+        self.PmacCS.motor_map = {"1": ("x", 50), "2": ("y", 20), "3": ("z", 10),
+                                 "4": ("u", 50), "5": ("v", 20), "6": ("w", 10),
+                                 "7": ("a", 50), "8": ("b", 20), "9": ("c", 10)}
 
     def test_given_velocities_list_then_set(self):
         velocities = ["10", "20", "30", "40", "50", "60", "70", "80", "90"]
-        expected_vel_dict = {'x': velocities[0], 'y': velocities[1], 'z': velocities[2],
-                             'u': velocities[3], 'v': velocities[4], 'w': velocities[5],
-                             'a': velocities[6], 'b': velocities[7], 'c': velocities[8]}
+        expected_vel_dict = {'x': 0.2, 'y': 1.0, 'z': 3,
+                             'u': 0.8, 'v': 2.5, 'w': 6.0,
+                             'a': 1.4, 'b': 4.0, 'c': 9.0}
 
         self.PmacCS.set_max_velocities(velocities)
 

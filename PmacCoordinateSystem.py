@@ -1,6 +1,11 @@
 
 
 class PmacCoordinateSystem(object):
+    """
+    A helper class for PmacTestHarness to store information specific to a PMAC
+    coordinate system
+
+    """
 
     def __init__(self, cs_num):
 
@@ -14,12 +19,28 @@ class PmacCoordinateSystem(object):
                                'a': 0, 'b': 0, 'c': 0}
 
     def add_motor_assignment(self, motor, axis, scaling):
+        """
+        Add motor assignment to CS motor and axis maps
+
+        Args:
+            motor(int): Motor number e.g. 1, 2, 3, ...
+            axis(str): Axis specifier e.g. X, Y, Z, U, V, ...
+            scaling(int): Scale factor between axis and motor definitions
+
+        """
 
         self.motor_map[str(motor)] = (axis, scaling)
         self.axis_map[str(axis)] = (motor, scaling)
 
     def set_max_velocities(self, velocities):
+        """
+        Set the maximum velocities in EGUs for the axes in the coordinate system
 
-        self.max_velocities = {'x': velocities[0], 'y': velocities[1], 'z': velocities[2],
-                               'u': velocities[3], 'v': velocities[4], 'w': velocities[5],
-                               'a': velocities[6], 'b': velocities[7], 'c': velocities[8]}
+        Args:
+            velocities(list(int)): Max velocities in cts, read from PMAC
+
+        """
+
+        # Assign motor max_velocities to corresponding axes
+        for motor_num, (axis, scaling) in self.motor_map.iteritems():
+            self.max_velocities[axis] = float(velocities[int(motor_num) - 1]) / scaling
