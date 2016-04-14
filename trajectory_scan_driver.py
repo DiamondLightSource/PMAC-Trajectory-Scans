@@ -79,26 +79,27 @@ def snake_trajectory_scan():
         print(status_message)
 
 
-def circle_scan():
+def circle_trajectory_scan():
 
     pmac = PmacTestHarness(IP_ADDRESS)
 
     pmac.force_abort()
-    pmac.assign_motors(["100X", "100Y"])
+    pmac.assign_motors([(1, "X", 100), (2, "Y", 100)])
     pmac.home_motors()
     pmac.reset_buffers()
     pmac.set_axes(384)
 
-    circle_points = generate_circle_points(500, 3600)
-    print(circle_points)
-    print(len(circle_points['time']))
-    print(len(circle_points['x']))
-    print(len(circle_points['y']))
-    circle_points = pmac.convert_points_to_pmac_float(circle_points)
+    circle_scan = ScanGen()
+    circle_scan.generate_circle_points(500, 3600)
+    print(circle_scan.point_set)
+    print(len(circle_scan.point_set['time']))
+    print(len(circle_scan.point_set['x']))
+    print(len(circle_scan.point_set['y']))
+    circle_scan.format_point_set()
 
-    buffer_length = 1000
+    buffer_length = pmac.buffer_length
     current_start = 0
-    current_points, end = grab_buffer_of_points(current_start, buffer_length, circle_points)
+    current_points, end = circle_scan.grab_buffer_of_points(current_start, buffer_length)
     current_start = end + 1
 
     pmac.fill_current_buffer(current_points)
@@ -115,7 +116,7 @@ def circle_scan():
     while int(pmac.status) == 1:
 
         if pmac.prev_buffer_write == 1 and int(pmac.current_buffer) == 1:
-            current_points, end = grab_buffer_of_points(current_start, 1000, circle_points)
+            current_points, end = circle_scan.grab_buffer_of_points(current_start, buffer_length)
             current_start = end + 1
 
             pmac.fill_idle_buffer(current_points)
@@ -123,7 +124,7 @@ def circle_scan():
             pmac.prev_buffer_write = 0
 
         elif pmac.prev_buffer_write == 0 and int(pmac.current_buffer) == 0:
-            current_points, end = grab_buffer_of_points(current_start, 1000, circle_points)
+            current_points, end = circle_scan.grab_buffer_of_points(current_start, buffer_length)
             current_start = end + 1
 
             pmac.fill_idle_buffer(current_points)
@@ -137,8 +138,8 @@ def circle_scan():
 def main():
 
     # trajectory_scan()
-    snake_trajectory_scan()
-    # circle_scan()
+    # snake_trajectory_scan()
+    circle_trajectory_scan()
 
 if __name__ == "__main__":
     main()
