@@ -1,4 +1,4 @@
-from PmacTestHarness import PmacTestHarness
+from test_harness.PmacTestHarness import PmacTestHarness
 import trajectory_scan_driver as driver
 import unittest
 import time

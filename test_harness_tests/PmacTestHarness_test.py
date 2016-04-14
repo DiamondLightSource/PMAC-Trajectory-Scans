@@ -1,6 +1,7 @@
-from PmacTestHarness import PmacTestHarness
-from PmacCoordinateSystem import PmacCoordinateSystem
+from test_harness.PmacTestHarness import PmacTestHarness
+from test_harness.PmacCoordinateSystem import PmacCoordinateSystem
 import unittest
+
 from pkg_resources import require
 require("mock")
 from mock import ANY, patch
@@ -26,7 +27,7 @@ class TesterPmacTestHarness(PmacTestHarness):
 
 class InitTest(unittest.TestCase):
 
-    @patch('PmacTestHarness.PmacTestHarness.read_variable')
+    @patch('test_harness.PmacTestHarness.PmacTestHarness.read_variable')
     def test_default_attributes_set(self, read_variable_mock):
         self.pmac = PmacTestHarness("test")
 
@@ -120,7 +121,7 @@ class UpdateVelocitiesTest(unittest.TestCase):
 
     @patch('PmacTestHarness_test.TesterPmacTestHarness.read_variable',
            side_effect=['10', '20', '30', '40', '50', '60', '70', '80', '90'])
-    @patch('PmacCoordinateSystem.PmacCoordinateSystem.set_max_velocities')
+    @patch('test_harness.PmacCoordinateSystem.PmacCoordinateSystem.set_max_velocities')
     def test_update_velocities(self, set_max_vel_mock, _):
         expected_call = ['10', '20', '30', '40', '50', '60', '70', '80', '90']
 
@@ -135,7 +136,7 @@ class CommandsTest(unittest.TestCase):
     def setUp(self):
         self.pmac = TesterPmacTestHarness()
 
-    @patch('PmacCoordinateSystem.PmacCoordinateSystem.add_motor_assignment')
+    @patch('test_harness.PmacCoordinateSystem.PmacCoordinateSystem.add_motor_assignment')
     def test_assign_motors_command(self, add_motor_mock, send_command_mock):
         axis_map = [(1, "X", 100), (3, "Y", 25)]
 

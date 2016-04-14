@@ -1,4 +1,4 @@
-from PmacCoordinateSystem import PmacCoordinateSystem
+from test_harness.PmacCoordinateSystem import PmacCoordinateSystem
 import unittest
 from pkg_resources import require
 require("mock")

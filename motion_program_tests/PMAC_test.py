@@ -1,5 +1,5 @@
-from PmacTestHarness import PmacTestHarness
-from TrajectoryScanGenerator import TrajectoryScanGenerator as ScanGen
+from test_harness.PmacTestHarness import PmacTestHarness
+from test_harness.TrajectoryScanGenerator import TrajectoryScanGenerator as ScanGen
 import unittest
 import time
 

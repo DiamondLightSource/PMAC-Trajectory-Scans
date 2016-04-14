@@ -1,5 +1,6 @@
-from TrajectoryScanGenerator import TrajectoryScanGenerator
+from test_harness.TrajectoryScanGenerator import TrajectoryScanGenerator
 import unittest
+
 from pkg_resources import require
 require("mock")
 from mock import ANY, patch, MagicMock
@@ -48,7 +49,7 @@ class ConvertPointsToPmacFloat(unittest.TestCase):
     def setUp(self):
         self.ScanGen = TrajectoryScanGenerator()
 
-    @patch('TrajectoryScanGenerator.TrajectoryScanGenerator.double_to_pmac_float')
+    @patch('test_harness.TrajectoryScanGenerator.TrajectoryScanGenerator.double_to_pmac_float')
     def test_given_points_call_convert_function(self, converter_mock):
         points = {'time': [10, 10, 10, 10],
                   'x': [0.0, 0.099861063292, 0.198723793760, 0.295599839129]}
@@ -179,11 +180,11 @@ class FormatPointsTest(unittest.TestCase):
                                   'time': [{'time_val': 500, 'subroutine': 10, 'vel_mode': 0},
                                            {'time_val': 500, 'subroutine': 0, 'vel_mode': 1}]}
 
-    @patch('TrajectoryScanGenerator.TrajectoryScanGenerator.double_to_pmac_float',
+    @patch('test_harness.TrajectoryScanGenerator.TrajectoryScanGenerator.double_to_pmac_float',
            side_effect=['$0', '$1', '$2', '$3'])
-    @patch('TrajectoryScanGenerator.TrajectoryScanGenerator.set_point_subroutine',
+    @patch('test_harness.TrajectoryScanGenerator.TrajectoryScanGenerator.set_point_subroutine',
            return_value='$a0001f4')
-    @patch('TrajectoryScanGenerator.TrajectoryScanGenerator.set_point_vel_mode',
+    @patch('test_harness.TrajectoryScanGenerator.TrajectoryScanGenerator.set_point_vel_mode',
            return_value='$100001f4')
     def test_given_point_set_then_correct_calls_made(self, set_vel_mock, set_sub_mock, d_to_pf_mock):
         expected_point_set = {'time': ['$a0001f4', '$100001f4'],
@@ -247,7 +248,7 @@ class ScanGeneratorTest(unittest.TestCase):
 
         self.assertEqual(expected_points, points)
 
-    @patch('TrajectoryScanGenerator.TrajectoryScanGenerator._generate_sine_points',
+    @patch('test_harness.TrajectoryScanGenerator.TrajectoryScanGenerator._generate_sine_points',
            return_value=[1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
     def test_generate_sine_scan_one_axis(self, gen_sine_points_mock):
         num_points = 6
@@ -264,7 +265,7 @@ class ScanGeneratorTest(unittest.TestCase):
         gen_sine_points_mock.assert_called_once_with(num_points)
         self.assertEqual(expected_points, self.ScanGen.point_set)
 
-    @patch('TrajectoryScanGenerator.TrajectoryScanGenerator._generate_sine_points',
+    @patch('test_harness.TrajectoryScanGenerator.TrajectoryScanGenerator._generate_sine_points',
            return_value=[1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
     def test_generate_sine_scan_all_axis(self, gen_sine_points_mock):
         num_points = 6
