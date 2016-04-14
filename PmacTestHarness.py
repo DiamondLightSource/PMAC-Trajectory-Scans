@@ -6,6 +6,7 @@ class PmacTestHarness(PmacEthernetInterface):
     """
     A pmac controller that can interface with and control the `trajectory_scan` motion
     program as the EPICS driver does.
+
     """
 
     def __init__(self, ip_address):
@@ -25,13 +26,13 @@ class PmacTestHarness(PmacEthernetInterface):
         self.connect()
 
         # Variables read directly from PMAC
-        self.status = self.read_variable("P4001")  # Change to int() ?
-        self.error = self.read_variable("P4015")
+        self.status = int(self.read_variable("P4001"))
+        self.error = int(self.read_variable("P4015"))
         self.total_points = 0
         self.current_index = 0
         self.current_buffer = 0
         # Fixed values
-        self.buffer_length = self.read_variable("P4004")
+        self.buffer_length = int(self.read_variable("P4004"))
         self.buffer_address_a = str(hex(int(self.read_variable("P4008")))[2:])
         self.buffer_address_b = str(hex(int(self.read_variable("P4009")))[2:])
 
