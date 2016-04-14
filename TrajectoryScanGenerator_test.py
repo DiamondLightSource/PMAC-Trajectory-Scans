@@ -2,24 +2,7 @@ from TrajectoryScanGenerator import TrajectoryScanGenerator
 import unittest
 from pkg_resources import require
 require("mock")
-from mock import ANY, patch
-
-
-class ConvertPointsToPmacFloat(unittest.TestCase):
-
-    def setUp(self):
-        self.PointGen = TrajectoryScanGenerator()
-
-    @patch('TrajectoryScanGenerator.TrajectoryScanGenerator.double_to_pmac_float')
-    def test_given_points_call_convert_function(self, converter_mock):
-        points = {'time': [10, 10, 10, 10],
-                  'x': [0.0, 0.099861063292, 0.198723793760, 0.295599839129]}
-
-        self.PointGen.convert_points_to_pmac_float(points)
-
-        self.assertEqual(4, converter_mock.call_count)
-        call_list = [call[0][0] for call in converter_mock.call_args_list]
-        self.assertEqual(call_list, points['x'])
+from mock import ANY, patch, MagicMock
 
 
 class DoubleToPmacFloatTest(unittest.TestCase):
@@ -58,6 +41,23 @@ class DoubleToPmacFloatTest(unittest.TestCase):
         pmac_float = TrajectoryScanGenerator.double_to_pmac_float(-10)
 
         self.assertEqual(pmac_float, value)
+
+
+class ConvertPointsToPmacFloat(unittest.TestCase):
+
+    def setUp(self):
+        self.ScanGen = TrajectoryScanGenerator()
+
+    @patch('TrajectoryScanGenerator.TrajectoryScanGenerator.double_to_pmac_float')
+    def test_given_points_call_convert_function(self, converter_mock):
+        points = {'time': [10, 10, 10, 10],
+                  'x': [0.0, 0.099861063292, 0.198723793760, 0.295599839129]}
+
+        self.ScanGen.convert_points_to_pmac_float(points)
+
+        self.assertEqual(4, converter_mock.call_count)
+        call_list = [call[0][0] for call in converter_mock.call_args_list]
+        self.assertEqual(call_list, points['x'])
 
 
 class SetPointSpecifiersTest(unittest.TestCase):
@@ -102,3 +102,189 @@ class SetPointSpecifiersTest(unittest.TestCase):
             self.PointGen.set_point_subroutine(time, subroutine)
 
         self.assertEqual(expected_error, error.exception.message)
+
+
+class GrabBufferOfPointsTest(unittest.TestCase):
+
+    def setUp(self):
+        self.PointGen = TrajectoryScanGenerator()
+        self.PointGen.point_set = {'y': [1.0, 0.99, 0.98, 0.95, 0.92],
+                                   'x': [0.0, 0.10, 0.19, 0.29, 0.38],
+                                   'time': [{'time_val': 500, 'subroutine': 0, 'vel_mode': 0},
+                                            {'time_val': 500, 'subroutine': 0, 'vel_mode': 0},
+                                            {'time_val': 500, 'subroutine': 0, 'vel_mode': 0},
+                                            {'time_val': 500, 'subroutine': 0, 'vel_mode': 0},
+                                            {'time_val': 500, 'subroutine': 0, 'vel_mode': 0}]}
+
+    def test_given_no_overflow_then_return_points_grab(self):
+        points, _ = self.PointGen.grab_buffer_of_points(0, 4)
+        expected_points = {'y': [1.0, 0.99, 0.98, 0.95],
+                           'x': [0.0, 0.10, 0.19, 0.29],
+                           'time': [{'time_val': 500, 'subroutine': 0, 'vel_mode': 0},
+                                    {'time_val': 500, 'subroutine': 0, 'vel_mode': 0},
+                                    {'time_val': 500, 'subroutine': 0, 'vel_mode': 0},
+                                    {'time_val': 500, 'subroutine': 0, 'vel_mode': 0}]}
+
+        self.assertEqual(expected_points, points)
+
+    def test_given_overflow_then_return_points_grab(self):
+        points, _ = self.PointGen.grab_buffer_of_points(3, 4)
+        expected_points = {'y': [0.95, 0.92, 1.0, 0.99],
+                           'x': [0.29, 0.38, 0.0, 0.10],
+                           'time': [{'time_val': 500, 'subroutine': 0, 'vel_mode': 0},
+                                    {'time_val': 500, 'subroutine': 0, 'vel_mode': 0},
+                                    {'time_val': 500, 'subroutine': 0, 'vel_mode': 0},
+                                    {'time_val': 500, 'subroutine': 0, 'vel_mode': 0}]}
+
+        self.assertEqual(expected_points, points)
+
+
+class CheckMaxVelocityTest(unittest.TestCase):
+
+    def setUp(self):
+        self.ScanGen = TrajectoryScanGenerator()
+        self.PmacCS = MagicMock()
+        self.PmacCS.max_velocities = {'x': 1}
+
+    def test_given_valid_points_then_no_error(self):
+        self.ScanGen.point_set = {'time': [{'time_val': 10, 'subroutine': 0, 'vel_mode': 0},
+                                           {'time_val': 10, 'subroutine': 0, 'vel_mode': 0},
+                                           {'time_val': 10, 'subroutine': 0, 'vel_mode': 0}],
+                                  'x': [1, 2, 3]}
+
+        response = self.ScanGen.check_max_velocity_of_points(self.PmacCS)
+
+        self.assertTrue(response)
+
+    def test_given_invalid_points_then_error(self):
+        self.ScanGen.point_set = {'time': [{'time_val': 1, 'subroutine': 0, 'vel_mode': 0},
+                                           {'time_val': 1, 'subroutine': 0, 'vel_mode': 0},
+                                           {'time_val': 1, 'subroutine': 0, 'vel_mode': 0}],
+                                  'x': [1, 2, 3]}
+
+        expected_error_message = "Points set will exceed maximum velocity for axis x"
+
+        with self.assertRaises(ValueError) as error:
+            self.ScanGen.check_max_velocity_of_points(self.PmacCS)
+
+        self.assertEqual(expected_error_message, error.exception.message)
+
+
+class FormatPointsTest(unittest.TestCase):
+
+    def setUp(self):
+        self.ScanGen = TrajectoryScanGenerator()
+        self.ScanGen.point_set = {'y': [1.0, 0.99],
+                                  'x': [0.0, 0.1],
+                                  'time': [{'time_val': 500, 'subroutine': 10, 'vel_mode': 0},
+                                           {'time_val': 500, 'subroutine': 0, 'vel_mode': 1}]}
+
+    @patch('TrajectoryScanGenerator.TrajectoryScanGenerator.double_to_pmac_float',
+           side_effect=['$0', '$1', '$2', '$3'])
+    @patch('TrajectoryScanGenerator.TrajectoryScanGenerator.set_point_subroutine',
+           return_value='$a0001f4')
+    @patch('TrajectoryScanGenerator.TrajectoryScanGenerator.set_point_vel_mode',
+           return_value='$100001f4')
+    def test_given_point_set_then_correct_calls_made(self, set_vel_mock, set_sub_mock, d_to_pf_mock):
+        expected_point_set = {'time': ['$a0001f4', '$100001f4'],
+                              'x': ['$2', '$3'], 'y': ['$0', '$1'], 'u': [],
+                              'v': [], 'w': [], 'a': [], 'b': [], 'c': [], 'z': []}
+
+        self.ScanGen.format_point_set()
+
+        call_list = [call[0][0] for call in d_to_pf_mock.call_args_list]
+        self.assertEqual([1.0, 0.99, 0.0, 0.1], call_list)
+        set_sub_mock.assert_called_once_with('$1f4', 10)
+        set_vel_mock.assert_called_once_with('$1f4', 1)
+        self.assertEqual(expected_point_set, self.ScanGen.point_set)
+
+
+class ScanGeneratorTest(unittest.TestCase):
+
+    def setUp(self):
+        self.ScanGen = TrajectoryScanGenerator()
+
+    def test_snake_scan(self):
+        trajectory = {'move_time': 100, 'width': 3, 'length': 3, 'direction': 0}
+        self.ScanGen.generate_snake_scan_w_vel(trajectory)
+
+        expected_points = {'time': [{'subroutine': 10, 'time_val': 100, 'vel_mode': 0},
+                                    {'subroutine': 0, 'time_val': 100, 'vel_mode': 0},
+                                    {'subroutine': 0, 'time_val': 100, 'vel_mode': 1},
+                                    {'subroutine': 11, 'time_val': 100, 'vel_mode': 2},
+                                    {'subroutine': 0, 'time_val': 100, 'vel_mode': 0},
+                                    {'subroutine': 0, 'time_val': 100, 'vel_mode': 1},
+                                    {'subroutine': 10, 'time_val': 100, 'vel_mode': 2},
+                                    {'subroutine': 0, 'time_val': 100, 'vel_mode': 0},
+                                    {'subroutine': 0, 'time_val': 100, 'vel_mode': 1}],
+                           'x': [0, 10, 20, 20, 10, 0, 0, 10, 20],
+                           'y': [0, 0, 0, 10, 10, 10, 20, 20, 20]}
+
+        self.assertEqual(expected_points, self.ScanGen.point_set)
+
+    def test_circle_scan(self):
+        self.maxDiff = None
+        self.ScanGen.generate_circle_points(100, 6)
+
+        expected_points = {'y': [1.0, 0.3090169944, -0.8090169944,
+                                 -0.8090169944, 0.3090169944, 1.0],
+                           'x': [0.0, 0.9510565163, 0.5877852523,
+                                 -0.5877852523, -0.9510565163, -0.0],
+                           'time': [{'time_val': 100, 'subroutine': 0, 'vel_mode': 0},
+                                    {'time_val': 100, 'subroutine': 0, 'vel_mode': 0},
+                                    {'time_val': 100, 'subroutine': 0, 'vel_mode': 0},
+                                    {'time_val': 100, 'subroutine': 0, 'vel_mode': 0},
+                                    {'time_val': 100, 'subroutine': 0, 'vel_mode': 0},
+                                    {'time_val': 100, 'subroutine': 0, 'vel_mode': 0}]}
+
+        self.assertEqual(expected_points, self.ScanGen.point_set)
+
+    def test_generate_sine_points(self):
+        points = self.ScanGen._generate_sine_points(6)
+
+        expected_points = [0.0, 0.9510565163, 0.5877852523,
+                           -0.5877852523, -0.9510565163, -0.0]
+
+        self.assertEqual(expected_points, points)
+
+    @patch('TrajectoryScanGenerator.TrajectoryScanGenerator._generate_sine_points',
+           return_value=[1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
+    def test_generate_sine_scan_one_axis(self, gen_sine_points_mock):
+        num_points = 6
+        self.ScanGen.generate_sine_points_one_axis(100, num_points)
+
+        expected_points = {'x': [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+                           'time': [{'time_val': 100, 'subroutine': 0, 'vel_mode': 1},
+                                    {'time_val': 100, 'subroutine': 0, 'vel_mode': 1},
+                                    {'time_val': 100, 'subroutine': 0, 'vel_mode': 1},
+                                    {'time_val': 100, 'subroutine': 0, 'vel_mode': 1},
+                                    {'time_val': 100, 'subroutine': 0, 'vel_mode': 1},
+                                    {'time_val': 100, 'subroutine': 0, 'vel_mode': 1}]}
+
+        gen_sine_points_mock.assert_called_once_with(num_points)
+        self.assertEqual(expected_points, self.ScanGen.point_set)
+
+    @patch('TrajectoryScanGenerator.TrajectoryScanGenerator._generate_sine_points',
+           return_value=[1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
+    def test_generate_sine_scan_all_axis(self, gen_sine_points_mock):
+        num_points = 6
+        self.ScanGen.generate_sine_points_all_axes(100, num_points)
+
+        expected_points = {'x': [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+                           'y': [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+                           'z': [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+                           'u': [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+                           'v': [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+                           'w': [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+                           'a': [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+                           'b': [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+                           'c': [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+                           'time': [{'time_val': 100, 'subroutine': 0, 'vel_mode': 1},
+                                    {'time_val': 100, 'subroutine': 0, 'vel_mode': 1},
+                                    {'time_val': 100, 'subroutine': 0, 'vel_mode': 1},
+                                    {'time_val': 100, 'subroutine': 0, 'vel_mode': 1},
+                                    {'time_val': 100, 'subroutine': 0, 'vel_mode': 1},
+                                    {'time_val': 100, 'subroutine': 0, 'vel_mode': 1}]}
+
+        gen_sine_points_mock.assert_called_once_with(num_points)
+        self.assertEqual(expected_points, self.ScanGen.point_set)

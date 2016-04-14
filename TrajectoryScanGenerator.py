@@ -18,6 +18,15 @@ class TrajectoryScanGenerator(object):
         self.point_set = {'time': []}
 
     def generate_snake_scan_w_vel(self, trajectory):
+        """
+        Generate a snake trajectory scan with dynamic velocity for turnarounds and
+        trigger setting
+
+        Args:
+            trajectory(dict): A dictionary containing the move_time, width & length of
+            the snake_scan area and direction (not implemented yet)
+
+        """
 
         move_time = trajectory['move_time']
         width = trajectory['width']
@@ -61,59 +70,110 @@ class TrajectoryScanGenerator(object):
             self.point_set['y'].append(point.positions['y'])
 
     def generate_circle_points(self, move_time, num_points):
+        """
+        Generate a circular trajectory scan
 
-        time_points = ["$" + hex(move_time)[2:]]*num_points
+        Args:
+            move_time(int): Move time between points
+            num_points(int): Number of points to split circle into
+
+        """
+
+        time_points = []
         x_points = []
         y_points = []
 
-        for angle in numpy.linspace(0.0, 360.0, num_points):
-            x_points.append(numpy.sin(angle))
-            y_points.append(numpy.cos(angle))
+        for i in range(0, num_points):
+
+            time_points.append({'time_val': move_time, 'vel_mode': 0, 'subroutine': 0})
+
+        for angle in numpy.linspace(0.0, 2.0*numpy.pi, num_points):
+            x_points.append(round(numpy.sin(angle), 10))
+            y_points.append(round(numpy.cos(angle), 10))
 
         self.point_set = {'time': time_points,
                           'x': x_points,
                           'y': y_points}
 
     def generate_sine_points_one_axis(self, move_time, num_points):
+        """
+        Generate a point set with sine points for the X-Axis only
 
-        time_points = ["$" + PmacTestHarness.add_hex(hex(move_time)[2:], "20000000")]*num_points
+        Args:
+            move_time(int): Move time between points
+            num_points(int): Number of points to split one cycle (0-360) of sine wave into
+
+        """
+
+        time_points = [{'time_val': move_time, 'subroutine': 0, 'vel_mode': 1}]*num_points
         x_points = self._generate_sine_points(num_points)
 
         self.point_set = {'time': time_points,
                           'x': x_points}
 
     def generate_sine_points_all_axes(self, move_time, num_points):
+        """
+        Generate a point set with sine points for all axes
 
-        time_points = ["$" + PmacTestHarness.add_hex(hex(move_time)[2:], "20000000")]*num_points
+        Args:
+            move_time(int): Move time between points
+            num_points(int): Number of points to split one cycle (0-360) of sine wave into
+
+        """
+
+        time_points = [{'time_val': move_time, 'subroutine': 0, 'vel_mode': 1}]*num_points
 
         points = self._generate_sine_points(num_points)
 
         self.point_set = {'time': time_points,
-                          'x': points,
-                          'y': points,
-                          'z': points,
-                          'u': points,
-                          'v': points,
-                          'w': points,
-                          'a': points,
-                          'b': points,
-                          'c': points}
+                          'x': points[:],
+                          'y': points[:],
+                          'z': points[:],
+                          'u': points[:],
+                          'v': points[:],
+                          'w': points[:],
+                          'a': points[:],
+                          'b': points[:],
+                          'c': points[:]}
 
     @staticmethod
     def _generate_sine_points(num_points):
+        """
+        Generate points of a sine wave
+
+        Args:
+            num_points(int): Number of points to split one cycle (0-360) of sine wave into
+
+        Returns:
+            list: Points of sine wave
+
+        """
 
         points = []
-        for angle in numpy.linspace(0.0, 360.0, num_points):
-            points.append(numpy.sin(angle))
+        for angle in numpy.linspace(0.0, 2.0*numpy.pi, num_points):
+            points.append(round(numpy.sin(angle), 10))
         return points
 
     def check_max_velocity_of_points(self, cs):
+        """
+        Check that the current point set won't exceed the max velocity of the axes on
+        the given coordinate system
+
+        Args:
+            cs(PmacCoordinateSystem.PmacCoordinateSystem): CS instance with
+            max_velocities stored
+
+        Returns:
+            bool: True if points are OK
+
+        Raises:
+            Value Error: "Points set will exceed maximum velocity for motor `motor_num`"
+
+        """
 
         for axis, axis_points in self.point_set.iteritems():
 
             if axis_points and axis != 'time':
-                max_velocity = float(cs.max_velocities[axis])               # cts/ms
-                max_vel_egu = max_velocity / cs.axis_map[axis.upper()][1]   # egus/ms
 
                 for point_num in range(1, len(axis_points)):
                     next_point = float(axis_points[point_num])
@@ -122,10 +182,11 @@ class TrajectoryScanGenerator(object):
                     move_time = float(self.point_set['time'][point_num]['time_val']) / 4
 
                     velocity = (next_point - prev_point)/move_time
-                    if velocity > max_vel_egu:
+                    if velocity > cs.max_velocities[axis]:
                         raise ValueError(
-                            "Points set will exceed maximum velocity for motor {}".format(axis))
-        print("Velocities OK!")
+                            "Points set will exceed maximum velocity for axis {}".format(axis))
+
+        return True
 
     def format_point_set(self):
 
@@ -148,7 +209,7 @@ class TrajectoryScanGenerator(object):
                     formatted_points['time'].append(time_point)
             else:
                 for point in axis_points:
-                    formatted_points[axis].append(self.double_to_pmac_float(int(point)))
+                    formatted_points[axis].append(self.double_to_pmac_float(point))
 
         self.point_set = formatted_points
 
@@ -164,9 +225,12 @@ class TrajectoryScanGenerator(object):
             points_grab['y'] = self.point_set['y'][start:end]
         else:
             new_end = end - num_points
-            points_grab['time'] = self.point_set['time'][start:num_points] + self.point_set['time'][:new_end]
-            points_grab['x'] = self.point_set['x'][start:num_points] + self.point_set['x'][:new_end]
-            points_grab['y'] = self.point_set['y'][start:num_points] + self.point_set['y'][:new_end]
+            points_grab['time'] = self.point_set['time'][start:num_points] + \
+                self.point_set['time'][:new_end]
+            points_grab['x'] = self.point_set['x'][start:num_points] + \
+                self.point_set['x'][:new_end]
+            points_grab['y'] = self.point_set['y'][start:num_points] + \
+                self.point_set['y'][:new_end]
             end = new_end
 
         return points_grab, end
