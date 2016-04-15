@@ -339,7 +339,7 @@ class PmacTestHarness(PmacEthernetInterface):
 
         """
 
-        position = self.sendCommand("#{motor}P".format(motor=motor_num))
+        position = self.sendCommand("#{motor}P".format(motor=motor_num))[0].split('\r')[0]
 
         return position
 
@@ -355,7 +355,7 @@ class PmacTestHarness(PmacEthernetInterface):
 
         """
 
-        position = self.sendCommand("#{motor}V".format(motor=motor_num))
+        position = self.sendCommand("#{motor}V".format(motor=motor_num))[0].split('\r')[0]
 
         return position
 
