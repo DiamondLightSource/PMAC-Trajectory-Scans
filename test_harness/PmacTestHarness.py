@@ -62,8 +62,8 @@ class PmacTestHarness(PmacEthernetInterface):
 
     def update_status_variables(self):
         """
-        Update status, total points scanned, current index and current buffer specifier
-        from the pmac
+        Update status, error, total points scanned, current index and current buffer
+        specifier from the pmac
 
         """
 
@@ -98,7 +98,7 @@ class PmacTestHarness(PmacEthernetInterface):
         Send command to assign motors to the required axes
 
         Args:
-            axis_map(list(int, str, int)): List of axes to assign to motor, with scaling.
+            axis_map(list(int, str, int)): List of axes to assign to motor, with scaling
             e.g. [(1, "X", 100), (3, "Y", 25)] => &1 #1->100X #3->25Y
 
         """
@@ -177,9 +177,10 @@ class PmacTestHarness(PmacEthernetInterface):
         Send number of require axes
 
         Args:
-            axes(int): Int between 1 and 511 that will be split into 9 bits specifying the
-            required motors e.g. X, Y and Z = 256 + 128 + 64 = 448;
+            axes(int): A number between 1 and 511 that will be split into 9 bits
+            specifying the required motors e.g. X, Y and Z = 256 + 128 + 64 = 448;
             X, Y and U = 256 + 128 + 32 = 416
+
         """
 
         self.set_variable("P4003", str(axes))
@@ -208,7 +209,7 @@ class PmacTestHarness(PmacEthernetInterface):
 
     def read_points(self, num_points, buffer_num=0, num_axes=1):
         """
-        Read points store in pmac memory buffer
+        Read points stored in pmac memory buffer
 
         Args:
             num_points(int): Number of sets of points to read
@@ -360,7 +361,7 @@ class PmacTestHarness(PmacEthernetInterface):
 
     def set_initial_coordinates(self):
         """
-        Set *_Coord values for required axes to be the actual motor positions; these act
+        Set Current_* values for required axes to be the actual motor positions; these act
         as the start positions for the motion program
 
         """
