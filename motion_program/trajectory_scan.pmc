@@ -25,49 +25,43 @@ Close
 Open Prog 1
 Clear
 
-Status = 1
-Abort = 0
-Error = 0
-
 Abs
 FRAX(X,Y,Z,U,V,W,A,B,C)
 
-CurrentBufferAdr = BufferAdr_A
+Status = 1                          ; Reset values to defaults
+Abort = 0
+Error = 0
+Trigger = 0
 CurrentIndex = 0
 TotalPoints = 0
-CurrentBufferFill = BufferFill_A
-PrevBufferFill = BufferLength
-CurrentBuffer = 0
-Trigger = 0
-
-GoSub1          ; Check which axes are required
-GoSub3          ; Set addresses for required axes
-
 P4201 = 0
 P4202 = 0
 
-CMD"End Gat"    ; Stop gathering
-CMD"Del Gat"    ; Deletes the gather buffer
-CMD"Def Gat"    ; Allocates all the available memory as gather buffer
-Dwell 0         ; Force CMD lines to execute
-CMD"Gat"        ; Starts gathering of the data
+CurrentBufferAdr = BufferAdr_A      ; Set CurrentBuffer values to buffer A
+CurrentBufferFill = BufferFill_A
+CurrentBuffer = 0
+
+PrevBufferFill = BufferLength       ; Set PrevBufferFill to pass outer while loop condition
+
+GoSub1                              ; Check which axes are required
+GoSub3                              ; Set addresses for required axes
 
 While(Abort = 0 and Error = 0 and CurrentBufferFill > 0 and PrevBufferFill = BufferLength)
 
     P4201 = P4201 + 1
 
-    ; Toggle buffer addresses
-    If(P4201>1)
+    ; Toggle buffer - Change address & specifier, set new buffer fill, reset previous buffer fill
+    If(P4201>1) ; Don't run on first loop
         If(CurrentBuffer = 0)
             CurrentBufferAdr = BufferAdr_B
+            CurrentBuffer = 1
             CurrentBufferFill = BufferFill_B
             BufferFill_A = 0
-            CurrentBuffer = 1
         Else
             CurrentBufferAdr = BufferAdr_A
+            CurrentBuffer = 0
             CurrentBufferFill = BufferFill_A
             BufferFill_B = 0
-            CurrentBuffer = 0
         End If
     End If
 
@@ -100,12 +94,13 @@ While(Abort = 0 and Error = 0 and CurrentBufferFill > 0 and PrevBufferFill = Buf
 
     End While
 
-    PrevBufferFill = CurrentBufferFill      ; Update previous buffer fill level to finish scan if it wasn't full
     GoSub2                                  ; Shift previous/current coordinates to N-1th/Nth points in buffer
+
+    PrevBufferFill = CurrentBufferFill      ; Update previous buffer fill level - exit while loop if it wasn't full
 
 End While
 
-; Move to final point if no error occurred
+; Set finished Idle Status if no error occurred - also move to final point if scan wasn't aborted
 If(Status = 1)
     If(Abort = 0)
         GoSub2                  ; Shift to final points in buffer
@@ -116,16 +111,13 @@ If(Status = 1)
     Status = 2                  ; Set program finished (Idle status)
 End If
 
-Dwell 0         ; Force CMD lines to execute
-CMD"End Gat"    ; Send On-line command to stop data gathering
-Dwell 0         ; Force CMD lines to execute
-
-CMD"A"
-While(1=1)
+CMD"A"                          ; Abort program so it doesn't run through Subroutines
+While(1=1)                      ; Infinite While loop to make sure
 End While
 
 ; Subroutine 1 ************************************************************************************
 ; Check that axes value is valid and assign required axes
+; The *_Axis values point to the bits of AxesParser and therefore represent the required axes
 ; *************************************************************************************************
 N1
     If(Axes > 511 or Axes < 1)
@@ -167,6 +159,7 @@ Return
 
 ; Subroutine 3 ************************************************************************************
 ; Assign coordinate pointers based on CurrentBufferAdr, CurrentIndex and BufferLength
+; If the axis is not activated, it won't be incremented and will remain pointing to the BlankAdr
 ; *************************************************************************************************
 
 N3
@@ -205,15 +198,23 @@ Return
 
 ; Subroutines 4-7 *********************************************************************************
 ; Calculate velocities for next move - 4: Master, 5: Prev->Current, 6: Prev->Next, 7: Current->Next
+; Velocities are multiplied by 1000 because the units of Time is milliseconds and the units
+; of velocity is user_units/second in the PVT move definition
 ; *************************************************************************************************
 
-; Velocities are multiplied by 1000 because the units of Time is milliseconds and the units
-; of velocity is user units/second in the PVT move definition
 
 N4
+    If(Time = 0)                        ; Set error and abort if demanded move time is zero
+        Status = 3
+        Error = 2
+        CMD"A"
+        Dwell 0
+        Time = 1000
+    End If
+
+    ; Select velocity calculation based on VelMode value
     If(VelMode = 1)
         GoSub5                          ; Prev -> Current
-        P4500 = P4500 + 1
     EndIf
     If(VelMode = 0 or VelMode > 2)
         GoSub6                          ; Prev -> Next
@@ -224,13 +225,6 @@ N4
 Return
 
 N5
-    If(Time = 0)
-        Status = 3
-        Error = 2
-        CMD"A"
-        Dwell 0
-        Time = 1000
-    End If
     X_Vel = 1000*(X_Coord - Prev_X)/Time
     Y_Vel = 1000*(Y_Coord - Prev_Y)/Time
     Z_Vel = 1000*(Z_Coord - Prev_Z)/Time
@@ -243,13 +237,6 @@ N5
 Return
 
 N6
-    If(Time = 0)
-        Status = 3
-        Error = 2
-        CMD"A"
-        Dwell 0
-        Time = 1000
-    End If
     X_Vel = 1000*(Next_X - Prev_X)/(Time + Next_Time)
     Y_Vel = 1000*(Next_Y - Prev_Y)/(Time + Next_Time)
     Z_Vel = 1000*(Next_Z - Prev_Z)/(Time + Next_Time)
@@ -262,13 +249,6 @@ N6
 Return
 
 N7
-    If(Time = 0)
-        Status = 3
-        Error = 2
-        CMD"A"
-        Dwell 0
-        Time = 1000
-    End If
     X_Vel = 1000*(Next_X - X_Coord)/Next_Time
     Y_Vel = 1000*(Next_Y - Y_Coord)/Next_Time
     Z_Vel = 1000*(Next_Z - Z_Coord)/Next_Time
@@ -282,10 +262,10 @@ Return
 
 ; Subroutine 8 ************************************************************************************
 ; Move axes
+; Set to Q Variables before move call to shorten command - The PMAC can't process it otherwise
 ; *************************************************************************************************
 
 N8
-    ; Set to Q Variables before move call to shorten command
     Q1 = X_Coord
     Q2 = X_Vel
     Q3 = Y_Coord
