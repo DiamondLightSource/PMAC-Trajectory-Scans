@@ -137,7 +137,7 @@ class CommandsTest(unittest.TestCase):
         self.pmac = TesterPmacTestHarness()
 
     @patch('test_harness.PmacCoordinateSystem.PmacCoordinateSystem.add_motor_assignment')
-    def test_assign_motors_command(self, add_motor_mock, send_command_mock):
+    def test_given_valid_assignment_then_assign_motors(self, add_motor_mock, send_command_mock):
         axis_map = [(1, "X", 100), (3, "Y", 25)]
 
         self.pmac.assign_motors(axis_map)
@@ -146,6 +146,26 @@ class CommandsTest(unittest.TestCase):
         self.assertIn(axis_map[0], call_list)
         self.assertIn(axis_map[1], call_list)
         send_command_mock.assert_called_once_with("&1 #1->100X #3->25Y")
+
+    @patch('test_harness.PmacCoordinateSystem.PmacCoordinateSystem.add_motor_assignment')
+    def test_given_invalid_motor_then_error(self, _1, _2):
+        axis_map = [(1, "X", 100), (100, "Y", 25)]
+        expected_error_message = "Motor selection invalid"
+
+        with self.assertRaises(ValueError) as error:
+            self.pmac.assign_motors(axis_map)
+
+        self.assertEqual(expected_error_message, error.exception.message)
+
+    @patch('test_harness.PmacCoordinateSystem.PmacCoordinateSystem.add_motor_assignment')
+    def test_given_invalid_axis_then_error(self, _1, _2):
+        axis_map = [(1, "1", 100), (2, "Y", 25)]
+        expected_error_message = "Axis selection invalid"
+
+        with self.assertRaises(ValueError) as error:
+            self.pmac.assign_motors(axis_map)
+
+        self.assertEqual(expected_error_message, error.exception.message)
 
     def test_home_motors_command(self, send_command_mock):
         self.pmac.coordinate_system.add_motor_assignment(1, "X", 1)

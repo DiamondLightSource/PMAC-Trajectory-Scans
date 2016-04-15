@@ -98,13 +98,18 @@ class PmacTestHarness(PmacEthernetInterface):
         Send command to assign motors to the required axes
 
         Args:
-            axis_map(list(str)): List of axes to assign to motor, with scaling.
+            axis_map(list(int, str, int)): List of axes to assign to motor, with scaling.
             e.g. [(1, "X", 100), (3, "Y", 25)] => &1 #1->100X #3->25Y
 
         """
 
         command = "&1"
         for motor, axis, scaling in axis_map:
+            if int(motor) not in range(1, 16):
+                raise ValueError("Motor selection invalid")
+            if axis.upper() not in ["X", "Y", "Z", "U", "V", "W", "A", "B", "C"]:
+                raise ValueError("Axis selection invalid")
+
             self.coordinate_system.add_motor_assignment(motor, axis, scaling)
             command += \
                 " #{motor_num}->{scaling}{axis}".format(
