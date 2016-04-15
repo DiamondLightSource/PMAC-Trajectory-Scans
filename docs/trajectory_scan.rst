@@ -12,11 +12,13 @@ PMAC Requirements
  * M-Variables - 4000..4050
  * User memory of 20 times the required buffer length
 
-.. _program-design:
+.. _program_design:
 Program Design
 --------------
 
 The motion program operates using two buffers, one of which can be scanned through by the PMAC while the other can be filled with points by EPICS. The idea is that a scan of any length can be sent from the data acquisition layer to the EPICS layer and can then be run continuously as if there is no limit to the PMAC memory.
+
+The program keeps 3 points per axis (plus time) accessible at any time; Prev\_* and Current\_* values are stored in P-Variables and Next\_* values are stored in an M variable. The M variable is used to iterate through the user memory addresses using pointers (_Adr values) to the M Variable definitions. Before each increment, the 3-point-buffers are shifted Current -> Prev and then Next -> Current. This allows the PMAC to calculate the required trajectory for each Current\_* point
 
 Dynamic Velocity Calculation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -84,5 +86,5 @@ EPICS must write the position coordinates as 48-bit PMAC floats (with a write L 
      _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _   _ _ _ _   _ _ _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
      <------------Unused----------->     User    VelMode   <---------------------Time--------------------->
 
-Time will then be read from the Y memory and User & VelMode will be read from the appropriate bits in the X memory. Time is the integer number of 1/4s of a milliseconds for the move (this must be written in hex), VelMode is 0, 1 or 2 as described in :ref:`program-design` and User is the number of the subroutine that should be run at the point.
+Time will then be read from the Y memory and User & VelMode will be read from the appropriate bits in the X memory. Time is the integer number of 1/4s of a milliseconds for the move (this must be written in hex), VelMode is 0, 1 or 2 as described in :ref:`program_design` and User is the number of the subroutine that should be run at the point.
 
