@@ -72,7 +72,7 @@ While(Abort = 0 and Error = 0 and CurrentBufferFill > 0 and PrevBufferFill = Buf
 
         Next_Time = Next_Time_N/4           ; Convert 1/4s of a ms into ms
 
-        GoSub2                              ; Shift values through Next_* -> *_Coord -> Prev_*
+        GoSub2                              ; Shift values through Next_* -> Current_* -> Prev_*
         GoSub3                              ; Update Next_* addresses based on incremented `CurrentIndex`
         PVT (Time)                          ; Set move time
         GoSub4                              ; Calculate velocities
@@ -129,7 +129,7 @@ N1
 Return
 
 ; Subroutine 2 ************************************************************************************
-; Shift coordinate buffer through Next -> Coord -> Prev
+; Shift coordinate buffer through Next -> Current -> Prev
 ; *************************************************************************************************
 
 N2
@@ -137,24 +137,24 @@ N2
     User = Next_User
     VelMode = NextVelMode
 
-    Prev_X = X_Coord
-    X_Coord = Next_X
-    Prev_Y = Y_Coord
-    Y_Coord = Next_Y
-    Prev_Z = Z_Coord
-    Z_Coord = Next_Z
-    Prev_U = U_Coord
-    U_Coord = Next_U
-    Prev_V = V_Coord
-    V_Coord = Next_V
-    Prev_W = W_Coord
-    W_Coord = Next_W
-    Prev_A = A_Coord
-    A_Coord = Next_A
-    Prev_B = B_Coord
-    B_Coord = Next_B
-    Prev_C = C_Coord
-    C_Coord = Next_C
+    Prev_X = Current_X
+    Current_X = Next_X
+    Prev_Y = Current_Y
+    Current_Y = Next_Y
+    Prev_Z = Current_Z
+    Current_Z = Next_Z
+    Prev_U = Current_U
+    Current_U = Next_U
+    Prev_V = Current_V
+    Current_V = Next_V
+    Prev_W = Current_W
+    Current_W = Next_W
+    Prev_A = Current_A
+    Current_A = Next_A
+    Prev_B = Current_B
+    Current_B = Next_B
+    Prev_C = Current_C
+    Current_C = Next_C
 Return
 
 ; Subroutine 3 ************************************************************************************
@@ -225,15 +225,15 @@ N4
 Return
 
 N5
-    X_Vel = 1000*(X_Coord - Prev_X)/Time
-    Y_Vel = 1000*(Y_Coord - Prev_Y)/Time
-    Z_Vel = 1000*(Z_Coord - Prev_Z)/Time
-    U_Vel = 1000*(U_Coord - Prev_U)/Time
-    V_Vel = 1000*(V_Coord - Prev_V)/Time
-    W_Vel = 1000*(W_Coord - Prev_W)/Time
-    A_Vel = 1000*(A_Coord - Prev_A)/Time
-    B_Vel = 1000*(B_Coord - Prev_B)/Time
-    C_Vel = 1000*(C_Coord - Prev_C)/Time
+    X_Vel = 1000*(Current_X - Prev_X)/Time
+    Y_Vel = 1000*(Current_Y - Prev_Y)/Time
+    Z_Vel = 1000*(Current_Z - Prev_Z)/Time
+    U_Vel = 1000*(Current_U - Prev_U)/Time
+    V_Vel = 1000*(Current_V - Prev_V)/Time
+    W_Vel = 1000*(Current_W - Prev_W)/Time
+    A_Vel = 1000*(Current_A - Prev_A)/Time
+    B_Vel = 1000*(Current_B - Prev_B)/Time
+    C_Vel = 1000*(Current_C - Prev_C)/Time
 Return
 
 N6
@@ -249,15 +249,15 @@ N6
 Return
 
 N7
-    X_Vel = 1000*(Next_X - X_Coord)/Next_Time
-    Y_Vel = 1000*(Next_Y - Y_Coord)/Next_Time
-    Z_Vel = 1000*(Next_Z - Z_Coord)/Next_Time
-    U_Vel = 1000*(Next_U - U_Coord)/Next_Time
-    V_Vel = 1000*(Next_V - V_Coord)/Next_Time
-    W_Vel = 1000*(Next_W - W_Coord)/Next_Time
-    A_Vel = 1000*(Next_A - A_Coord)/Next_Time
-    B_Vel = 1000*(Next_B - B_Coord)/Next_Time
-    C_Vel = 1000*(Next_C - C_Coord)/Next_Time
+    X_Vel = 1000*(Next_X - Current_X)/Next_Time
+    Y_Vel = 1000*(Next_Y - Current_Y)/Next_Time
+    Z_Vel = 1000*(Next_Z - Current_Z)/Next_Time
+    U_Vel = 1000*(Next_U - Current_U)/Next_Time
+    V_Vel = 1000*(Next_V - Current_V)/Next_Time
+    W_Vel = 1000*(Next_W - Current_W)/Next_Time
+    A_Vel = 1000*(Next_A - Current_A)/Next_Time
+    B_Vel = 1000*(Next_B - Current_B)/Next_Time
+    C_Vel = 1000*(Next_C - Current_C)/Next_Time
 Return
 
 ; Subroutine 8 ************************************************************************************
@@ -266,23 +266,23 @@ Return
 ; *************************************************************************************************
 
 N8
-    Q1 = X_Coord
+    Q1 = Current_X
     Q2 = X_Vel
-    Q3 = Y_Coord
+    Q3 = Current_Y
     Q4 = Y_Vel
-    Q5 = Z_Coord
+    Q5 = Current_Z
     Q6 = Z_Vel
-    Q7 = U_Coord
+    Q7 = Current_U
     Q8 = U_Vel
-    Q9 = V_Coord
+    Q9 = Current_V
     Q10 = V_Vel
-    Q11 = W_Coord
+    Q11 = Current_W
     Q12 = W_Vel
-    Q13 = A_Coord
+    Q13 = Current_A
     Q14 = A_Vel
-    Q15 = B_Coord
+    Q15 = Current_B
     Q16 = B_Vel
-    Q17 = C_Coord
+    Q17 = Current_C
     Q18 = C_Vel
 
     X(Q1):(Q2) Y(Q3):(Q4) Z(Q5):(Q6) U(Q7):(Q8) V(Q9):(Q10) W(Q11):(Q12) A(Q13):(Q14) B(Q15):(Q16) ;C(Q17):(Q18)
