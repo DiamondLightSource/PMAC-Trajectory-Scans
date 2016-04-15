@@ -50,22 +50,7 @@ While(Abort = 0 and Error = 0 and CurrentBufferFill > 0 and PrevBufferFill = Buf
 
     P4201 = P4201 + 1
 
-    ; Toggle buffer - Change address & specifier, set new buffer fill, reset previous buffer fill
-    If(P4201>1) ; Don't run on first loop
-        If(CurrentBuffer = 0)
-            CurrentBufferAdr = BufferAdr_B
-            CurrentBuffer = 1
-            CurrentBufferFill = BufferFill_B
-            BufferFill_A = 0
-        Else
-            CurrentBufferAdr = BufferAdr_A
-            CurrentBuffer = 0
-            CurrentBufferFill = BufferFill_A
-            BufferFill_B = 0
-        End If
-    End If
-
-    CurrentIndex = 0
+    CurrentIndex = 1
     While(Abort = 0 and Error = 0 and CurrentIndex < CurrentBufferFill)
 
         P4202 = P4202 + 1
@@ -78,9 +63,8 @@ While(Abort = 0 and Error = 0 and CurrentBufferFill > 0 and PrevBufferFill = Buf
         GoSub4                              ; Calculate velocities
         GoSub8                              ; Move axes
 
-        ; Run any required subroutine
         If(User > 0)
-            GoSub(User)
+            GoSub(User)                     ; Run any required subroutine
         End If
 
         CurrentIndex = CurrentIndex + 1
@@ -94,23 +78,51 @@ While(Abort = 0 and Error = 0 and CurrentBufferFill > 0 and PrevBufferFill = Buf
 
     End While
 
-    GoSub2                                  ; Shift previous/current coordinates to N-1th/Nth points in buffer
+    Next_Time = Next_Time_N/4                   ; Convert time for last point of buffer
+    GoSub2                                      ; Shift previous/current coordinates to N-1th/Nth points in buffer
 
-    PrevBufferFill = CurrentBufferFill      ; Update previous buffer fill level - exit while loop if it wasn't full
+    ; Toggle buffer - Change address & specifier, set new buffer fill, reset previous buffer fill
+    If(CurrentBuffer = 0)
+        CurrentBufferAdr = BufferAdr_B
+        CurrentBuffer = 1
+        CurrentBufferFill = BufferFill_B
+        BufferFill_A = 0
+    Else
+        CurrentBufferAdr = BufferAdr_A
+        CurrentBuffer = 0
+        CurrentBufferFill = BufferFill_A
+        BufferFill_B = 0
+    End If
+
+    If(Abort = 0 and CurrentBufferFill > 0)     ; Do move with previous buffer N-1 and N and current buffer 1
+        CurrentIndex = 0                        ; Reset to start of next buffer
+        GoSub3                                  ; Update Next_* addresses to 0th point of next buffer
+        PVT (Time)                              ; Set move time
+        GoSub4                                  ; Calculate velocities
+        GoSub8                                  ; Move axes to final point of previous buffer
+        If(User > 0)
+            GoSub(User)                         ; Run any required subroutine
+        End If
+    End If
+
+    PrevBufferFill = CurrentBufferFill      ; Update previous buffer fill - will exit while loop if it wasn't full
 
 End While
 
 ; Set finished Idle Status if no error occurred - also move to final point if scan wasn't aborted
 If(Status = 1)
     If(Abort = 0)
-        GoSub2                  ; Shift to final points in buffer
         PVT (Time)              ; Set move time
         GoSub7                  ; Prev->Current velocity calculation
         GoSub8                  ; Move axes
+        If(User > 0)
+            GoSub(User)         ; Run any required subroutine
+        End If
     End If
     Status = 2                  ; Set program finished (Idle status)
 End If
 
+Dwell 0                         ; Stop program aborting before above lines are complete
 CMD"A"                          ; Abort program so it doesn't run through Subroutines
 While(1=1)                      ; Infinite While loop to make sure
 End While
