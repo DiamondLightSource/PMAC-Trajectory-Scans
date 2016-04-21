@@ -6,6 +6,7 @@
 #define BlankAdr            30000           ; Start of User Buffer
 #define AxisAdr             30001           ; BlankAdr + 1
 #define BufferAdr           30010           ; BlankAdr + 10
+#define BuffLen             1000
 
 #define RootVar     4000
 

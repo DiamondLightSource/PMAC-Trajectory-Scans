@@ -7,7 +7,7 @@
 Del Gat
 
 ; Set Initial Values
-BufferLength = 1000
+BufferLength = BuffLen                          ; Set in header file (Default = 1000)
 BufferAdr_A = $BufferAdr                        ; Set in header file (Default = 30000)
 BufferAdr_B = BufferAdr_A + 10*BufferLength
 BlankAddress = 0
