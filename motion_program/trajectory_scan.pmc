@@ -83,16 +83,18 @@ While(Abort = 0 and Error = 0 and CurrentBufferFill > 0 and PrevBufferFill = Buf
     GoSub2                                      ; Shift previous/current coordinates to N-1th/Nth points in buffer
 
     ; Toggle buffer - Change address & specifier, set new buffer fill, reset previous buffer fill
-    If(CurrentBuffer = 0)
-        CurrentBufferAdr = BufferAdr_B
-        CurrentBuffer = 1
-        CurrentBufferFill = BufferFill_B
-        BufferFill_A = 0
-    Else
-        CurrentBufferAdr = BufferAdr_A
-        CurrentBuffer = 0
-        CurrentBufferFill = BufferFill_A
-        BufferFill_B = 0
+    If(Abort = 0)
+        If(CurrentBuffer = 0)
+            CurrentBufferAdr = BufferAdr_B
+            CurrentBuffer = 1
+            CurrentBufferFill = BufferFill_B
+            BufferFill_A = 0
+        Else
+            CurrentBufferAdr = BufferAdr_A
+            CurrentBuffer = 0
+            CurrentBufferFill = BufferFill_A
+            BufferFill_B = 0
+        End If
     End If
 
     If(Abort = 0 and CurrentBufferFill > 0)     ; Do move with previous buffer N-1 and N and current buffer 1
@@ -281,6 +283,7 @@ Return
 ; *************************************************************************************************
 
 N8
+    P4500 = P4500 + 1
     Q1 = Current_X
     Q2 = X_Vel
     Q3 = Current_Y
