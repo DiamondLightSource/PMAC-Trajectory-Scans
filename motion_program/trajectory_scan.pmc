@@ -36,6 +36,7 @@ CurrentIndex = 0
 TotalPoints = 0
 P4201 = 0
 P4202 = 0
+P4500 = 0
 
 CurrentBufferAdr = BufferAdr_A      ; Set CurrentBuffer values to buffer A
 CurrentBufferFill = BufferFill_A
@@ -50,9 +51,9 @@ While(Abort = 0 and Error = 0 and CurrentBufferFill > 0 and PrevBufferFill = Buf
 
     P4201 = P4201 + 1
 
-    CurrentIndex = 0
+    CurrentIndex = 1
     ; This loop ends when Current_* is at N-1 because then Next_* is at N
-    While(Abort = 0 and Error = 0 and CurrentIndex < CurrentBufferFill - 1)
+    While(Abort = 0 and Error = 0 and CurrentIndex + 1 < CurrentBufferFill)
 
         P4202 = P4202 + 1
 
@@ -69,7 +70,6 @@ While(Abort = 0 and Error = 0 and CurrentBufferFill > 0 and PrevBufferFill = Buf
         End If
 
         CurrentIndex = CurrentIndex + 1
-        TotalPoints = TotalPoints + 1
 
         ; Check for following error and run-time error
         If(M141 = 1 or M241 = 1 or RTE = 1)
@@ -97,6 +97,7 @@ While(Abort = 0 and Error = 0 and CurrentBufferFill > 0 and PrevBufferFill = Buf
         End If
     End If
 
+    ; Move to final point of buffer if next buffer has points
     If(Abort = 0 and CurrentBufferFill > 0)     ; Do move with previous buffer N-1 and N and current buffer 1
         CurrentIndex = 0                        ; Reset to start of next buffer
         TotalPoints = TotalPoints + 1
@@ -116,9 +117,8 @@ End While
 ; Set finished Idle Status if no error occurred - also move to final point if scan wasn't aborted
 If(Status = 1)
     If(Abort = 0)
-        TotalPoints = TotalPoints + 1
         PVT (Time)              ; Set move time
-        GoSub107                ; Prev->Current velocity calculation
+        GoSub105                ; Prev->Current velocity calculation
         GoSub108                ; Move axes
         If(User > 0)
             GoSub(User)         ; Run any required subroutine
@@ -186,31 +186,31 @@ N103
     VelMode_Adr = CurrentBufferAdr + CurrentIndex + 1
 
     If(X_Axis = 1)
-        X_Adr = CurrentBufferAdr + CurrentIndex + 1 + BufferLength
+        X_Adr = CurrentBufferAdr + CurrentIndex + BufferLength
     End If
     If(Y_Axis = 1)
-        Y_Adr = CurrentBufferAdr + CurrentIndex + 1 + 2*BufferLength
+        Y_Adr = CurrentBufferAdr + CurrentIndex + 2*BufferLength
     End If
     If(Z_Axis = 1)
-        Z_Adr = CurrentBufferAdr + CurrentIndex + 1 + 3*BufferLength
+        Z_Adr = CurrentBufferAdr + CurrentIndex + 3*BufferLength
     End If
     If(U_Axis = 1)
-        U_Adr = CurrentBufferAdr + CurrentIndex + 1 + 4*BufferLength
+        U_Adr = CurrentBufferAdr + CurrentIndex + 4*BufferLength
     End If
     If(V_Axis = 1)
-        V_Adr = CurrentBufferAdr + CurrentIndex + 1 + 5*BufferLength
+        V_Adr = CurrentBufferAdr + CurrentIndex + 5*BufferLength
     End If
     If(W_Axis = 1)
-        W_Adr = CurrentBufferAdr + CurrentIndex + 1 + 6*BufferLength
+        W_Adr = CurrentBufferAdr + CurrentIndex + 6*BufferLength
     End If
     If(A_Axis = 1)
-        A_Adr = CurrentBufferAdr + CurrentIndex + 1 + 7*BufferLength
+        A_Adr = CurrentBufferAdr + CurrentIndex + 7*BufferLength
     End If
     If(B_Axis = 1)
-        B_Adr = CurrentBufferAdr + CurrentIndex + 1 + 8*BufferLength
+        B_Adr = CurrentBufferAdr + CurrentIndex + 8*BufferLength
     End If
     If(C_Axis = 1)
-        C_Adr = CurrentBufferAdr + CurrentIndex + 1 + 9*BufferLength
+        C_Adr = CurrentBufferAdr + CurrentIndex + 9*BufferLength
     End If
 Return
 
@@ -304,6 +304,7 @@ N108
     Q18 = C_Vel
 
     X(Q1):(Q2) Y(Q3):(Q4) Z(Q5):(Q6) U(Q7):(Q8) V(Q9):(Q10) W(Q11):(Q12) A(Q13):(Q14) B(Q15):(Q16) ;C(Q17):(Q18)
+    TotalPoints = TotalPoints + 1
 Return
 
 ; User Subroutines ********************************************************************************
