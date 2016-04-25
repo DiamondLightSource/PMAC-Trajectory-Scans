@@ -69,11 +69,12 @@ Read Variables
     * CurrentIndex (P4006) - The current point in the buffer
     * CurrentBuffer (P4007) - The specifier for the current half-buffer i.e. 0: Buffer A, 1: Buffer B
     * BufferAdr_A/BufferAdr_B (P4008/9) - The starting address in the PMAC user memory for buffer A/B
+    * Error (P40015) - Error code corresponding to Status = 3; 0: No error, 1: Invalid axes value, 2: Move time of 0, 3: Following error/ Run-time error
 
 Write Variables
 ~~~~~~~~~~~~~~~
-    * Abort - A trigger to abort the scan (will move to current target point)
-    * Axes - A bit mask to specify which axes are to be used in the scan. X = 256, Y = 128, ..., C = 1 e.g. for axes X, Y, U and V the value would be 256 + 128 + 32 + 16 = 432
+    * Abort (P4002) - A trigger to abort the scan (will move to current target point)
+    * Axes (P4003) - A bit mask to specify which axes are to be used in the scan. X = 256, Y = 128, ..., C = 1 e.g. for axes X, Y, U and V the value would be 256 + 128 + 32 + 16 = 432
     * BufferFill_A/BufferFill_B (P4011/12) - The number of points written into buffer A/B
 
 Buffer Filling
