@@ -287,26 +287,26 @@ Return
 
 N108
     P4500 = P4500 + 1
-    Q1 = Current_X
-    Q2 = X_Vel
-    Q3 = Current_Y
-    Q4 = Y_Vel
-    Q5 = Current_Z
-    Q6 = Z_Vel
-    Q7 = Current_U
-    Q8 = U_Vel
-    Q9 = Current_V
-    Q10 = V_Vel
-    Q11 = Current_W
-    Q12 = W_Vel
-    Q13 = Current_A
-    Q14 = A_Vel
-    Q15 = Current_B
-    Q16 = B_Vel
-    Q17 = Current_C
-    Q18 = C_Vel
+    Q71 = Current_A
+    Q91 = A_Vel
+    Q72 = Current_B
+    Q92 = B_Vel
+    Q73 = Current_C
+    Q93 = C_Vel
+    Q74 = Current_U
+    Q94 = U_Vel
+    Q75 = Current_V
+    Q95 = V_Vel
+    Q76 = Current_W
+    Q96 = W_Vel
+    Q77 = Current_X
+    Q97 = X_Vel
+    Q78 = Current_Y
+    Q98 = Y_Vel
+    Q79 = Current_Z
+    Q99 = Z_Vel
 
-    X(Q1):(Q2) Y(Q3):(Q4) Z(Q5):(Q6) U(Q7):(Q8) V(Q9):(Q10) W(Q11):(Q12) A(Q13):(Q14) B(Q15):(Q16) C(Q17):(Q18)
+    A(Q71):(Q91) B(Q72):(Q92) C(Q73):(Q93) U(Q74):(Q94) V(Q75):(Q95) W(Q76):(Q96) X(Q77):(Q97) Y(Q78):(Q98) Z(Q79):(Q99)
     TotalPoints = TotalPoints + 1
 Return
 
