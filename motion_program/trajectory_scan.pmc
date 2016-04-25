@@ -306,7 +306,7 @@ N108
     Q17 = Current_C
     Q18 = C_Vel
 
-    X(Q1):(Q2) Y(Q3):(Q4) Z(Q5):(Q6) U(Q7):(Q8) V(Q9):(Q10) W(Q11):(Q12) A(Q13):(Q14) B(Q15):(Q16) ;C(Q17):(Q18)
+    X(Q1):(Q2) Y(Q3):(Q4) Z(Q5):(Q6) U(Q7):(Q8) V(Q9):(Q10) W(Q11):(Q12) A(Q13):(Q14) B(Q15):(Q16) C(Q17):(Q18)
     TotalPoints = TotalPoints + 1
 Return
 
