@@ -43,4 +43,4 @@ class PmacCoordinateSystem(object):
 
         # Assign motor max_velocities to corresponding axes
         for motor_num, (axis, scaling) in self.motor_map.iteritems():
-            self.max_velocities[axis] = float(velocities[int(motor_num) - 1]) / scaling
+            self.max_velocities[axis.lower()] = float(velocities[int(motor_num) - 1]) / scaling
