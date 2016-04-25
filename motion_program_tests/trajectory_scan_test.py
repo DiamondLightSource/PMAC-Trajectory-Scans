@@ -12,7 +12,7 @@ class InitialisationTest(unittest.TestCase):
 
     def setUp(self):
         self.pmac = PmacTestHarness(PMAC_IP)
-        self.pmac.assign_motors(["100X", "100Y"])
+        self.pmac.assign_motors([(1, "X", 100), (2, "Y", 100)])
 
     def tearDown(self):
         self.pmac.force_abort()
@@ -21,6 +21,8 @@ class InitialisationTest(unittest.TestCase):
     def test_given_valid_axes_then_set_axis_values(self):
         self.pmac.set_axes(511)
         self.pmac.run_motion_program(PROG_NUM)
+
+        time.sleep(1)
 
         self.assertEqual(self.pmac.read_variable("M4040"), "511")
         self.assertEqual(self.pmac.read_variable("M4041"), "1")
@@ -74,7 +76,7 @@ class AbortTests(unittest.TestCase):
 
     def setUp(self):
         self.pmac = PmacTestHarness(PMAC_IP)
-        self.pmac.assign_motors([(1, 100, "X"), (2, 100, "Y")])
+        self.pmac.assign_motors([(1, "X", 1), (2, "Y", 1)])
         self.pmac.home_motors()
         self.pmac.set_axes(256)
 
@@ -85,27 +87,30 @@ class AbortTests(unittest.TestCase):
         self.pmac.disconnect()
 
     def test_given_running_and_abort_command_then_abort(self):
-        points = self.ScanGen.convert_points_to_pmac_float({'time': ['$190', '$190', '$190'], 'x': [1, 2, 3]})
+        points = self.ScanGen.convert_points_to_pmac_float(
+            {'time': ['$FA0', '$FA0', '$FA0', '$FA0', '$FA0', '$FA0'],
+             'x': [1, 2, 3, 4, 5, 6]})
         self.pmac.fill_current_buffer(points)
         self.pmac.set_current_buffer_fill(50)
         self.pmac.run_motion_program(PROG_NUM)
 
-        time.sleep(0.1)
+        time.sleep(1)
         self.assertEqual(self.pmac.read_variable("P4001"), "1")
         self.assertEqual(self.pmac.read_variable("P4002"), "0")
 
         self.pmac.set_abort()
 
-        time.sleep(0.5)
+        time.sleep(2)
         self.assertEqual(self.pmac.read_variable("P4001"), "2")
         self.assertEqual(self.pmac.read_variable("P4002"), "1")
 
     def test_given_time_0_then_status_3_and_error_2(self):
-        points = self.ScanGen.convert_points_to_pmac_float({'time': ['$0', '$0', '$0'], 'x': [1, 2, 3]})
+        points = self.ScanGen.convert_points_to_pmac_float(
+            {'time': ['$0', '$0', '$0'], 'x': [1, 2, 3]})
         self.pmac.fill_current_buffer(points)
         self.pmac.set_current_buffer_fill(3)
         self.pmac.run_motion_program(PROG_NUM)
-        time.sleep(0.1)
+        time.sleep(1)
 
         self.assertEqual(self.pmac.read_variable("P4001"), "3")
         self.assertEqual(self.pmac.read_variable("P4015"), "2")
@@ -115,11 +120,11 @@ class TrajectoryScanTest(unittest.TestCase):
 
     def setUp(self):
         self.pmac = PmacTestHarness(PMAC_IP)
-        self.pmac.assign_motors([(1, "X", 100), (2, "Y", 100)])
+        self.pmac.assign_motors([(1, "X", 1), (2, "Y", 1)])
         self.pmac.home_motors()
         self.pmac.set_axes(384)
         self.pmac.reset_buffers()
-        self.move_time = 250
+        self.move_time = 200
 
         self.ScanGen = ScanGen()
         self.ScanGen.generate_circle_points(self.move_time, 3600)
@@ -171,18 +176,20 @@ class TrajectoryScanTest(unittest.TestCase):
     def test_given_single_point_then_move(self):
 
         buffer_fill = 1
-        current_points, _ = self.ScanGen.grab_buffer_of_points(0, buffer_fill)
+        self.ScanGen.point_set = {'x': [10.0],
+                                  'time': [{'time_val': 4000, 'subroutine': 0, 'vel_mode': 0}]}
+        self.ScanGen.format_point_set()
 
-        self.pmac.fill_current_buffer(current_points)
+        self.pmac.fill_current_buffer(self.ScanGen.point_set)
         self.pmac.set_current_buffer_fill(buffer_fill)
+        self.pmac.set_idle_buffer_fill(0)
 
         self.pmac.run_motion_program(PROG_NUM)
         scan_time = (self.move_time/4*buffer_fill)/1000
-        time.sleep(scan_time + 1)
+        time.sleep(scan_time + 3)
 
         self.assertEqual("2", self.pmac.read_variable("P4001"))
         self.assertEqual("0", self.pmac.read_variable("P4002"))
-        self.assertEqual(str(buffer_fill), self.pmac.read_variable("P4005"))
 
     def test_given_one_partial_buffer_then_complete(self):
 
@@ -191,6 +198,7 @@ class TrajectoryScanTest(unittest.TestCase):
 
         self.pmac.fill_current_buffer(current_points)
         self.pmac.set_current_buffer_fill(buffer_fill)
+        self.pmac.set_idle_buffer_fill(0)
 
         self.pmac.run_motion_program(PROG_NUM)
         scan_time = (self.move_time/4*buffer_fill)/1000
