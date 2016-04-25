@@ -56,6 +56,7 @@ def snake_trajectory_scan():
     for axis in snake_scan.point_set.iteritems():
         print(axis)
 
+    pmac.read_cs_max_velocities()
     snake_scan.check_max_velocity_of_points(pmac.coordinate_system)
 
     snake_scan.format_point_set()
@@ -90,7 +91,7 @@ def circle_trajectory_scan():
     pmac.set_axes(384)
 
     circle_scan = ScanGen()
-    circle_scan.generate_circle_points(500, 3600)
+    circle_scan.generate_circle_points(4000, 3600)
     print(circle_scan.point_set)
     print(len(circle_scan.point_set['time']))
     print(len(circle_scan.point_set['x']))
@@ -131,7 +132,7 @@ def circle_trajectory_scan():
             pmac.set_idle_buffer_fill(buffer_length)
             pmac.prev_buffer_write = 1
 
-        status_message = make_status_message(pmac, start_time, 0.1)
+        status_message = make_status_message(pmac, start_time, 0.5)
         print(status_message)
 
 
