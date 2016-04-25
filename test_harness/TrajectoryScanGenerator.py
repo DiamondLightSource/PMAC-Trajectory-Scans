@@ -47,10 +47,10 @@ class TrajectoryScanGenerator(object):
 
             if (i+1) % width == width/2:
                 if trigger == 0:
-                    subroutine = 10
+                    subroutine = 1
                     trigger = 1
                 else:
-                    subroutine = 11
+                    subroutine = 2
                     trigger = 0
             else:
                 subroutine = 0
@@ -89,7 +89,7 @@ class TrajectoryScanGenerator(object):
 
         for angle in numpy.linspace(0.0, 2.0*numpy.pi, num_points):
             x_points.append(round(numpy.sin(angle), 10))
-            y_points.append(round(numpy.cos(angle), 10))
+            y_points.append(round(numpy.cos(angle), 10) - 1.0)
 
         self.point_set = {'time': time_points,
                           'x': x_points,
@@ -184,7 +184,8 @@ class TrajectoryScanGenerator(object):
                     velocity = (next_point - prev_point)/move_time
                     if velocity > cs.max_velocities[axis]:
                         raise ValueError(
-                            "Points set will exceed maximum velocity, {max_vel}, for axis {axis}: {vel}".format(axis=axis, max_vel=cs.max_velocities[axis], vel=velocity))
+                            "Points set will exceed maximum velocity, {max_vel}, for axis {axis}: {vel}"
+                            "".format(axis=axis, max_vel=cs.max_velocities[axis], vel=velocity))
 
         return True
 

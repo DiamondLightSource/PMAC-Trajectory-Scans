@@ -209,13 +209,13 @@ class ScanGeneratorTest(unittest.TestCase):
         trajectory = {'move_time': 100, 'width': 3, 'length': 3, 'direction': 0}
         self.ScanGen.generate_snake_scan_w_vel(trajectory)
 
-        expected_points = {'time': [{'subroutine': 10, 'time_val': 100, 'vel_mode': 0},
+        expected_points = {'time': [{'subroutine': 1, 'time_val': 100, 'vel_mode': 0},
                                     {'subroutine': 0, 'time_val': 100, 'vel_mode': 0},
                                     {'subroutine': 0, 'time_val': 100, 'vel_mode': 1},
-                                    {'subroutine': 11, 'time_val': 100, 'vel_mode': 2},
+                                    {'subroutine': 2, 'time_val': 100, 'vel_mode': 2},
                                     {'subroutine': 0, 'time_val': 100, 'vel_mode': 0},
                                     {'subroutine': 0, 'time_val': 100, 'vel_mode': 1},
-                                    {'subroutine': 10, 'time_val': 100, 'vel_mode': 2},
+                                    {'subroutine': 1, 'time_val': 100, 'vel_mode': 2},
                                     {'subroutine': 0, 'time_val': 100, 'vel_mode': 0},
                                     {'subroutine': 0, 'time_val': 100, 'vel_mode': 1}],
                            'x': [0, 10, 20, 20, 10, 0, 0, 10, 20],
@@ -227,8 +227,8 @@ class ScanGeneratorTest(unittest.TestCase):
         self.maxDiff = None
         self.ScanGen.generate_circle_points(100, 6)
 
-        expected_points = {'y': [1.0, 0.3090169944, -0.8090169944,
-                                 -0.8090169944, 0.3090169944, 1.0],
+        expected_points = {'y': [0.0, -0.6909830055999999, -1.8090169943999999,
+                                 -1.8090169943999999, -0.6909830055999999, 0.0],
                            'x': [0.0, 0.9510565163, 0.5877852523,
                                  -0.5877852523, -0.9510565163, -0.0],
                            'time': [{'time_val': 100, 'subroutine': 0, 'vel_mode': 0},
