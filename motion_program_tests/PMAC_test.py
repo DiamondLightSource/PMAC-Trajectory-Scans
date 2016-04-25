@@ -29,10 +29,8 @@ class WriteTest(unittest.TestCase):
 
     def test_buffer_fill_time_one_axis(self):
 
-        buffer_fill = int(self.pmac.buffer_length)
-
         scan = ScanGen()
-        scan.generate_sine_points_one_axis(400, 1000)
+        scan.generate_sine_points_one_axis(400, self.pmac.buffer_length)
         scan.format_point_set()
 
         length = 0
@@ -42,16 +40,14 @@ class WriteTest(unittest.TestCase):
 
         start_time = time.time()
         self.pmac.fill_current_buffer(scan.point_set)
-        self.pmac.set_current_buffer_fill(buffer_fill)
+        self.pmac.set_current_buffer_fill(self.pmac.buffer_length)
         print("Time to fill buffers: " + str(time.time() - start_time))
         print("Messages sent: " + str(self.pmac.sendCommand.called))
 
     def test_buffer_fill_time_two_axes(self):
 
-        buffer_fill = int(self.pmac.buffer_length)
-
         scan = ScanGen()
-        scan.generate_sine_points_one_axis(400, 1000)
+        scan.generate_sine_points_one_axis(400, self.pmac.buffer_length)
         scan.format_point_set()
         scan.point_set['y'] = scan.point_set['x'][:]
 
@@ -62,16 +58,14 @@ class WriteTest(unittest.TestCase):
 
         start_time = time.time()
         self.pmac.fill_current_buffer(scan.point_set)
-        self.pmac.set_current_buffer_fill(buffer_fill)
+        self.pmac.set_current_buffer_fill(self.pmac.buffer_length)
         print("Time to fill buffers: " + str(time.time() - start_time))
         print("Messages sent: " + str(self.pmac.sendCommand.called))
 
     def test_buffer_fill_time_nine_axes(self):
 
-        buffer_fill = int(self.pmac.buffer_length)
-
         scan = ScanGen()
-        scan.generate_sine_points_all_axes(400, 1000)
+        scan.generate_sine_points_all_axes(400, self.pmac.buffer_length)
         scan.format_point_set()
 
         length = 0
@@ -81,11 +75,12 @@ class WriteTest(unittest.TestCase):
 
         start_time = time.time()
         self.pmac.fill_current_buffer(scan.point_set)
-        self.pmac.set_current_buffer_fill(buffer_fill)
+        self.pmac.set_current_buffer_fill(self.pmac.buffer_length)
         print("Time to fill buffers: " + str(time.time() - start_time))
         print("Messages sent: " + str(self.pmac.sendCommand.called))
 
     def test_read_max_velocities(self):
+        self.pmac.assign_motors([(1, "X", 50)])
         self.pmac.read_cs_max_velocities()
 
         print("Max Axis Velocities:")
