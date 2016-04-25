@@ -124,7 +124,7 @@ class TrajectoryScanTest(unittest.TestCase):
         self.pmac.home_motors()
         self.pmac.set_axes(384)
         self.pmac.reset_buffers()
-        self.move_time = 200
+        self.move_time = 40
 
         self.ScanGen = ScanGen()
         self.ScanGen.generate_circle_points(self.move_time, 3600)
@@ -134,44 +134,44 @@ class TrajectoryScanTest(unittest.TestCase):
         self.pmac.force_abort()
         self.pmac.disconnect()
 
-    def test_given_simple_point_set_then_positions_reached(self):
-        point_set = {'x': [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
-                     'time': [{'time_val': 4000, 'subroutine': 0, 'vel_mode': 0},
-                              {'time_val': 4000, 'subroutine': 0, 'vel_mode': 0},
-                              {'time_val': 4000, 'subroutine': 0, 'vel_mode': 0},
-                              {'time_val': 4000, 'subroutine': 0, 'vel_mode': 0},
-                              {'time_val': 4000, 'subroutine': 0, 'vel_mode': 0},
-                              {'time_val': 4000, 'subroutine': 0, 'vel_mode': 0}]}
-
-        self.ScanGen.point_set = point_set
-        self.ScanGen.format_point_set()
-
-        self.pmac.fill_current_buffer(self.ScanGen.point_set)
-        self.pmac.set_current_buffer_fill(6)
-        self.pmac.set_initial_coordinates()
-
-        self.pmac.run_motion_program(PROG_NUM)
-
-        time_ = []
-        prev = []
-        curr = []
-        next_ = []
-        com_pos = []
-        act_pos = []
-        com_vel = []
-        act_vel = []
-        for _ in range(0, len(point_set['x']) + 1):
-            time.sleep(1)
-            time_.append(_)
-            prev.append(self.pmac.read_variable("P4101"))
-            curr.append(self.pmac.read_variable("P4111"))
-            next_.append(self.pmac.read_variable("M4001"))
-            com_pos.append(self.pmac.read_variable("Q1"))
-            com_vel.append(self.pmac.read_variable("Q2"))
-            act_pos.append(self.pmac.read_motor_position(1))
-            act_vel.append(self.pmac.read_motor_velocity(1))
-
-        self.assertEqual(act_pos, [100, 200, 300, 400, 500, 600])
+    # def test_given_simple_point_set_then_positions_reached(self):
+    #     point_set = {'x': [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+    #                  'time': [{'time_val': 4000, 'subroutine': 0, 'vel_mode': 0},
+    #                           {'time_val': 4000, 'subroutine': 0, 'vel_mode': 0},
+    #                           {'time_val': 4000, 'subroutine': 0, 'vel_mode': 0},
+    #                           {'time_val': 4000, 'subroutine': 0, 'vel_mode': 0},
+    #                           {'time_val': 4000, 'subroutine': 0, 'vel_mode': 0},
+    #                           {'time_val': 4000, 'subroutine': 0, 'vel_mode': 0}]}
+    #
+    #     self.ScanGen.point_set = point_set
+    #     self.ScanGen.format_point_set()
+    #
+    #     self.pmac.fill_current_buffer(self.ScanGen.point_set)
+    #     self.pmac.set_current_buffer_fill(6)
+    #     self.pmac.set_initial_coordinates()
+    #
+    #     self.pmac.run_motion_program(PROG_NUM)
+    #
+    #     time_ = []
+    #     prev = []
+    #     curr = []
+    #     next_ = []
+    #     com_pos = []
+    #     act_pos = []
+    #     com_vel = []
+    #     act_vel = []
+    #     for _ in range(0, len(point_set['x']) + 1):
+    #         time.sleep(1)
+    #         time_.append(_)
+    #         prev.append(self.pmac.read_variable("P4101"))
+    #         curr.append(self.pmac.read_variable("P4111"))
+    #         next_.append(self.pmac.read_variable("M4001"))
+    #         com_pos.append(self.pmac.read_variable("Q1"))
+    #         com_vel.append(self.pmac.read_variable("Q2"))
+    #         act_pos.append(self.pmac.read_motor_position(1))
+    #         act_vel.append(self.pmac.read_motor_velocity(1))
+    #
+    #     self.assertEqual(act_pos, [100, 200, 300, 400, 500, 600])
 
     def test_given_single_point_then_move(self):
 
