@@ -163,7 +163,7 @@ class CheckMaxVelocityTest(unittest.TestCase):
                                            {'time_val': 1, 'subroutine': 0, 'vel_mode': 0}],
                                   'x': [1, 2, 3]}
 
-        expected_error_message = "Points set will exceed maximum velocity for axis x"
+        expected_error_message = "Points set will exceed maximum velocity, 1, for axis x: 4.0"
 
         with self.assertRaises(ValueError) as error:
             self.ScanGen.check_max_velocity_of_points(self.PmacCS)

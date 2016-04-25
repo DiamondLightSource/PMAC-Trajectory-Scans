@@ -184,7 +184,7 @@ class TrajectoryScanGenerator(object):
                     velocity = (next_point - prev_point)/move_time
                     if velocity > cs.max_velocities[axis]:
                         raise ValueError(
-                            "Points set will exceed maximum velocity for axis {}".format(axis))
+                            "Points set will exceed maximum velocity, {max_vel}, for axis {axis}: {vel}".format(axis=axis, max_vel=cs.max_velocities[axis], vel=velocity))
 
         return True
 
