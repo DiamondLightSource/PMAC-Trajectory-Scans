@@ -2,6 +2,7 @@ from test_harness.PmacTestHarness import PmacTestHarness
 from test_harness.TrajectoryScanGenerator import TrajectoryScanGenerator as ScanGen
 import unittest
 import time
+import random
 
 # PMAC_IP = "172.23.243.169"
 PMAC_IP = "172.23.253.15"
@@ -90,9 +91,12 @@ class WriteTest(unittest.TestCase):
     def test_float_parsing(self):
         self.pmac.sendCommand("M4500->L:$30000,0,48")
 
-        value = 10
-        pmac_float = ScanGen.double_to_pmac_float(value)
-        print(str(value) + ' : ' + str(pmac_float))
-        self.pmac.write_to_address("L", "30000", pmac_float)
-        self.assertAlmostEqual(value, float(self.pmac.read_variable("M4500")), places=5)
+        for _ in range(1000):
+            number = random.uniform(-10000000.0, 10000000)
+            pmac_float = ScanGen.double_to_pmac_float(number)
+
+            self.pmac.write_to_address("L", "30000", pmac_float)
+            read_back = float(self.pmac.read_variable("M4500"))
+            # print(number, read_back)
+            self.assertAlmostEqual(number, read_back, places=10-len(str(int(number)))-1)
 
