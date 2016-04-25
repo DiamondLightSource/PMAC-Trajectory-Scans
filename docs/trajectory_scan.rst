@@ -20,6 +20,8 @@ The motion program operates using two buffers, one of which can be scanned throu
 
 The program keeps 3 points per axis (plus time) accessible at any time; Prev\_* and Current\_* values are stored in P-Variables and Next\_* values are stored in an M variable. The M variable is used to iterate through the user memory addresses using pointers (_Adr values) to the M Variable definitions. Before each increment, the 3-point-buffers are shifted Current -> Prev and then Next -> Current. This allows the PMAC to calculate the required trajectory for each Current\_* point
 
+Buffers are iterated through with the CurrentIndex variable, which corresponds to the Next_* coordinate in the buffer. The main loop runs from 1 to N (From a 0 to N range), because in the very first loop no move can be made until Current_* is at 0, i.e. when Next_* is at 1. This means there is an extra move after the inner while loop to move to the last point of the buffer while using the first point of the next buffer for velocity calculations. However this does not work for the last point of the last buffer, because there is no next buffer for the Next_* coordinate. For this, there is an extra move after the outer loop to move to the very last point using the Prev -> Current velocity calculation.
+
 Dynamic Velocity Calculation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
