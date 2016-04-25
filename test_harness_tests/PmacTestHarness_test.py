@@ -1,5 +1,7 @@
-from PmacTestHarness import PmacTestHarness
+from test_harness.PmacTestHarness import PmacTestHarness
+from test_harness.PmacCoordinateSystem import PmacCoordinateSystem
 import unittest
+
 from pkg_resources import require
 require("mock")
 from mock import ANY, patch
@@ -10,6 +12,7 @@ class TesterPmacTestHarness(PmacTestHarness):
     def __init__(self):
 
         self.status = "1"
+        self.status = "0"
         self.total_points = 0
         self.current_index = 0
         self.current_buffer = 0
@@ -17,54 +20,60 @@ class TesterPmacTestHarness(PmacTestHarness):
         self.buffer_address_a = "30000"
         self.buffer_address_b = "30226"
         self.addresses = {}
+        self.coordinate_system = PmacCoordinateSystem(1)
 
         self.prev_buffer_write = 1
 
 
 class InitTest(unittest.TestCase):
 
-    @patch('PmacTestHarness.PmacTestHarness.read_variable')
+    @patch('test_harness.PmacTestHarness.PmacTestHarness.read_variable')
     def test_default_attributes_set(self, read_variable_mock):
         self.pmac = PmacTestHarness("test")
 
         self.assertEqual(read_variable_mock.call_args_list[0][0][0], "P4001")
-        self.assertEqual(read_variable_mock.call_args_list[1][0][0], "P4004")
-        self.assertEqual(read_variable_mock.call_args_list[2][0][0], "P4008")
-        self.assertEqual(read_variable_mock.call_args_list[3][0][0], "P4009")
+        self.assertEqual(read_variable_mock.call_args_list[1][0][0], "P4015")
+        self.assertEqual(read_variable_mock.call_args_list[2][0][0], "P4004")
+        self.assertEqual(read_variable_mock.call_args_list[3][0][0], "P4008")
+        self.assertEqual(read_variable_mock.call_args_list[4][0][0], "P4009")
 
 
+@patch('PmacTestHarness_test.TesterPmacTestHarness.read_variable', return_value="0")
 class UpdateStatusVariablesTest(unittest.TestCase):
 
     def setUp(self):
         self.pmac = TesterPmacTestHarness()
 
-    @patch('PmacTestHarness_test.TesterPmacTestHarness.read_variable', return_value="1")
     def test_status_updated(self, read_variable_mock):
+        read_variable_mock.return_value = "1"
 
         self.pmac.update_status_variables()
         self.assertEqual(self.pmac.status, 1)
         self.assertEqual(read_variable_mock.call_args_list[0][0][0], "P4001")
 
-    @patch('PmacTestHarness_test.TesterPmacTestHarness.read_variable', return_value="0")
+    def test_error_updated(self, read_variable_mock):
+
+        self.pmac.update_status_variables()
+        self.assertEqual(self.pmac.total_points, 0)
+        self.assertEqual(read_variable_mock.call_args_list[1][0][0], "P4015")
+
     def test_total_points_updated(self, read_variable_mock):
 
         self.pmac.update_status_variables()
         self.assertEqual(self.pmac.total_points, 0)
-        self.assertEqual(read_variable_mock.call_args_list[1][0][0], "P4005")
+        self.assertEqual(read_variable_mock.call_args_list[2][0][0], "P4005")
 
-    @patch('PmacTestHarness_test.TesterPmacTestHarness.read_variable', return_value="0")
     def test_current_index_updated(self, read_variable_mock):
 
         self.pmac.update_status_variables()
         self.assertEqual(self.pmac.current_index, 0)
-        self.assertEqual(read_variable_mock.call_args_list[2][0][0], "P4006")
+        self.assertEqual(read_variable_mock.call_args_list[3][0][0], "P4006")
 
-    @patch('PmacTestHarness_test.TesterPmacTestHarness.read_variable', return_value="0")
     def test_current_buffer_updated(self, read_variable_mock):
 
         self.pmac.update_status_variables()
         self.assertEqual(self.pmac.current_buffer, 0)
-        self.assertEqual(read_variable_mock.call_args_list[3][0][0], "P4007")
+        self.assertEqual(read_variable_mock.call_args_list[4][0][0], "P4007")
 
 
 class UpdateAddressesTest(unittest.TestCase):
@@ -110,59 +119,118 @@ class UpdateVelocitiesTest(unittest.TestCase):
     def setUp(self):
         self.pmac = TesterPmacTestHarness()
 
-    @patch('PmacTestHarness_test.TesterPmacTestHarness.sendCommand',
+    @patch('PmacTestHarness_test.TesterPmacTestHarness.read_variable',
            side_effect=['10', '20', '30', '40', '50', '60', '70', '80', '90'])
-    def test_given_buffer_A_then_update(self, _):
-        expected_address = {'a': '70',
-                            'b': '80',
-                            'c': '90',
-                            'u': '40',
-                            'v': '50',
-                            'w': '60',
-                            'x': '10',
-                            'y': '20',
-                            'z': '30'}
+    @patch('test_harness.PmacCoordinateSystem.PmacCoordinateSystem.set_max_velocities')
+    def test_update_velocities(self, set_max_vel_mock, _):
+        expected_call = ['10', '20', '30', '40', '50', '60', '70', '80', '90']
 
-        self.pmac.update_max_velocities()
+        self.pmac.read_cs_max_velocities()
 
-        self.assertEqual(expected_address, self.pmac.max_velocities)
+        set_max_vel_mock.assert_called_once_with(expected_call)
 
 
+@patch('PmacTestHarness_test.TesterPmacTestHarness.sendCommand')
 class CommandsTest(unittest.TestCase):
 
     def setUp(self):
         self.pmac = TesterPmacTestHarness()
 
-    @patch('PmacTestHarness_test.TesterPmacTestHarness.sendCommand')
-    def test_assign_motors_command(self, send_command_mock):
+    @patch('test_harness.PmacCoordinateSystem.PmacCoordinateSystem.add_motor_assignment')
+    def test_given_valid_assignment_then_assign_motors(self, add_motor_mock, send_command_mock):
+        axis_map = [(1, "X", 100), (3, "Y", 25)]
 
-        self.pmac.assign_motors()
+        self.pmac.assign_motors(axis_map)
 
-        send_command_mock.assert_called_once_with(
-            "&1 #1->100X #2->100Y #3->Z #4->U #5->V #6->W #7->A #8->B")
+        call_list = [call[0] for call in add_motor_mock.call_args_list]
+        self.assertIn(axis_map[0], call_list)
+        self.assertIn(axis_map[1], call_list)
+        send_command_mock.assert_called_once_with("&1 #1->100X #3->25Y")
 
-    @patch('PmacTestHarness_test.TesterPmacTestHarness.sendCommand')
+    @patch('test_harness.PmacCoordinateSystem.PmacCoordinateSystem.add_motor_assignment')
+    def test_given_invalid_motor_then_error(self, _1, _2):
+        axis_map = [(1, "X", 100), (100, "Y", 25)]
+        expected_error_message = "Motor selection invalid"
+
+        with self.assertRaises(ValueError) as error:
+            self.pmac.assign_motors(axis_map)
+
+        self.assertEqual(expected_error_message, error.exception.message)
+
+    @patch('test_harness.PmacCoordinateSystem.PmacCoordinateSystem.add_motor_assignment')
+    def test_given_invalid_axis_then_error(self, _1, _2):
+        axis_map = [(1, "1", 100), (2, "Y", 25)]
+        expected_error_message = "Axis selection invalid"
+
+        with self.assertRaises(ValueError) as error:
+            self.pmac.assign_motors(axis_map)
+
+        self.assertEqual(expected_error_message, error.exception.message)
+
     def test_home_motors_command(self, send_command_mock):
-
+        self.pmac.coordinate_system.add_motor_assignment(1, "X", 1)
+        self.pmac.coordinate_system.add_motor_assignment(2, "Y", 1)
         self.pmac.home_motors()
 
         send_command_mock.assert_called_once_with(
-            "#1HMZ #2HMZ #3HMZ #4HMZ #5HMZ #6HMZ #7HMZ #8HMZ #9HMZ")
+            "#1HMZ#2HMZ")
 
-    @patch('PmacTestHarness_test.TesterPmacTestHarness.sendCommand')
     def test_run_motion_program_command(self, send_command_mock):
+        self.pmac.coordinate_system.add_motor_assignment(1, "X", 1)
+        self.pmac.coordinate_system.add_motor_assignment(2, "Y", 1)
 
         self.pmac.run_motion_program(1)
 
         send_command_mock.assert_called_once_with(
-            "#1J/ #2J/ #3J/ #4J/ #5J/ #6J/ #7J/ #8J/ &1 B1 R")
+            "#1J/#2J/&1B1R")
 
-    @patch('PmacTestHarness_test.TesterPmacTestHarness.sendCommand')
     def test_abort_command(self, send_command_mock):
 
         self.pmac.force_abort()
 
         send_command_mock.assert_called_once_with("A")
+
+    def test_read_motor_position_command(self, send_command_mock):
+
+        self.pmac.read_motor_position(1)
+
+        send_command_mock.assert_called_once_with("#1P")
+
+    def test_read_motor_velocity_command(self, send_command_mock):
+
+        self.pmac.read_motor_velocity(1)
+
+        send_command_mock.assert_called_once_with("#1V")
+
+
+class SetCurrentCoordinatesTest(unittest.TestCase):
+
+    def setUp(self):
+        self.pmac = TesterPmacTestHarness()
+
+    @patch('PmacTestHarness_test.TesterPmacTestHarness.read_motor_position',
+           side_effect=["10", "20"])
+    @patch('PmacTestHarness_test.TesterPmacTestHarness.set_variable')
+    def test_set_initial_coordinates_makes_correct_calls(self, set_variable_mock, _):
+        self.pmac.coordinate_system.motor_map = {"1": ("X", 50), "2": ("Y", 20)}
+
+        self.pmac.set_initial_coordinates()
+
+        call_list = [call[0] for call in set_variable_mock.call_args_list]
+        self.assertIn(("P4111", "500"), call_list)
+        self.assertIn(("P4112", "400"), call_list)
+
+
+# class CheckProgramExistsTest(unittest.TestCase):
+#
+#     def setUp(self):
+#         self.pmac = TesterPmacTestHarness()
+#
+#     def test_check_program_exists(self):
+#
+#         exists = self.pmac.check_program_exists()
+#
+#         self.assertTrue(exists)
 
 
 class SetAxesTest(unittest.TestCase):
@@ -183,26 +251,27 @@ class SetAbortTest(unittest.TestCase):
         self.pmac = TesterPmacTestHarness()
 
     @patch('PmacTestHarness_test.TesterPmacTestHarness.set_variable')
-    def test_axes_set(self, set_variable_mock):
+    def test_abort_set(self, set_variable_mock):
         self.pmac.set_abort()
 
         set_variable_mock.assert_called_once_with("P4002", "1")
 
 
-class ReadAddressTest(unittest.TestCase):
+@patch('PmacTestHarness_test.TesterPmacTestHarness.sendCommand')
+class ReadWriteTest(unittest.TestCase):
 
     def setUp(self):
         self.pmac = TesterPmacTestHarness()
 
-    @patch('PmacTestHarness_test.TesterPmacTestHarness.sendCommand', return_value=("1\r", True))
-    def test_given_valid_args_return_value(self, send_command_mock):
+    def test_read_address_given_valid_args_return_value(self, send_command_mock):
+        send_command_mock.return_value = ("1\r", True)
         value = self.pmac.read_address("X", "30000")
 
         send_command_mock.assert_called_once_with("RX $30000")
         self.assertEqual(value, "1")
 
-    @patch('PmacTestHarness_test.TesterPmacTestHarness.sendCommand', return_value=("\r", False))
-    def test_given_invalid_args_then_raise_error(self, send_command_mock):
+    def test_read_address_given_invalid_args_then_raise_error(self, send_command_mock):
+        send_command_mock.return_value = ("1\r", False)
 
         with self.assertRaises(IOError) as error:
             self.pmac.read_address("U", "1000000")
@@ -210,42 +279,31 @@ class ReadAddressTest(unittest.TestCase):
         send_command_mock.assert_called_once_with("RU $1000000")
         self.assertEqual(error.exception.message, "Read failed")
 
-
-class WriteToAddressTest(unittest.TestCase):
-
-    def setUp(self):
-        self.pmac = TesterPmacTestHarness()
-
-    @patch('PmacTestHarness_test.TesterPmacTestHarness.sendCommand', return_value=("1\r", True))
-    def test_given_valid_args_then_success(self, send_command_mock):
+    def test_write_address_given_valid_args_then_success(self, send_command_mock):
+        send_command_mock.return_value = ("1\r", True)
         success = self.pmac.write_to_address("X", "30000", "100")
 
         send_command_mock.assert_called_once_with("WX $30000 100")
         self.assertTrue(success)
 
-    @patch('PmacTestHarness_test.TesterPmacTestHarness.sendCommand', return_value=("\r", False))
-    def test_given_invalid_args_then_raise_error(self, send_command_mock):
+    def test_write_address_given_invalid_args_then_raise_error(self, send_command_mock):
+        send_command_mock.return_value = ("1\r", False)
+
         with self.assertRaises(IOError) as error:
             self.pmac.write_to_address("U", "1000000", "")
 
         send_command_mock.assert_called_once_with("WU $1000000 ")
         self.assertEqual(error.exception.message, "Write failed")
 
-
-class ReadVariableTest(unittest.TestCase):
-
-    def setUp(self):
-        self.pmac = TesterPmacTestHarness()
-
-    @patch('PmacTestHarness_test.TesterPmacTestHarness.sendCommand', return_value=("1\r", True))
-    def test_given_valid_args_return_value(self, send_command_mock):
+    def test_read_variable_given_valid_args_return_value(self, send_command_mock):
+        send_command_mock.return_value = ("1\r", True)
         value = self.pmac.read_variable("P4001")
 
         send_command_mock.assert_called_once_with("P4001")
         self.assertEqual(value, "1")
 
-    @patch('PmacTestHarness_test.TesterPmacTestHarness.sendCommand', return_value=("\r", False))
-    def test_given_invalid_args_then_raise_error(self, send_command_mock):
+    def test_read_variable_given_invalid_args_then_raise_error(self, send_command_mock):
+        send_command_mock.return_value = ("1\r", False)
 
         with self.assertRaises(IOError) as error:
             self.pmac.read_variable("P10000")
@@ -253,21 +311,15 @@ class ReadVariableTest(unittest.TestCase):
         send_command_mock.assert_called_once_with("P10000")
         self.assertEqual(error.exception.message, "Read failed")
 
-
-class SetVariableTest(unittest.TestCase):
-
-    def setUp(self):
-        self.pmac = TesterPmacTestHarness()
-
-    @patch('PmacTestHarness_test.TesterPmacTestHarness.sendCommand', return_value=("1\r", True))
-    def test_given_valid_args_success(self, send_command_mock):
+    def test_set_variable_given_valid_args_success(self, send_command_mock):
+        send_command_mock.return_value = ("1\r", True)
         success = self.pmac.set_variable("P4002", "1")
 
         send_command_mock.assert_called_once_with("P4002=1")
         self.assertTrue(success)
 
-    @patch('PmacTestHarness_test.TesterPmacTestHarness.sendCommand', return_value=("\r", False))
-    def test_given_invalid_args_then_raise_error(self, send_command_mock):
+    def test_set_variable_given_invalid_args_then_raise_error(self, send_command_mock):
+        send_command_mock.return_value = ("1\r", False)
 
         with self.assertRaises(IOError) as error:
             self.pmac.set_variable("P10000", "1")
@@ -280,69 +332,25 @@ class ResetBuffersTest(unittest.TestCase):
 
     def setUp(self):
         self.pmac = TesterPmacTestHarness()
-        self.num_points = int(self.pmac.buffer_length)*10*2
+        self.pmac.buffer_length = 5
 
-    @patch('PmacTestHarness_test.TesterPmacTestHarness.write_to_address')
-    def test_buffers_set_to_zero(self, write_mock):
+    @patch('PmacTestHarness_test.TesterPmacTestHarness.fill_current_buffer')
+    @patch('PmacTestHarness_test.TesterPmacTestHarness.fill_idle_buffer')
+    def test_buffers_set_to_zero(self, idle_mock, current_mock):
         self.pmac.reset_buffers()
+        expected_call = {'time': ['$0', '$0', '$0', '$0', '$0'],
+                         'x': ['$0', '$0', '$0', '$0', '$0'],
+                         'y': ['$0', '$0', '$0', '$0', '$0'],
+                         'z': ['$0', '$0', '$0', '$0', '$0'],
+                         'u': ['$0', '$0', '$0', '$0', '$0'],
+                         'v': ['$0', '$0', '$0', '$0', '$0'],
+                         'w': ['$0', '$0', '$0', '$0', '$0'],
+                         'a': ['$0', '$0', '$0', '$0', '$0'],
+                         'b': ['$0', '$0', '$0', '$0', '$0'],
+                         'c': ['$0', '$0', '$0', '$0', '$0']}
 
-        self.assertEqual(write_mock.call_args_list[0][0], ("L", "30000", "0"))
-        self.assertEqual(write_mock.call_args_list[-1][0], ("L", ANY, "0"))
-        self.assertEqual(write_mock.call_count, self.num_points)
-
-
-class ConvertPointsToPmacFloat(unittest.TestCase):
-
-    def setUp(self):
-        self.pmac = TesterPmacTestHarness()
-
-    @patch('PmacTestHarness_test.TesterPmacTestHarness.double_to_pmac_float')
-    def test_given_points_call_convert_function(self, converter_mock):
-        points = {'time': [10, 10, 10, 10],
-                  'x': [0.0, 0.099861063292, 0.198723793760, 0.295599839129]}
-
-        self.pmac.convert_points_to_pmac_float(points)
-
-        self.assertEqual(4, converter_mock.call_count)
-        call_list = [call[0][0] for call in converter_mock.call_args_list]
-        self.assertEqual(call_list, points['x'])
-
-
-class SendPointsTest(unittest.TestCase):
-
-    def setUp(self):
-        self.pmac = TesterPmacTestHarness()
-        self.points = {'time': [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
-                       'x': [200, 200, 200, 200, 200, 200, 200, 200, 200, 200],
-                       'y': [300, 300, 300, 300, 300, 300, 300, 300, 300, 300]}
-
-    @patch('PmacTestHarness_test.TesterPmacTestHarness.write_to_address')
-    def test_given_current_True_then_points_sent_to_A(self, write_mock):
-
-        self.pmac.send_points(self.points, current=True)
-        root_address = self.pmac.buffer_address_a
-
-        call_list = [call[0] for call in write_mock.call_args_list]
-        self.assertEqual(write_mock.call_count, 30)
-        self.assertIn(("L", root_address, "100"), call_list)
-        self.assertIn(
-            ("L", self.pmac.add_dechex(root_address, int(self.pmac.buffer_length)), "200"),call_list)
-        self.assertIn(
-            ("L", self.pmac.add_dechex(root_address, 2*int(self.pmac.buffer_length)), "300"), call_list)
-
-    @patch('PmacTestHarness_test.TesterPmacTestHarness.write_to_address')
-    def test_given_current_False_points_sent_to_B(self, write_mock):
-
-        self.pmac.send_points(self.points, current=False)
-        root_address = self.pmac.buffer_address_b
-
-        call_list = [call[0] for call in write_mock.call_args_list]
-        self.assertEqual(write_mock.call_count, 30)
-        self.assertIn(("L", root_address, "100"), call_list)
-        self.assertIn(
-            ("L", self.pmac.add_dechex(root_address, int(self.pmac.buffer_length)), "200"), call_list)
-        self.assertIn(
-            ("L", self.pmac.add_dechex(root_address, 2*int(self.pmac.buffer_length)), "300"), call_list)
+        current_mock.assert_called_once_with(expected_call)
+        idle_mock.assert_called_once_with(expected_call)
 
 
 class ConstructWriteCommandTest(unittest.TestCase):
@@ -473,17 +481,31 @@ class FillBufferTest(unittest.TestCase):
         self.assertIn(time_cmd, send_calls)
 
 
+@patch('PmacTestHarness_test.TesterPmacTestHarness.read_address')
 class ReadPointsTest(unittest.TestCase):
 
     def setUp(self):
         self.pmac = TesterPmacTestHarness()
 
-    @patch('PmacTestHarness_test.TesterPmacTestHarness.read_address',
-           side_effect=[100, 100, 100, 200, 200, 200, 300, 300, 300,
-                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                        0, 0, 0, 0, 0, 0, 0, 0, 0])
-    def test_read_points(self, _):
-        pmac_buffer = self.pmac.read_points(3, num_axes=2)
+    def test_given_buffer_A_then_read(self, read_address_mock):
+        read_address_mock.side_effect = [100, 100, 100, 200, 200, 200,
+                                         300, 300, 300, 0, 0, 0, 0, 0,
+                                         0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                         0, 0, 0, 0, 0, 0]
+        pmac_buffer = self.pmac.read_points(3, buffer_num=0, num_axes=2)
+
+        points = [100, 100, 100,
+                  200, 200, 200,
+                  300, 300, 300]
+
+        self.assertEqual(pmac_buffer[:9], points)
+
+    def test_given_buffer_B_then_read(self, read_address_mock):
+        read_address_mock.side_effect = [100, 100, 100, 200, 200, 200,
+                                         300, 300, 300, 0, 0, 0, 0, 0,
+                                         0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                         0, 0, 0, 0, 0, 0]
+        pmac_buffer = self.pmac.read_points(3, buffer_num=1, num_axes=2)
 
         points = [100, 100, 100,
                   200, 200, 200,
@@ -492,22 +514,35 @@ class ReadPointsTest(unittest.TestCase):
         self.assertEqual(pmac_buffer[:9], points)
 
 
-class SetBufferFill(unittest.TestCase):
+@patch('PmacTestHarness_test.TesterPmacTestHarness.set_variable')
+class SetBufferFillTest(unittest.TestCase):
 
     def setUp(self):
         self.pmac = TesterPmacTestHarness()
 
-    @patch('PmacTestHarness_test.TesterPmacTestHarness.set_variable')
-    def test_given_current_True_then_A_buffer_set(self, set_variable_mock):
-        self.pmac.set_buffer_fill(50, current=True)
+    def test_current_given_A_active_then_A_buffer_set(self, set_variable_mock):
+        self.pmac.current_buffer = 0
+        self.pmac.set_current_buffer_fill(50)
 
         set_variable_mock.assert_called_once_with("P4011", "50")
 
-    @patch('PmacTestHarness_test.TesterPmacTestHarness.set_variable')
-    def test_given_current_True_then_A_buffer_set(self, set_variable_mock):
-        self.pmac.set_buffer_fill(50, current=False)
+    def test_current_given_B_active_then_B_buffer_set(self, set_variable_mock):
+        self.pmac.current_buffer = 1
+        self.pmac.set_current_buffer_fill(50)
 
         set_variable_mock.assert_called_once_with("P4012", "50")
+
+    def test_idle_given_A_active_then_B_buffer_set(self, set_variable_mock):
+        self.pmac.current_buffer = 0
+        self.pmac.set_idle_buffer_fill(50)
+
+        set_variable_mock.assert_called_once_with("P4012", "50")
+
+    def test_current_given_B_active_then_A_buffer_set(self, set_variable_mock):
+        self.pmac.current_buffer = 1
+        self.pmac.set_idle_buffer_fill(50)
+
+        set_variable_mock.assert_called_once_with("P4011", "50")
 
 
 class DecHexConverterTest(unittest.TestCase):
@@ -544,34 +579,3 @@ class DecHexConverterTest(unittest.TestCase):
         self.assertEqual(series, ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
                                   "a", "b", "c", "d", "e", "f", "10", "11", "12",
                                   "13", "14", "15", "16", "17", "18", "19", "1a"])
-
-
-class DoubleToPmacFloatTest(unittest.TestCase):
-
-    def test_given_positive_then_convert(self):
-
-        value = '$500000000803'
-        pmac_float = PmacTestHarness.double_to_pmac_float(10)
-
-        self.assertEqual(pmac_float, value)
-
-    def test_given_less_than_1_decimal_then_convert(self):
-
-        value = '$4bac6e59b7fe'
-        pmac_float = PmacTestHarness.double_to_pmac_float(0.295599839124)
-
-        self.assertEqual(pmac_float, value)
-
-    def test_given_more_than_1_decimal_then_convert(self):
-
-        value = '$52eb1b910800'
-        pmac_float = PmacTestHarness.double_to_pmac_float(1.2955998341)
-
-        self.assertEqual(pmac_float, value)
-
-    def test_given_negative_then_convert(self):
-
-        value = '$ffaffffffff803'
-        pmac_float = PmacTestHarness.double_to_pmac_float(-10)
-
-        self.assertEqual(pmac_float, value)

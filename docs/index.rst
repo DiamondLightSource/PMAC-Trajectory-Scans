@@ -17,6 +17,7 @@ Contents:
 
    test_harness
    trajectory_scan
+   motion_program_tests
 
 Indices and tables
 ==================

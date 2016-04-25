@@ -9,7 +9,7 @@ install:
   - python setup.py bdist_egg
 
 # command to run tests
-script: nosetests -v --exclude=trajectory_scan_test
+script: nosetests test_harness_tests/
 
 after_success:
     - coveralls

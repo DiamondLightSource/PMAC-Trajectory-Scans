@@ -1,10 +1,12 @@
 from dls_pmacremote import PmacEthernetInterface
+from PmacCoordinateSystem import PmacCoordinateSystem as PmacCS
 
 
 class PmacTestHarness(PmacEthernetInterface):
     """
-    A pmac controller that can interface with and control the `trajectory_scan` motion program
-    as the EPICS driver does.
+    A pmac controller that can interface with and control the `trajectory_scan` motion
+    program as the EPICS driver does.
+
     """
 
     def __init__(self, ip_address):
@@ -19,31 +21,54 @@ class PmacTestHarness(PmacEthernetInterface):
         super(PmacTestHarness, self).__init__(
             parent=None, verbose=False, numAxes=None, timeout=3.0)
 
+        # Connection initialisation
         self.setConnectionParams(host=ip_address, port=1025)
         self.connect()
 
-        self.status = self.read_variable("P4001")  # Change to int() ?
+        # Variables read directly from PMAC
+        self.status = int(self.read_variable("P4001"))
+        self.error = int(self.read_variable("P4015"))
         self.total_points = 0
         self.current_index = 0
         self.current_buffer = 0
-        self.buffer_length = self.read_variable("P4004")
+        # Fixed values
+        self.buffer_length = int(self.read_variable("P4004"))
         self.buffer_address_a = str(hex(int(self.read_variable("P4008")))[2:])
         self.buffer_address_b = str(hex(int(self.read_variable("P4009")))[2:])
-        self.addresses = {}
 
+        # Other PMAC information
+        self.addresses = {}
         self.prev_buffer_write = 1
 
-        self.max_velocities = {'x': 0, 'y': 0, 'z': 0,
-                               'u': 0, 'v': 0, 'w': 0,
-                               'a': 0, 'b': 0, 'c': 0}
+        # PMAC CS Set Up
+        self.coordinate_system = PmacCS(1)
+        self.read_cs_max_velocities()
+
+    def add_coordinate_system(self, cs_instance):
+
+        self.coordinate_system = cs_instance
+
+    def read_cs_max_velocities(self):
+        """
+        Read the maximum allowed velocities from variables ix16 on the PMAC
+
+        """
+
+        velocities = []
+        for i in range(1, 10):
+            velocities.append(self.read_variable("i{axis}16".format(axis=i)))
+
+        self.coordinate_system.set_max_velocities(velocities)
 
     def update_status_variables(self):
         """
-        Update status, total points scanned, current index and current buffer specifier from the pmac
+        Update status, error, total points scanned, current index and current buffer
+        specifier from the pmac
 
         """
 
         self.status = int(self.read_variable("P4001"))
+        self.error = int(self.read_variable("P4015"))
         self.total_points = int(self.read_variable("P4005"))
         self.current_index = int(self.read_variable("P4006"))
         self.current_buffer = int(self.read_variable("P4007"))
@@ -68,24 +93,29 @@ class PmacTestHarness(PmacEthernetInterface):
                           'b': self.add_dechex(root_address, 8*int(self.buffer_length)),
                           'c': self.add_dechex(root_address, 9*int(self.buffer_length))}
 
-    def update_max_velocities(self):
-
-        velocities = []
-        for i in range(0, 9):
-            velocities.append(self.sendCommand("i{axis}16".format(axis=i)))
-
-        self.max_velocities = {'x': velocities[0], 'y': velocities[1], 'z': velocities[2],
-                               'u': velocities[3], 'v': velocities[4], 'w': velocities[5],
-                               'a': velocities[6], 'b': velocities[7], 'c': velocities[8]}
-
-    def assign_motors(self):
+    def assign_motors(self, axis_map):
         """
         Send command to assign motors to the required axes
 
+        Args:
+            axis_map(list(int, str, int)): List of axes to assign to motor, with scaling
+            e.g. [(1, "X", 100), (3, "Y", 25)] => &1 #1->100X #3->25Y
+
         """
 
-        self.sendCommand("&1 #1->100X #2->100Y #3->Z #4->U #5->V #6->W #7->A #8->B")
-        # self.sendCommand("&1 #1->100X #2->100Y")
+        command = "&1"
+        for motor, axis, scaling in axis_map:
+            if int(motor) not in range(1, 16):
+                raise ValueError("Motor selection invalid")
+            if axis.upper() not in ["X", "Y", "Z", "U", "V", "W", "A", "B", "C"]:
+                raise ValueError("Axis selection invalid")
+
+            self.coordinate_system.add_motor_assignment(motor, axis, scaling)
+            command += \
+                " #{motor_num}->{scaling}{axis}".format(
+                    motor_num=motor, scaling=scaling, axis=axis)
+
+        self.sendCommand(command)
 
     def home_motors(self):
         """
@@ -93,7 +123,11 @@ class PmacTestHarness(PmacEthernetInterface):
 
         """
 
-        self.sendCommand("#1HMZ #2HMZ #3HMZ #4HMZ #5HMZ #6HMZ #7HMZ #8HMZ #9HMZ")
+        command = ""
+        for motor in self.coordinate_system.motor_map.iterkeys():
+            command += "#{motor}HMZ".format(motor=motor)
+
+        self.sendCommand(command)
 
     def run_motion_program(self, program_num):
         """
@@ -104,10 +138,23 @@ class PmacTestHarness(PmacEthernetInterface):
 
         """
 
-        self.sendCommand("#1J/ #2J/ #3J/ #4J/ #5J/ #6J/ #7J/ #8J/ &{num} B{num} R".format(
-                num=str(program_num)))
-        # self.sendCommand("#1J/ #2J/ &{num} B{num} R".format(
-        #         num=str(program_num)))
+        command = ""
+        for motor in self.coordinate_system.motor_map.iterkeys():
+            command += "#{motor}J/".format(motor=motor)
+        command += "&" + str(self.coordinate_system.cs_number)
+        command += "B" + str(program_num) + "R"
+
+        self.sendCommand(command)
+
+    def check_program_exists(self):
+        raise NotImplementedError
+
+        # response, _ = self.sendCommand("List Prog 1")
+        #
+        # if len(response) > 50:
+        #     return True
+        # else:
+        #     return False
 
     def force_abort(self):
         """
@@ -130,9 +177,10 @@ class PmacTestHarness(PmacEthernetInterface):
         Send number of require axes
 
         Args:
-            axes(int): Int between 1 and 510 that will be split into 8 bits specifying the
-            required motors
-            e.g. X, Y and Z = 256 + 128 + 64 = 448; X, Y and U = 256 + 128 + 32 = 416
+            axes(int): A number between 1 and 511 that will be split into 9 bits
+            specifying the required motors e.g. X, Y and Z = 256 + 128 + 64 = 448;
+            X, Y and U = 256 + 128 + 32 = 416
+
         """
 
         self.set_variable("P4003", str(axes))
@@ -158,6 +206,41 @@ class PmacTestHarness(PmacEthernetInterface):
             return value.split('\r')[0]
         else:
             raise IOError("Read failed")
+
+    def read_points(self, num_points, buffer_num=0, num_axes=1):
+        """
+        Read points stored in pmac memory buffer
+
+        Args:
+            num_points(int): Number of sets of points to read
+            buffer_num(int): Specifier for buffer A (0) or B (1)
+            num_axes(int): Number of axes to read
+
+        Returns:
+            list(str): Points stored in pmac memory
+
+        Raises:
+            IOError: Read failed
+        """
+
+        if buffer_num == 0:
+            start = "30000"
+        else:
+            start = self.add_dechex("30000", int(self.buffer_length)*10)
+
+        pmac_buffer = []
+        current_address = start
+        for _ in range(0, num_points):
+            pmac_buffer.append(self.read_address("L", current_address))
+            current_address = self.inc_hex(current_address)
+        for i in range(1, num_axes + 1):
+            current_address = self.add_dechex(start, int(self.buffer_length)*i)
+            # print(current_address)
+            for _ in range(0, num_points):
+                pmac_buffer.append(self.read_address("L", current_address))
+                current_address = self.inc_hex(current_address)
+
+        return pmac_buffer
 
     def write_to_address(self, mode, address, value):
         """
@@ -235,97 +318,59 @@ class PmacTestHarness(PmacEthernetInterface):
 
         """
 
-        current_address = self.buffer_address_a
+        zeroes = ['$0']*int(self.buffer_length)
+        reset_points = {'time': zeroes[:],
+                        'x': zeroes[:], 'y': zeroes[:], 'z': zeroes[:],
+                        'u': zeroes[:], 'v': zeroes[:], 'w': zeroes[:],
+                        'a': zeroes[:], 'b': zeroes[:], 'c': zeroes[:]}
 
-        for _ in range(0, int(self.buffer_length)*10*2):
-            self.write_to_address("L", current_address, "0")
-            current_address = self.inc_hex(current_address)
+        self.fill_current_buffer(reset_points)
+        self.fill_idle_buffer(reset_points)
 
-    def convert_points_to_pmac_float(self, points):
+    def read_motor_position(self, motor_num):
         """
-        Convert the position coordinates of `points` to pmac float type.
+        Request current position of give motor
 
         Args:
-            points(dict): Set of points to convert
+            motor_num(int): Motor to read position for
 
         Returns:
-            dict: Set of points with position coordinated converted to pmac float
+            str: Current position of motor
+
         """
 
-        pmac_points = {'time': points['time'],
-                       'x': [], 'y': [], 'z': [],
-                       'u': [], 'v': [], 'w': [],
-                       'a': [], 'b': [], 'c': []}
+        position = self.sendCommand("#{motor}P".format(motor=motor_num))[0].split('\r')[0]
 
-        for axis, axis_points in points.iteritems():
-            if axis != 'time':
-                for point in axis_points:
-                    pmac_points[axis].append(self.double_to_pmac_float(point))
+        return position
 
-        return pmac_points
-
-    def send_points(self, points, current=False):
+    def read_motor_velocity(self, motor_num):
         """
-        Send points to fill a buffer. If current is False, the currently unused buffer will be filled.
-        If current is True, the current buffer will be filled (e.g. for filling both buffers before
-        program is run).
+        Request current velocity of give motor
 
         Args:
-            points(list(list(int))): List of lists of the time and coordinates for each move
-            current(int): A 1 or 0 to specify which buffer to fill
-
-        Raises:
-            IOError: Write failed
-
-        """
-
-        # Toggle to invert buffer choice logic
-        buffer_toggle = int(current)
-
-        if self.current_buffer == buffer_toggle:
-            self.update_address_dict(self.buffer_address_b)
-        else:
-            self.update_address_dict(self.buffer_address_a)
-
-        axis_num = 0
-        for axis, axis_points in points.iteritems():
-            current_address = self.addresses[axis]
-            for point in axis_points:
-                self.write_to_address("L", current_address, str(point))
-                current_address = self.inc_hex(current_address)
-            axis_num += 1
-
-        print("Points sent to " + self.addresses['time'])
-
-    def set_point_vel_mode(self, coord, num):
-        raise NotImplementedError
-
-    def set_subroutine(self, coord, num):
-        raise NotImplementedError
-
-    @staticmethod
-    def _construct_write_command_and_remove_used_points(command_details):
-        """
-        Construct a command to send as many points as possible from the given set.
-        Length must be less than 255 characters
-
-        Args:
-            command_details(dict): The write mode, address and point set to send
+            motor_num(int): Motor to read velocity for
 
         Returns:
-            dict: The resulting command, the remaining point set and the number of points sent
+            str: Current velocity of motor
+
         """
 
-        command = 'W' + command_details['mode'] + '$' + command_details['address']
+        position = self.sendCommand("#{motor}V".format(motor=motor_num))[0].split('\r')[0]
 
-        point_num = 0
-        axis_points = command_details['points']
-        while len(axis_points) > 0 and len(command + ',' + axis_points[0]) <= 255:
-            command += ',' + axis_points.pop(0)
-            point_num += 1
+        return position
 
-        response = {'command': command, 'points': axis_points, 'num_sent': point_num}
-        return response
+    def set_initial_coordinates(self):
+        """
+        Set Current_* values for required axes to be the actual motor positions; these act
+        as the start positions for the motion program
+
+        """
+
+        for motor_num, axis_assignment in self.coordinate_system.motor_map.iteritems():
+            egu_scaling = axis_assignment[1]
+            current_position = str(int(self.read_motor_position(motor_num)) * egu_scaling)
+
+            self.set_variable("P411" + motor_num, current_position)
 
     def fill_idle_buffer(self, points):
         """
@@ -375,69 +420,70 @@ class PmacTestHarness(PmacEthernetInterface):
             if axis and len(axis) != num_points:
                 raise ValueError("Point set must have equal points in all axes")
 
-        for axis in points.iterkeys():
-            address = self.addresses[axis]
-            while len(points[axis]) > 0:
-                command_details = {'mode': 'L', 'address': address, 'points': points[axis]}
-                response = self._construct_write_command_and_remove_used_points(command_details)
+        for axis_num, axis_points in points.iteritems():
+            address = self.addresses[axis_num]
+            while len(axis_points) > 0:
+                command_details = {'mode': 'L', 'address': address, 'points': axis_points}
+                response = self._construct_write_command_and_remove_used_points(
+                    command_details)
 
                 self.sendCommand(response['command'])
 
                 address = self.add_dechex(address, response['num_sent'])
-                points[axis] = response['points']
+                axis_points = response['points']
 
-    def set_buffer_fill(self, fill_level, current=False):
+    @staticmethod
+    def _construct_write_command_and_remove_used_points(command_details):
         """
-        Set the buffer fill level of a buffer. If current is False, the currently unused buffer will
-        be set. If current is True, the current buffer will be set.
+        Construct a command to send as many points as possible from the given set.
+        Length must be less than 255 characters
+
+        Args:
+            command_details(dict): The write mode, address and point set to send
+
+        Returns:
+            dict: The resulting command, the remaining point set and the number of
+            points sent
+        """
+
+        command = 'W' + command_details['mode'] + '$' + command_details['address']
+
+        point_num = 0
+        axis_points = command_details['points']
+        while len(axis_points) > 0 and len(command + ',' + axis_points[0]) <= 255:
+            command += ',' + axis_points.pop(0)
+            point_num += 1
+
+        response = {'command': command, 'points': axis_points, 'num_sent': point_num}
+        return response
+
+    def set_idle_buffer_fill(self, fill_level):
+        """
+        Set the buffer fill level of the idle buffer.
 
         Args:
             fill_level(int): Number of coordinate sets in buffer
-            current(int): A 1 or 0 to specify which buffer to set
 
         """
 
-        buffer_toggle = int(current)
-
-        if self.current_buffer == buffer_toggle:
+        if self.current_buffer == 0:
             self.set_variable("P4012", str(fill_level))
         else:
             self.set_variable("P4011", str(fill_level))
 
-    def read_points(self, num_points, buffer_num=0, num_axes=1):
+    def set_current_buffer_fill(self, fill_level):
         """
-        Read points store in pmac memory buffer
+        Set the buffer fill level of the current buffer.
 
         Args:
-            num_points(int): Number of sets of points to read
-            buffer_num(int): Specifier for buffer A (0) or B (1)
-            num_axes(int): Number of axes to read
+            fill_level(int): Number of coordinate sets in buffer
 
-        Returns:
-            list(str): Points stored in pmac memory
-
-        Raises:
-            IOError: Read failed
         """
 
-        if buffer_num == 0:
-            start = "30000"
+        if self.current_buffer == 0:
+            self.set_variable("P4011", str(fill_level))
         else:
-            start = self.add_dechex("30000", int(self.buffer_length)*10)
-
-        pmac_buffer = []
-        current_address = start
-        for _ in range(0, num_points):
-            pmac_buffer.append(self.read_address("L", current_address))
-            current_address = self.inc_hex(current_address)
-        for i in range(1, num_axes + 1):
-            current_address = self.add_dechex(start, int(self.buffer_length)*i)
-            # print(current_address)
-            for _ in range(0, num_points):
-                pmac_buffer.append(self.read_address("L", current_address))
-                current_address = self.inc_hex(current_address)
-
-        return pmac_buffer
+            self.set_variable("P4012", str(fill_level))
 
     @staticmethod
     def add_hex(hex1, hex2):
@@ -482,55 +528,3 @@ class PmacTestHarness(PmacEthernetInterface):
         """
 
         return PmacTestHarness.add_dechex(hexdec, 1)
-
-    @staticmethod
-    def double_to_pmac_float(value):
-        """
-        Convert `value` to the custom PMAC hex format for a float
-
-        Args:
-            value(float):
-
-        Returns:
-            str: PMAC hex format of `value`
-        """
-
-        if value == value*10:
-            return '$0'
-
-        negative = False
-        if value < 0.0:
-            value *= -1.0
-            negative = True
-
-        exp_value = value
-        exponent = 0
-        # Normalise value between 1 and 2
-        while exp_value >= 2.0:
-            exp_value /= 2.0
-            exponent += 1
-        while exp_value < 1.0:
-            exp_value *= 2.0
-            exponent -= 1
-        # Offset exponent to provide +-2048 range
-        exponent += 0x800
-
-        # Bit shift mantissa to maximum precision (in powers of 2)
-        mantissa_value = value
-        max_mantissa = 34359738368.0
-        while mantissa_value < max_mantissa:
-            mantissa_value *= 2.0
-        mantissa_value /= 2.0
-
-        # To make value negative, subtract value from max
-        if negative:
-            int_value = 0xFFFFFFFFFFF - int(mantissa_value)
-        else:
-            int_value = int(mantissa_value)
-
-        # Bit shift mantissa to correct location, then add exponent to end
-        pmac_float = int_value << 12
-        pmac_float += exponent
-
-        # Convert decimal representation to string of hex representation.
-        return "$" + str(hex(pmac_float))[2:]

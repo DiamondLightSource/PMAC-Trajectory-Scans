@@ -12,11 +12,15 @@ PMAC Requirements
  * M-Variables - 4000..4050
  * User memory of 20 times the required buffer length
 
-.. _program-design:
+.. _program_design:
 Program Design
 --------------
 
 The motion program operates using two buffers, one of which can be scanned through by the PMAC while the other can be filled with points by EPICS. The idea is that a scan of any length can be sent from the data acquisition layer to the EPICS layer and can then be run continuously as if there is no limit to the PMAC memory.
+
+The program keeps 3 points per axis (plus time) accessible at any time; Prev\_* and Current\_* values are stored in P-Variables and Next\_* values are stored in an M variable. The M variable is used to iterate through the user memory addresses using pointers (_Adr values) to the M Variable definitions. Before each increment, the 3-point-buffers are shifted Current -> Prev and then Next -> Current. This allows the PMAC to calculate the required trajectory for each Current\_* point
+
+Buffers are iterated through with the CurrentIndex variable, which corresponds to the Next_* coordinate in the buffer. The main loop runs from 1 to N (From a 0 to N range), because in the very first loop no move can be made until Current_* is at 0, i.e. when Next_* is at 1. This means there is an extra move after the inner while loop to move to the last point of the buffer while using the first point of the next buffer for velocity calculations. However this does not work for the last point of the last buffer, because there is no next buffer for the Next_* coordinate. For this, there is an extra move after the outer loop to move to the very last point using the Prev -> Current velocity calculation.
 
 Dynamic Velocity Calculation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -67,11 +71,12 @@ Read Variables
     * CurrentIndex (P4006) - The current point in the buffer
     * CurrentBuffer (P4007) - The specifier for the current half-buffer i.e. 0: Buffer A, 1: Buffer B
     * BufferAdr_A/BufferAdr_B (P4008/9) - The starting address in the PMAC user memory for buffer A/B
+    * Error (P40015) - Error code corresponding to Status = 3; 0: No error, 1: Invalid axes value, 2: Move time of 0, 3: Following error/ Run-time error
 
 Write Variables
 ~~~~~~~~~~~~~~~
-    * Abort - A trigger to abort the scan (will move to current target point)
-    * Axes - A bit mask to specify which axes are to be used in the scan. X = 256, Y = 128, ..., C = 1 e.g. for axes X, Y, U and V the value would be 256 + 128 + 32 + 16 = 432
+    * Abort (P4002) - A trigger to abort the scan (will move to current target point)
+    * Axes (P4003) - A bit mask to specify which axes are to be used in the scan. X = 256, Y = 128, ..., C = 1 e.g. for axes X, Y, U and V the value would be 256 + 128 + 32 + 16 = 432
     * BufferFill_A/BufferFill_B (P4011/12) - The number of points written into buffer A/B
 
 Buffer Filling
@@ -84,5 +89,5 @@ EPICS must write the position coordinates as 48-bit PMAC floats (with a write L 
      _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _   _ _ _ _   _ _ _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
      <------------Unused----------->     User    VelMode   <---------------------Time--------------------->
 
-Time will then be read from the Y memory and User & VelMode will be read from the appropriate bits in the X memory. Time is the integer number of 1/4s of a milliseconds for the move (this must be written in hex), VelMode is 0, 1 or 2 as described in :ref:`program-design` and User is the number of the subroutine that should be run at the point.
+Time will then be read from the Y memory and User & VelMode will be read from the appropriate bits in the X memory. Time is the integer number of 1/4s of a milliseconds for the move (this must be written in hex), VelMode is 0, 1 or 2 as described in :ref:`program_design` and User is the number of the subroutine that should be run at the point.
 

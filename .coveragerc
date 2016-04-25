@@ -1,13 +1,2 @@
-[report]
-omit =
-    dls_pmacremote.py
-    trajectory_scan_test.py
-    trajectory_scan.pmc
-    scanpointgenerator/__init__.py
-    scanpointgenerator/linegenerator.py
-    scanpointgenerator/nestedgenerator.py
-    scanpointgenerator/plotgenerator.py
-    scanpointgenerator/point.py
-    scanpointgenerator/scanpointgenerator.py
-    scanpointgenerator/version.py
-    PmacTestHarness_test.py
+[run]
+source = test_harness_tests/
