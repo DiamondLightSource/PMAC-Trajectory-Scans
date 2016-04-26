@@ -42,7 +42,7 @@ def snake_trajectory_scan():
     pmac.assign_motors([(1, "X", 1), (2, "Y", 1)])
     pmac.home_motors()
     pmac.reset_buffers()
-    pmac.set_axes(384)
+    pmac.set_axes(['X', 'Y'])
 
     width = 20
     length = 20
@@ -89,7 +89,7 @@ def circle_trajectory_scan():
     pmac.assign_motors([(1, "X", 100), (2, "Y", 100)])
     pmac.home_motors()
     pmac.reset_buffers()
-    pmac.set_axes(384)
+    pmac.set_axes(['X', 'Y'])
 
     circle_scan = ScanGen()
     circle_scan.generate_circle_points(400, 3600)

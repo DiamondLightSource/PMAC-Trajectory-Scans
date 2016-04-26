@@ -22,7 +22,7 @@ class WriteTest(unittest.TestCase):
     def setUp(self):
         self.pmac = PmacTestHarness(PMAC_IP)
         self.pmac.home_motors()
-        self.pmac.set_axes(384)
+        self.pmac.set_axes(['X', 'Y'])
 
     def tearDown(self):
         self.pmac.force_abort()
@@ -99,4 +99,3 @@ class WriteTest(unittest.TestCase):
             read_back = float(self.pmac.read_variable("M4500"))
             # print(number, read_back)
             self.assertAlmostEqual(number, read_back, places=10-len(str(int(number)))-1)
-
