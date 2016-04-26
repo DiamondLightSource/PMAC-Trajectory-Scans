@@ -2,6 +2,7 @@ from test_harness.PmacTestHarness import PmacTestHarness
 from test_harness.TrajectoryScanGenerator import TrajectoryScanGenerator as ScanGen
 import unittest
 import time
+import numpy
 
 # PMAC_IP = "172.23.243.169"
 PMAC_IP = "172.23.253.15"
@@ -19,7 +20,7 @@ class InitialisationTest(unittest.TestCase):
         self.pmac.disconnect()
 
     def test_given_valid_axes_then_set_axis_values(self):
-        self.pmac.set_axes(511)
+        self.pmac.set_axes(['A', 'B', 'C', 'U', 'V', 'W', 'X', 'Y', 'Z'])
         self.pmac.run_motion_program(PROG_NUM)
 
         time.sleep(1)
@@ -36,7 +37,7 @@ class InitialisationTest(unittest.TestCase):
         self.assertEqual(self.pmac.read_variable("M4049"), "1")
 
     def test_given_axes_too_high_then_error_status_and_abort(self):
-        self.pmac.set_axes(550)
+        self.pmac.set_variable("P4003", "550")
         self.pmac.run_motion_program(PROG_NUM)
 
         self.assertEqual(self.pmac.read_variable("P4001"), "3")
@@ -44,7 +45,7 @@ class InitialisationTest(unittest.TestCase):
         self.assertEqual(self.pmac.read_variable("P4015"), "1")
 
     def test_given_axes_too_low_then_error_status_and_abort(self):
-        self.pmac.set_axes(0)
+        self.pmac.set_axes([])
         self.pmac.run_motion_program(PROG_NUM)
 
         self.assertEqual(self.pmac.read_variable("P4001"), "3")
@@ -78,7 +79,7 @@ class AbortTests(unittest.TestCase):
         self.pmac = PmacTestHarness(PMAC_IP)
         self.pmac.assign_motors([(1, "X", 1), (2, "Y", 1)])
         self.pmac.home_motors()
-        self.pmac.set_axes(256)
+        self.pmac.set_axes(['X', 'Y'])
 
         self.ScanGen = ScanGen()
 
@@ -122,7 +123,7 @@ class TrajectoryScanTest(unittest.TestCase):
         self.pmac = PmacTestHarness(PMAC_IP)
         self.pmac.assign_motors([(1, "X", 1), (2, "Y", 1)])
         self.pmac.home_motors()
-        self.pmac.set_axes(384)
+        self.pmac.set_axes(['X', 'Y'])
         self.pmac.reset_buffers()
         self.move_time = 40
 
@@ -133,45 +134,6 @@ class TrajectoryScanTest(unittest.TestCase):
     def tearDown(self):
         self.pmac.force_abort()
         self.pmac.disconnect()
-
-    # def test_given_simple_point_set_then_positions_reached(self):
-    #     point_set = {'x': [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
-    #                  'time': [{'time_val': 4000, 'subroutine': 0, 'vel_mode': 0},
-    #                           {'time_val': 4000, 'subroutine': 0, 'vel_mode': 0},
-    #                           {'time_val': 4000, 'subroutine': 0, 'vel_mode': 0},
-    #                           {'time_val': 4000, 'subroutine': 0, 'vel_mode': 0},
-    #                           {'time_val': 4000, 'subroutine': 0, 'vel_mode': 0},
-    #                           {'time_val': 4000, 'subroutine': 0, 'vel_mode': 0}]}
-    #
-    #     self.ScanGen.point_set = point_set
-    #     self.ScanGen.format_point_set()
-    #
-    #     self.pmac.fill_current_buffer(self.ScanGen.point_set)
-    #     self.pmac.set_current_buffer_fill(6)
-    #     self.pmac.set_initial_coordinates()
-    #
-    #     self.pmac.run_motion_program(PROG_NUM)
-    #
-    #     time_ = []
-    #     prev = []
-    #     curr = []
-    #     next_ = []
-    #     com_pos = []
-    #     act_pos = []
-    #     com_vel = []
-    #     act_vel = []
-    #     for _ in range(0, len(point_set['x']) + 1):
-    #         time.sleep(1)
-    #         time_.append(_)
-    #         prev.append(self.pmac.read_variable("P4101"))
-    #         curr.append(self.pmac.read_variable("P4111"))
-    #         next_.append(self.pmac.read_variable("M4001"))
-    #         com_pos.append(self.pmac.read_variable("Q1"))
-    #         com_vel.append(self.pmac.read_variable("Q2"))
-    #         act_pos.append(self.pmac.read_motor_position(1))
-    #         act_vel.append(self.pmac.read_motor_velocity(1))
-    #
-    #     self.assertEqual(act_pos, [100, 200, 300, 400, 500, 600])
 
     def test_given_single_point_then_move(self):
 
@@ -321,3 +283,51 @@ class TrajectoryScanTest(unittest.TestCase):
         self.assertEqual("0", self.pmac.read_variable("P4002"))
         self.assertEqual(str(3*buffer_fill_a + 2*buffer_fill_b),
                          self.pmac.read_variable("P4005"))
+
+
+class TrajectoryScanPositionTest(unittest.TestCase):
+
+    def setUp(self):
+        self.pmac = PmacTestHarness(PMAC_IP)
+        self.pmac.assign_motors([(1, "X", 100), (2, "Y", 100)])
+        self.pmac.home_motors()
+        self.pmac.set_axes(['X', 'Y'])
+        self.pmac.reset_buffers()
+
+        self.ScanGen = ScanGen()
+
+    def tearDown(self):
+        self.pmac.force_abort()
+        self.pmac.disconnect()
+
+    def test_given_simple_point_set_then_positions_reached(self):
+        move_time = 8000
+        point_set = {'x': [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+                     'time': [{'time_val': move_time, 'subroutine': 0, 'vel_mode': 0},
+                              {'time_val': move_time, 'subroutine': 0, 'vel_mode': 0},
+                              {'time_val': move_time, 'subroutine': 0, 'vel_mode': 0},
+                              {'time_val': move_time, 'subroutine': 0, 'vel_mode': 0},
+                              {'time_val': move_time, 'subroutine': 0, 'vel_mode': 0},
+                              {'time_val': move_time, 'subroutine': 0, 'vel_mode': 0}]}
+        expected_positions = [100.0, 200.0, 300.0, 400.0, 500.0, 600.0]
+
+        self.ScanGen.point_set = point_set
+        self.ScanGen.format_point_set()
+
+        self.pmac.fill_current_buffer(self.ScanGen.point_set)
+        self.pmac.set_current_buffer_fill(6)
+        self.pmac.set_initial_coordinates()
+
+        self.pmac.run_motion_program(PROG_NUM)
+        time.sleep(2)
+
+        act_pos = []
+        for _ in range(0, len(point_set['x'])):
+            act_pos.append(self.pmac.read_motor_position(1))
+            time.sleep(2)
+
+        print(act_pos)
+
+        for i, position in enumerate(act_pos):
+            rounded_position = numpy.round(float(position)/100, 0)*100
+            self.assertEqual(expected_positions[i], rounded_position)
