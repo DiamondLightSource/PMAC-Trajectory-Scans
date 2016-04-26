@@ -18,6 +18,8 @@ Program Design
 
 The motion program operates using two buffers, one of which can be scanned through by the PMAC while the other can be filled with points by EPICS. The idea is that a scan of any length can be sent from the data acquisition layer to the EPICS layer and can then be run continuously as if there is no limit to the PMAC memory.
 
+.. figure:: buffer_layout.png
+
 The program keeps 3 points per axis (plus time) accessible at any time; Prev\_* and Current\_* values are stored in P-Variables and Next\_* values are stored in an M variable. The M variable is used to iterate through the user memory addresses using pointers (_Adr values) to the M Variable definitions. Before each increment, the 3-point-buffers are shifted Current -> Prev and then Next -> Current. This allows the PMAC to calculate the required trajectory for each Current\_* point
 
 Buffers are iterated through with the CurrentIndex variable, which corresponds to the Next_* coordinate in the buffer. The main loop runs from 1 to N (From a 0 to N range), because in the very first loop no move can be made until Current_* is at 0, i.e. when Next_* is at 1. This means there is an extra move after the inner while loop to move to the last point of the buffer while using the first point of the next buffer for velocity calculations. However this does not work for the last point of the last buffer, because there is no next buffer for the Next_* coordinate. For this, there is an extra move after the outer loop to move to the very last point using the Prev -> Current velocity calculation.
@@ -84,10 +86,7 @@ Buffer Filling
 
 EPICS must write the position coordinates as 48-bit PMAC floats (with a write L command). These are a custom delta tau format and must be written in hex. PmacTestHarness has a converter for this. The time coordinates, user and velocity mode values must be written into a single address (also with a write L) in the following format:
 
-    4 4 4 4 4 4 4 4 3 3 3 3 3 3 3 3   3 3 2 2   2 2 2 2   2 2 2 2 1 1 1 1 1 1 1 1 1 1
-     7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2   1 0 9 8   7 6 5 4   3 2 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0
-     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _   _ _ _ _   _ _ _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-     <------------Unused----------->     User    VelMode   <---------------------Time--------------------->
+.. figure:: bit_mapping.png
 
 Time will then be read from the Y memory and User & VelMode will be read from the appropriate bits in the X memory. Time is the integer number of 1/4s of a milliseconds for the move (this must be written in hex), VelMode is 0, 1 or 2 as described in :ref:`program_design` and User is the number of the subroutine that should be run at the point.
 
