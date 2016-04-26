@@ -31,6 +31,7 @@ class TrajectoryScanGenerator(object):
         move_time = trajectory['move_time']
         width = trajectory['width']
         length = trajectory['length']
+        step = trajectory['step']
         direction = trajectory['direction']
 
         self.point_set = {'time': [], 'x': [], 'y': []}
@@ -58,8 +59,8 @@ class TrajectoryScanGenerator(object):
             self.point_set['time'].append({'time_val': move_time, 'vel_mode': vel_mode, 'subroutine': subroutine})
 
         if direction == 0:
-            xs = LineGenerator("x", "mm", 0, 10, width)
-            ys = LineGenerator("y", "mm", 0, 10, length)
+            xs = LineGenerator("x", "mm", 0, step, width)
+            ys = LineGenerator("y", "mm", 0, step, length)
             gen = NestedGenerator(ys, xs, snake=True)
         else:
             raise NotImplementedError("Reverse not implemented")

@@ -28,7 +28,7 @@ def make_status_message(pmac, start_time, sleep_time):
                        " - Index: " + str(pmac.current_index) +
                        " - Total Points: " + str(pmac.total_points) +
                        " - VelMode: " + pmac.read_variable("M4011") +
-                       " - Trigger State: " + pmac.read_variable("M4016") +
+                       " - Trigger State: " + pmac.read_variable("M32") +
                        " - Scan Time: " + scan_time)
 
     return status_message
@@ -39,16 +39,17 @@ def snake_trajectory_scan():
     pmac = PmacTestHarness(IP_ADDRESS)
 
     pmac.force_abort()
-    pmac.assign_motors([(1, "X", 50), (2, "Y", 50)])
+    pmac.assign_motors([(1, "X", 1), (2, "Y", 1)])
     pmac.home_motors()
     pmac.reset_buffers()
     pmac.set_axes(384)
 
-    width = 10
-    length = 10
-    trajectory = {'move_time': 4000,
+    width = 20
+    length = 20
+    trajectory = {'move_time': 2000,
                   'width': width,
                   'length': length,
+                  'step': 1,
                   'direction': 0}
 
     snake_scan = ScanGen()
@@ -76,7 +77,7 @@ def snake_trajectory_scan():
     print("Status: " + str(pmac.status))
 
     while int(pmac.status) == 1:
-        status_message = make_status_message(pmac, start_time, 1)
+        status_message = make_status_message(pmac, start_time, 0.5)
         print(status_message)
 
 
@@ -91,7 +92,7 @@ def circle_trajectory_scan():
     pmac.set_axes(384)
 
     circle_scan = ScanGen()
-    circle_scan.generate_circle_points(4000, 3600)
+    circle_scan.generate_circle_points(400, 3600)
     print(circle_scan.point_set)
     print(len(circle_scan.point_set['time']))
     print(len(circle_scan.point_set['x']))
@@ -139,8 +140,8 @@ def circle_trajectory_scan():
 def main():
 
     # trajectory_scan()
-    # snake_trajectory_scan()
-    circle_trajectory_scan()
+    snake_trajectory_scan()
+    # circle_trajectory_scan()
 
 if __name__ == "__main__":
     main()
