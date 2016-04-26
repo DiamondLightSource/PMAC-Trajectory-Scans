@@ -8,7 +8,7 @@ PMAC Requirements
 -----------------
 
  * P-Variables - 4000..4150
- * Q-Variables - 1..18
+ * Q-Variables - 71..79, 91..99
  * M-Variables - 4000..4050
  * User memory of 20 times the required buffer length
 
