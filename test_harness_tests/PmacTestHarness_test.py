@@ -240,9 +240,9 @@ class SetAxesTest(unittest.TestCase):
 
     @patch('PmacTestHarness_test.TesterPmacTestHarness.set_variable')
     def test_axes_set(self, set_variable_mock):
-        self.pmac.set_axes(510)
+        self.pmac.set_axes(['X', 'Y'])
 
-        set_variable_mock.assert_called_once_with("P4003", "510")
+        set_variable_mock.assert_called_once_with("P4003", "384")
 
 
 class SetAbortTest(unittest.TestCase):

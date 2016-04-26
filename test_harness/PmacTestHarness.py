@@ -177,13 +177,18 @@ class PmacTestHarness(PmacEthernetInterface):
         Send number of require axes
 
         Args:
-            axes(int): A number between 1 and 511 that will be split into 9 bits
-            specifying the required motors e.g. X, Y and Z = 256 + 128 + 64 = 448;
-            X, Y and U = 256 + 128 + 32 = 416
+            axes(list(str)): List of required axes
 
         """
+        axis_definitions = {'A': 4, 'B': 2, 'C': 1,
+                            'U': 32, 'V': 16, 'W': 8,
+                            'X': 256, 'Y': 128, 'Z': 64}
 
-        self.set_variable("P4003", str(axes))
+        axes_val = 0
+        for axis in axes:
+            axes_val += axis_definitions[axis.upper()]
+
+        self.set_variable("P4003", str(axes_val))
 
     def read_address(self, mode, address):
         """
@@ -320,11 +325,15 @@ class PmacTestHarness(PmacEthernetInterface):
 
         zeroes = ['$0']*int(self.buffer_length)
         reset_points = {'time': zeroes[:],
-                        'x': zeroes[:], 'y': zeroes[:], 'z': zeroes[:],
+                        'a': zeroes[:], 'b': zeroes[:], 'c': zeroes[:],
                         'u': zeroes[:], 'v': zeroes[:], 'w': zeroes[:],
-                        'a': zeroes[:], 'b': zeroes[:], 'c': zeroes[:]}
-
+                        'x': zeroes[:], 'y': zeroes[:], 'z': zeroes[:]}
         self.fill_current_buffer(reset_points)
+
+        reset_points = {'time': zeroes[:],
+                        'a': zeroes[:], 'b': zeroes[:], 'c': zeroes[:],
+                        'u': zeroes[:], 'v': zeroes[:], 'w': zeroes[:],
+                        'x': zeroes[:], 'y': zeroes[:], 'z': zeroes[:]}
         self.fill_idle_buffer(reset_points)
 
     def read_motor_position(self, motor_num):
