@@ -16,13 +16,15 @@ PMAC Requirements
 Program Design
 --------------
 
-The motion program operates using two buffers, one of which can be scanned through by the PMAC while the other can be filled with points by EPICS. The idea is that a scan of any length can be sent from the data acquisition layer to the EPICS layer and can then be run continuously as if there is no limit to the PMAC memory.
+The motion program operates using two buffers, one of which can be scanned through by the PMAC while the other can be filled with points by EPICS. The idea is that a scan of any length can be sent from the data acquisition layer to the EPICS layer and can then be run continuously as if there is no limit to the PMAC memory. The buffer layout is shown in the diagram below:
 
 .. figure:: buffer_layout.png
 
+The program requires buffers to be completely full; if a buffer is not full, it will scan through the buffer and then end the scan, even if the next buffer has points.
+
 The program keeps 3 points per axis (plus time) accessible at any time; Prev\_* and Current\_* values are stored in P-Variables and Next\_* values are stored in an M variable. The M variable is used to iterate through the user memory addresses using pointers (_Adr values) to the M Variable definitions. Before each increment, the 3-point-buffers are shifted Current -> Prev and then Next -> Current. This allows the PMAC to calculate the required trajectory for each Current\_* point
 
-Buffers are iterated through with the CurrentIndex variable, which corresponds to the Next_* coordinate in the buffer. The main loop runs from 1 to N (From a 0 to N range), because in the very first loop no move can be made until Current_* is at 0, i.e. when Next_* is at 1. This means there is an extra move after the inner while loop to move to the last point of the buffer while using the first point of the next buffer for velocity calculations. However this does not work for the last point of the last buffer, because there is no next buffer for the Next_* coordinate. For this, there is an extra move after the outer loop to move to the very last point using the Prev -> Current velocity calculation.
+Buffers are iterated through with the CurrentIndex variable, which corresponds to the Next_* coordinate in the buffer. However Current_* is the coordinate that the move command uses. This means that the main loop runs from 1 to N-1 (rather than the full 0 to N-1), because in the very first loop no move can be made until Current_* is at 0, i.e. when Next_* is at 1. This means there is an extra move after the inner while loop to move to the last point of the buffer while using the first point of the next buffer for velocity calculations. However this does not work for the last point of the last buffer, because there is no next buffer for the Next_* coordinate. For this, there is an extra move after the outer loop to move to the very last point using the Prev -> Current velocity calculation.
 
 Dynamic Velocity Calculation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -40,15 +42,6 @@ If VelMode is set to 2 it will calculate the current->next vector:
 .. figure:: curr_to_next_vector.png
 
 This allows the user to set exit and entrance velocity vectors from an area of interest and the PMAC will interpolate the smoothest curve, given the time allowed time for the move, between the points. The user then doesn't have to worry about adding points to ensure smooth turnarounds.
-
-Quirks of PMAC
-~~~~~~~~~~~~~~
-
-The program has a structure that may be a little confusing in places. This is, in part, due to the quirks of PMAC (see lookahead and double jump-back). This section will explain some sections of code that have had to be written in a certain way to overcome these factors.
-
-The buffer indexing runs from 0 to N-1, but appears in EPICS as 1 to N. This is because the move at the move command the PMAC lookahead sees the CurrentIndex increment line and sets the variable. This was left as is because it makes more sense to run from 1 to N, so the offset would have had to be introduced elsewhere anyway.
-
-Their was a problem with the buffer swapping where the swap would occur before the final increment to store the last two values of the previous buffer. This appeared to be caused by a combination of two consecutive EndWhile statements without a move and the lookahead of the PMAC. This is why the buffer address swap is at the start of the outer while loop, with a check to stop it running on the first loop.
 
 .. _epics_api:
 Epics API
