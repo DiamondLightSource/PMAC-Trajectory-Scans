@@ -4,3 +4,5 @@
 [![ReadTheDocs](https://readthedocs.org/projects/pmac-trajectory-scans/badge/?version=latest)](http://pmac-trajectory-scans.readthedocs.org)
 
 # PMAC-Trajectory-Scans
+
+To run the scripts and tests you must add the root of PMAC-Trajectory-Scans to your python path (export PYTHONPATH=/path/to/PMAC-Trajectory-Scans:$PYTHONPATH) and add scanpointgenerator to the the root of the module. Tests can be run using `nosetests -v *test_folder*` from the root.
