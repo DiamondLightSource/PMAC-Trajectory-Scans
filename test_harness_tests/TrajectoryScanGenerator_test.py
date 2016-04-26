@@ -95,9 +95,9 @@ class SetPointSpecifiersTest(unittest.TestCase):
         self.assertEqual(expected_new_time, new_time)
 
     def test_given_invalid_subroutine_then_error(self):
-        subroutine = 3
+        subroutine = 18
         time = "$10"
-        expected_error = "Subroutine must be in range 10 - 16"
+        expected_error = "Subroutine must be in range 1 - 16"
 
         with self.assertRaises(ValueError) as error:
             self.PointGen.set_point_subroutine(time, subroutine)
@@ -206,7 +206,7 @@ class ScanGeneratorTest(unittest.TestCase):
         self.ScanGen = TrajectoryScanGenerator()
 
     def test_snake_scan(self):
-        trajectory = {'move_time': 100, 'width': 3, 'length': 3, 'direction': 0}
+        trajectory = {'move_time': 100, 'width': 3, 'length': 3, 'step': 10, 'direction': 0}
         self.ScanGen.generate_snake_scan_w_vel(trajectory)
 
         expected_points = {'time': [{'subroutine': 1, 'time_val': 100, 'vel_mode': 0},
