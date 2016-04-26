@@ -29,24 +29,15 @@ Dynamic Velocity Calculation
 
 The motion program implements a dynamic velocity calculation to allow more generic trajectory scans to be demanded from higher level software. By default (0) the velocity will be calculated using the three currently stored coordinates, i.e. the previous->next vector:
 
-       Prev Curr Next
-         |    |    |
-    X    X    X    X    X
-         |--------->
+.. figure:: prev_to_next_vector.png
 
 If VelMode is set to 1 it will calculate the previous->current vector:
 
-       Prev Curr Next
-         |    |    |
-    X    X    X    X    X
-         |---->
+.. figure:: prev_to_curr_vector.png
 
 If VelMode is set to 2 it will calculate the current->next vector:
 
-       Prev Curr Next
-         |    |    |
-    X    X    X    X    X
-              |---->
+.. figure:: curr_to_next_vector.png
 
 This allows the user to set exit and entrance velocity vectors from an area of interest and the PMAC will interpolate the smoothest curve, given the time allowed time for the move, between the points. The user then doesn't have to worry about adding points to ensure smooth turnarounds.
 
