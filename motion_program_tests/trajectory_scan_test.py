@@ -301,7 +301,7 @@ class TrajectoryScanPositionTest(unittest.TestCase):
         self.pmac.disconnect()
 
     def test_given_simple_point_set_then_positions_reached(self):
-        move_time = 8000
+        move_time = 4000
         point_set = {'x': [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
                      'time': [{'time_val': move_time, 'subroutine': 0, 'vel_mode': 0},
                               {'time_val': move_time, 'subroutine': 0, 'vel_mode': 0},
@@ -309,24 +309,30 @@ class TrajectoryScanPositionTest(unittest.TestCase):
                               {'time_val': move_time, 'subroutine': 0, 'vel_mode': 0},
                               {'time_val': move_time, 'subroutine': 0, 'vel_mode': 0},
                               {'time_val': move_time, 'subroutine': 0, 'vel_mode': 0}]}
-        expected_positions = [100.0, 200.0, 300.0, 400.0, 500.0, 600.0]
+        expected_positions = [0.0, 100.0, 200.0, 300.0, 400.0, 500.0, 600.0]
 
         self.ScanGen.point_set = point_set
         self.ScanGen.format_point_set()
 
         self.pmac.fill_current_buffer(self.ScanGen.point_set)
         self.pmac.set_current_buffer_fill(6)
+        self.pmac.set_idle_buffer_fill(0)
         self.pmac.set_initial_coordinates()
 
         self.pmac.run_motion_program(PROG_NUM)
-        time.sleep(2)
+        act_pos = [self.pmac.read_motor_position(1)]
+        x_pos = [(self.pmac.read_variable('P4107'), self.pmac.read_variable('P4117'), self.pmac.read_variable('M4007'))]
 
-        act_pos = []
+        time.sleep(1)
         for _ in range(0, len(point_set['x'])):
+            x_pos.append((self.pmac.read_variable('P4107'),
+                          self.pmac.read_variable('P4117'),
+                          self.pmac.read_variable('M4007')))
             act_pos.append(self.pmac.read_motor_position(1))
-            time.sleep(2)
+            time.sleep(1)
 
         print(act_pos)
+        print(x_pos)
 
         for i, position in enumerate(act_pos):
             rounded_position = numpy.round(float(position)/100, 0)*100
