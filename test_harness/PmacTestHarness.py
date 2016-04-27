@@ -374,12 +374,14 @@ class PmacTestHarness(PmacEthernetInterface):
         as the start positions for the motion program
 
         """
+        axis_assignments = {'A': 7, 'B': 8, 'C': 9,
+                            'U': 4, 'V': 5, 'W': 6,
+                            'X': 1, 'Y': 2, 'Z': 3}
 
-        for motor_num, axis_assignment in self.coordinate_system.motor_map.iteritems():
-            egu_scaling = axis_assignment[1]
-            current_position = str(int(self.read_motor_position(motor_num)) * egu_scaling)
+        for axis, egu_scaling in self.coordinate_system.motor_map.itervalues():
+            current_position = str(int(self.read_motor_position(axis_assignments[axis])) * egu_scaling)
 
-            self.set_variable("P411" + motor_num, current_position)
+            self.set_variable("P411" + str(axis_assignments[axis]), current_position)
 
     def fill_idle_buffer(self, points):
         """
