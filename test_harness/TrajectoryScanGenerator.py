@@ -46,13 +46,13 @@ class TrajectoryScanGenerator(object):
             else:
                 vel_mode = 0
 
-            if (i+1) % width == width/2:
-                if trigger == 0:
-                    subroutine = 1
-                    trigger = 1
-                else:
+            if i % width != 0:
+                if trigger == 1:
                     subroutine = 2
                     trigger = 0
+                else:
+                    subroutine = 1
+                    trigger = 1
             else:
                 subroutine = 0
 

@@ -44,12 +44,12 @@ def snake_trajectory_scan():
     pmac.reset_buffers()
     pmac.set_axes(['X', 'Y'])
 
-    width = 20
-    length = 20
-    trajectory = {'move_time': 2000,
+    width = 10
+    length = 10
+    trajectory = {'move_time': 4000,
                   'width': width,
                   'length': length,
-                  'step': 1,
+                  'step': 100,
                   'direction': 0}
 
     snake_scan = ScanGen()
@@ -77,7 +77,7 @@ def snake_trajectory_scan():
     print("Status: " + str(pmac.status))
 
     while int(pmac.status) == 1:
-        status_message = make_status_message(pmac, start_time, 0.5)
+        status_message = make_status_message(pmac, start_time, 0.1)
         print(status_message)
 
 
