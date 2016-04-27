@@ -26,7 +26,7 @@ Open Prog 1
 Clear
 
 Abs
-FRAX(X,Y,Z,U,V,W,A,B,C)
+FRAX(A,B,C,U,V,W,X,Y,Z)
 
 Status = 1                          ; Reset values to defaults
 Abort = 0
@@ -157,24 +157,24 @@ N102
     User = Next_User
     VelMode = NextVelMode
 
-    Prev_X = Current_X
-    Current_X = Next_X
-    Prev_Y = Current_Y
-    Current_Y = Next_Y
-    Prev_Z = Current_Z
-    Current_Z = Next_Z
-    Prev_U = Current_U
-    Current_U = Next_U
-    Prev_V = Current_V
-    Current_V = Next_V
-    Prev_W = Current_W
-    Current_W = Next_W
     Prev_A = Current_A
     Current_A = Next_A
     Prev_B = Current_B
     Current_B = Next_B
     Prev_C = Current_C
     Current_C = Next_C
+    Prev_U = Current_U
+    Current_U = Next_U
+    Prev_V = Current_V
+    Current_V = Next_V
+    Prev_W = Current_W
+    Current_W = Next_W
+    Prev_X = Current_X
+    Current_X = Next_X
+    Prev_Y = Current_Y
+    Current_Y = Next_Y
+    Prev_Z = Current_Z
+    Current_Z = Next_Z
 Return
 
 ; Subroutine 3 ************************************************************************************
@@ -188,14 +188,14 @@ N103
     User_Adr = CurrentBufferAdr + CurrentIndex
     VelMode_Adr = CurrentBufferAdr + CurrentIndex
 
-    If(X_Axis = 1)
-        X_Adr = CurrentBufferAdr + CurrentIndex + BufferLength
+    If(A_Axis = 1)
+        A_Adr = CurrentBufferAdr + CurrentIndex + BufferLength
     End If
-    If(Y_Axis = 1)
-        Y_Adr = CurrentBufferAdr + CurrentIndex + 2*BufferLength
+    If(B_Axis = 1)
+        B_Adr = CurrentBufferAdr + CurrentIndex + 2*BufferLength
     End If
-    If(Z_Axis = 1)
-        Z_Adr = CurrentBufferAdr + CurrentIndex + 3*BufferLength
+    If(C_Axis = 1)
+        C_Adr = CurrentBufferAdr + CurrentIndex + 3*BufferLength
     End If
     If(U_Axis = 1)
         U_Adr = CurrentBufferAdr + CurrentIndex + 4*BufferLength
@@ -206,14 +206,14 @@ N103
     If(W_Axis = 1)
         W_Adr = CurrentBufferAdr + CurrentIndex + 6*BufferLength
     End If
-    If(A_Axis = 1)
-        A_Adr = CurrentBufferAdr + CurrentIndex + 7*BufferLength
+    If(X_Axis = 1)
+        X_Adr = CurrentBufferAdr + CurrentIndex + 7*BufferLength
     End If
-    If(B_Axis = 1)
-        B_Adr = CurrentBufferAdr + CurrentIndex + 8*BufferLength
+    If(Y_Axis = 1)
+        Y_Adr = CurrentBufferAdr + CurrentIndex + 8*BufferLength
     End If
-    If(C_Axis = 1)
-        C_Adr = CurrentBufferAdr + CurrentIndex + 9*BufferLength
+    If(Z_Axis = 1)
+        Z_Adr = CurrentBufferAdr + CurrentIndex + 9*BufferLength
     End If
 Return
 
@@ -245,39 +245,39 @@ N104
 Return
 
 N105
-    X_Vel = 1000*(Current_X - Prev_X)/Time
-    Y_Vel = 1000*(Current_Y - Prev_Y)/Time
-    Z_Vel = 1000*(Current_Z - Prev_Z)/Time
-    U_Vel = 1000*(Current_U - Prev_U)/Time
-    V_Vel = 1000*(Current_V - Prev_V)/Time
-    W_Vel = 1000*(Current_W - Prev_W)/Time
     A_Vel = 1000*(Current_A - Prev_A)/Time
     B_Vel = 1000*(Current_B - Prev_B)/Time
     C_Vel = 1000*(Current_C - Prev_C)/Time
+    U_Vel = 1000*(Current_U - Prev_U)/Time
+    V_Vel = 1000*(Current_V - Prev_V)/Time
+    W_Vel = 1000*(Current_W - Prev_W)/Time
+    X_Vel = 1000*(Current_X - Prev_X)/Time
+    Y_Vel = 1000*(Current_Y - Prev_Y)/Time
+    Z_Vel = 1000*(Current_Z - Prev_Z)/Time
 Return
 
 N106
-    X_Vel = 1000*(Next_X - Prev_X)/(Time + Next_Time)
-    Y_Vel = 1000*(Next_Y - Prev_Y)/(Time + Next_Time)
-    Z_Vel = 1000*(Next_Z - Prev_Z)/(Time + Next_Time)
-    U_Vel = 1000*(Next_U - Prev_U)/(Time + Next_Time)
-    V_Vel = 1000*(Next_V - Prev_V)/(Time + Next_Time)
-    W_Vel = 1000*(Next_W - Prev_W)/(Time + Next_Time)
     A_Vel = 1000*(Next_A - Prev_A)/(Time + Next_Time)
     B_Vel = 1000*(Next_B - Prev_B)/(Time + Next_Time)
     C_Vel = 1000*(Next_C - Prev_C)/(Time + Next_Time)
+    U_Vel = 1000*(Next_U - Prev_U)/(Time + Next_Time)
+    V_Vel = 1000*(Next_V - Prev_V)/(Time + Next_Time)
+    W_Vel = 1000*(Next_W - Prev_W)/(Time + Next_Time)
+    X_Vel = 1000*(Next_X - Prev_X)/(Time + Next_Time)
+    Y_Vel = 1000*(Next_Y - Prev_Y)/(Time + Next_Time)
+    Z_Vel = 1000*(Next_Z - Prev_Z)/(Time + Next_Time)
 Return
 
 N107
-    X_Vel = 1000*(Next_X - Current_X)/Next_Time
-    Y_Vel = 1000*(Next_Y - Current_Y)/Next_Time
-    Z_Vel = 1000*(Next_Z - Current_Z)/Next_Time
-    U_Vel = 1000*(Next_U - Current_U)/Next_Time
-    V_Vel = 1000*(Next_V - Current_V)/Next_Time
-    W_Vel = 1000*(Next_W - Current_W)/Next_Time
     A_Vel = 1000*(Next_A - Current_A)/Next_Time
     B_Vel = 1000*(Next_B - Current_B)/Next_Time
     C_Vel = 1000*(Next_C - Current_C)/Next_Time
+    U_Vel = 1000*(Next_U - Current_U)/Next_Time
+    V_Vel = 1000*(Next_V - Current_V)/Next_Time
+    W_Vel = 1000*(Next_W - Current_W)/Next_Time
+    X_Vel = 1000*(Next_X - Current_X)/Next_Time
+    Y_Vel = 1000*(Next_Y - Current_Y)/Next_Time
+    Z_Vel = 1000*(Next_Z - Current_Z)/Next_Time
 Return
 
 ; Subroutine 8 ************************************************************************************

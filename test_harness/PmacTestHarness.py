@@ -83,15 +83,15 @@ class PmacTestHarness(PmacEthernetInterface):
         """
 
         self.addresses = {'time': root_address,
-                          'x': self.add_dechex(root_address, int(self.buffer_length)),
-                          'y': self.add_dechex(root_address, 2*int(self.buffer_length)),
-                          'z': self.add_dechex(root_address, 3*int(self.buffer_length)),
+                          'a': self.add_dechex(root_address, int(self.buffer_length)),
+                          'b': self.add_dechex(root_address, 2*int(self.buffer_length)),
+                          'c': self.add_dechex(root_address, 3*int(self.buffer_length)),
                           'u': self.add_dechex(root_address, 4*int(self.buffer_length)),
                           'v': self.add_dechex(root_address, 5*int(self.buffer_length)),
                           'w': self.add_dechex(root_address, 6*int(self.buffer_length)),
-                          'a': self.add_dechex(root_address, 7*int(self.buffer_length)),
-                          'b': self.add_dechex(root_address, 8*int(self.buffer_length)),
-                          'c': self.add_dechex(root_address, 9*int(self.buffer_length))}
+                          'x': self.add_dechex(root_address, 7*int(self.buffer_length)),
+                          'y': self.add_dechex(root_address, 8*int(self.buffer_length)),
+                          'z': self.add_dechex(root_address, 9*int(self.buffer_length))}
 
     def assign_motors(self, axis_map):
         """
@@ -180,9 +180,9 @@ class PmacTestHarness(PmacEthernetInterface):
             axes(list(str)): List of required axes
 
         """
-        axis_definitions = {'A': 4, 'B': 2, 'C': 1,
-                            'U': 32, 'V': 16, 'W': 8,
-                            'X': 256, 'Y': 128, 'Z': 64}
+        axis_definitions = {'A': 1, 'B': 2, 'C': 4,
+                            'U': 8, 'V': 16, 'W': 32,
+                            'X': 64, 'Y': 128, 'Z': 256}
 
         axes_val = 0
         for axis in axes:
@@ -374,9 +374,9 @@ class PmacTestHarness(PmacEthernetInterface):
         as the start positions for the motion program
 
         """
-        axis_assignments = {'A': 7, 'B': 8, 'C': 9,
+        axis_assignments = {'A': 1, 'B': 2, 'C': 3,
                             'U': 4, 'V': 5, 'W': 6,
-                            'X': 1, 'Y': 2, 'Z': 3}
+                            'X': 7, 'Y': 8, 'Z': 9}
 
         for axis, egu_scaling in self.coordinate_system.motor_map.itervalues():
             current_position = str(int(self.read_motor_position(axis_assignments[axis])) * egu_scaling)
