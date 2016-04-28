@@ -206,17 +206,18 @@ class ScanGeneratorTest(unittest.TestCase):
         self.ScanGen = TrajectoryScanGenerator()
 
     def test_snake_scan(self):
+        self.maxDiff = None
         trajectory = {'move_time': 100, 'width': 3, 'length': 3, 'step': 10, 'direction': 0}
         self.ScanGen.generate_snake_scan(trajectory)
 
-        expected_points = {'time': [{'subroutine': 1, 'time_val': 100, 'vel_mode': 0},
-                                    {'subroutine': 0, 'time_val': 100, 'vel_mode': 0},
+        expected_points = {'time': [{'subroutine': 0, 'time_val': 100, 'vel_mode': 0},
+                                    {'subroutine': 1, 'time_val': 100, 'vel_mode': 0},
                                     {'subroutine': 0, 'time_val': 100, 'vel_mode': 1},
-                                    {'subroutine': 2, 'time_val': 100, 'vel_mode': 2},
-                                    {'subroutine': 0, 'time_val': 100, 'vel_mode': 0},
+                                    {'subroutine': 0, 'time_val': 100, 'vel_mode': 2},
+                                    {'subroutine': 2, 'time_val': 100, 'vel_mode': 0},
                                     {'subroutine': 0, 'time_val': 100, 'vel_mode': 1},
-                                    {'subroutine': 1, 'time_val': 100, 'vel_mode': 2},
-                                    {'subroutine': 0, 'time_val': 100, 'vel_mode': 0},
+                                    {'subroutine': 0, 'time_val': 100, 'vel_mode': 2},
+                                    {'subroutine': 1, 'time_val': 100, 'vel_mode': 0},
                                     {'subroutine': 0, 'time_val': 100, 'vel_mode': 1}],
                            'x': [0, 10, 20, 20, 10, 0, 0, 10, 20],
                            'y': [0, 0, 0, 10, 10, 10, 20, 20, 20]}
@@ -225,18 +226,15 @@ class ScanGeneratorTest(unittest.TestCase):
 
     def test_circle_scan(self):
         self.maxDiff = None
-        self.ScanGen.generate_circle_points(100, 6)
+        self.ScanGen.generate_circle_points(100, 10)
 
-        expected_points = {'y': [0.0, -0.6909830055999999, -1.8090169943999999,
-                                 -1.8090169943999999, -0.6909830055999999, 0.0],
-                           'x': [0.0, 0.9510565163, 0.5877852523,
-                                 -0.5877852523, -0.9510565163, -0.0],
-                           'time': [{'time_val': 100, 'subroutine': 0, 'vel_mode': 0},
-                                    {'time_val': 100, 'subroutine': 0, 'vel_mode': 0},
-                                    {'time_val': 100, 'subroutine': 0, 'vel_mode': 0},
-                                    {'time_val': 100, 'subroutine': 0, 'vel_mode': 0},
-                                    {'time_val': 100, 'subroutine': 0, 'vel_mode': 0},
-                                    {'time_val': 100, 'subroutine': 0, 'vel_mode': 0}]}
+        expected_points = {'x': [0.0, -0.23395555690000003, -0.8263518223,
+                                 -1.5, -1.9396926208, -1.9396926208, -1.5,
+                                 -0.8263518223, -0.23395555690000003, 0.0],
+                           'y': [0.0, 0.6427876097, 0.984807753, 0.8660254038,
+                                 0.3420201433, -0.3420201433, -0.8660254038,
+                                 -0.984807753, -0.6427876097, 0.0],
+                           'time': [{'subroutine': 0, 'time_val': 100, 'vel_mode': 0}]*10}
 
         self.assertEqual(expected_points, self.ScanGen.point_set)
 
