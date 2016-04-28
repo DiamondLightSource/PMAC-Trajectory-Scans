@@ -17,7 +17,7 @@ class TrajectoryScanGenerator(object):
 
         self.point_set = {'time': []}
 
-    def generate_snake_scan_w_vel(self, trajectory):
+    def generate_snake_scan(self, trajectory):
         """
         Generate a snake trajectory scan with dynamic velocity for turnarounds and
         trigger setting

@@ -207,7 +207,7 @@ class ScanGeneratorTest(unittest.TestCase):
 
     def test_snake_scan(self):
         trajectory = {'move_time': 100, 'width': 3, 'length': 3, 'step': 10, 'direction': 0}
-        self.ScanGen.generate_snake_scan_w_vel(trajectory)
+        self.ScanGen.generate_snake_scan(trajectory)
 
         expected_points = {'time': [{'subroutine': 1, 'time_val': 100, 'vel_mode': 0},
                                     {'subroutine': 0, 'time_val': 100, 'vel_mode': 0},
