@@ -12,7 +12,7 @@ class TesterPmacTestHarness(PmacTestHarness):
     def __init__(self):
 
         self.status = "1"
-        self.status = "0"
+        self.status = "1"
         self.total_points = 0
         self.current_index = 0
         self.current_buffer = 0
@@ -175,7 +175,9 @@ class CommandsTest(unittest.TestCase):
         send_command_mock.assert_called_once_with(
             "#1HMZ#2HMZ")
 
-    def test_run_motion_program_command(self, send_command_mock):
+    @patch('PmacTestHarness_test.TesterPmacTestHarness.check_program_exists',
+           return_value=True)
+    def test_given_program_exists_run_motion_program_command(self, _, send_command_mock):
         self.pmac.coordinate_system.add_motor_assignment(1, "X", 1)
         self.pmac.coordinate_system.add_motor_assignment(2, "Y", 1)
 
@@ -183,6 +185,19 @@ class CommandsTest(unittest.TestCase):
 
         send_command_mock.assert_called_once_with(
             "#1J/#2J/&1B1R")
+
+    @patch('PmacTestHarness_test.TesterPmacTestHarness.check_program_exists',
+           return_value=False)
+    def test_given_program_doesnt_exist_raise_error(self, _, send_command_mock):
+        self.pmac.coordinate_system.add_motor_assignment(1, "X", 1)
+        self.pmac.coordinate_system.add_motor_assignment(2, "Y", 1)
+        expected_error_message = "Pmac does not have a program 2"
+
+        with self.assertRaises(IOError) as e:
+            self.pmac.run_motion_program(2)
+
+        self.assertEqual(expected_error_message, e.exception.message)
+        self.assertEqual(0, send_command_mock.call_count)
 
     def test_abort_command(self, send_command_mock):
 
@@ -221,16 +236,26 @@ class SetCurrentCoordinatesTest(unittest.TestCase):
         self.assertIn(("P4112", "400"), call_list)
 
 
-# class CheckProgramExistsTest(unittest.TestCase):
-#
-#     def setUp(self):
-#         self.pmac = TesterPmacTestHarness()
-#
-#     def test_check_program_exists(self):
-#
-#         exists = self.pmac.check_program_exists()
-#
-#         self.assertTrue(exists)
+class CheckProgramExistsTest(unittest.TestCase):
+
+    def setUp(self):
+        self.pmac = TesterPmacTestHarness()
+
+    @patch('PmacTestHarness_test.TesterPmacTestHarness.sendCommand',
+           return_value=("Some response", True, "Program print-out"))
+    def test_given_program_exists_then_return_True(self, _):
+
+        exists = self.pmac.check_program_exists(1)
+
+        self.assertTrue(exists)
+
+    @patch('PmacTestHarness_test.TesterPmacTestHarness.sendCommand',
+           return_value=("Some error message", False))
+    def test_given_program_exists_then_return_True(self, _):
+
+        exists = self.pmac.check_program_exists(1)
+
+        self.assertFalse(exists)
 
 
 class SetAxesTest(unittest.TestCase):

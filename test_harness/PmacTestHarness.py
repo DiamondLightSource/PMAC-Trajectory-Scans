@@ -136,25 +136,33 @@ class PmacTestHarness(PmacEthernetInterface):
         Args:
             program_num(int): Number of motion program to run
 
+        Raises:
+            [If program doesn't exist]: Pmac does not have a program
+            `program_num`
+
         """
+        if self.check_program_exists(program_num):
+            command = ""
+            for motor in self.coordinate_system.motor_map.iterkeys():
+                command += "#{motor}J/".format(motor=motor)
+            command += "&" + str(self.coordinate_system.cs_number)
+            command += "B" + str(program_num) + "R"
 
-        command = ""
-        for motor in self.coordinate_system.motor_map.iterkeys():
-            command += "#{motor}J/".format(motor=motor)
-        command += "&" + str(self.coordinate_system.cs_number)
-        command += "B" + str(program_num) + "R"
+            self.sendCommand(command)
+        else:
+            raise IOError("Pmac does not have a program " + str(program_num))
 
-        self.sendCommand(command)
+    def check_program_exists(self, program_number):
 
-    def check_program_exists(self):
-        raise NotImplementedError
+        response = self.sendCommand("List Prog " + str(program_number))
 
-        # response, _ = self.sendCommand("List Prog 1")
-        #
-        # if len(response) > 50:
-        #     return True
-        # else:
-        #     return False
+        # If the program exists, PmacEthernetInterface will return a third
+        # entry with the program, if not it will be empty - the PMAC will
+        # return an ERR003 which PEI raises an IOError for
+        if len(response) == 3:
+            return True
+        else:
+            return False
 
     def force_abort(self):
         """
