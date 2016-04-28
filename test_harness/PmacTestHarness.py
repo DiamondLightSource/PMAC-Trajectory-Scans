@@ -141,16 +141,14 @@ class PmacTestHarness(PmacEthernetInterface):
             `program_num`
 
         """
-        if self.check_program_exists(program_num):
-            command = ""
-            for motor in self.coordinate_system.motor_map.iterkeys():
-                command += "#{motor}J/".format(motor=motor)
-            command += "&" + str(self.coordinate_system.cs_number)
-            command += "B" + str(program_num) + "R"
 
-            self.sendCommand(command)
-        else:
-            raise IOError("Pmac does not have a program " + str(program_num))
+        command = ""
+        for motor in self.coordinate_system.motor_map.iterkeys():
+            command += "#{motor}J/".format(motor=motor)
+        command += "&" + str(self.coordinate_system.cs_number)
+        command += "B" + str(program_num) + "R"
+
+        self.sendCommand(command)
 
     def check_program_exists(self, program_number):
 

@@ -175,9 +175,7 @@ class CommandsTest(unittest.TestCase):
         send_command_mock.assert_called_once_with(
             "#1HMZ#2HMZ")
 
-    @patch('PmacTestHarness_test.TesterPmacTestHarness.check_program_exists',
-           return_value=True)
-    def test_given_program_exists_run_motion_program_command(self, _, send_command_mock):
+    def test_run_motion_program_command(self, send_command_mock):
         self.pmac.coordinate_system.add_motor_assignment(1, "X", 1)
         self.pmac.coordinate_system.add_motor_assignment(2, "Y", 1)
 
@@ -185,19 +183,6 @@ class CommandsTest(unittest.TestCase):
 
         send_command_mock.assert_called_once_with(
             "#1J/#2J/&1B1R")
-
-    @patch('PmacTestHarness_test.TesterPmacTestHarness.check_program_exists',
-           return_value=False)
-    def test_given_program_doesnt_exist_raise_error(self, _, send_command_mock):
-        self.pmac.coordinate_system.add_motor_assignment(1, "X", 1)
-        self.pmac.coordinate_system.add_motor_assignment(2, "Y", 1)
-        expected_error_message = "Pmac does not have a program 2"
-
-        with self.assertRaises(IOError) as e:
-            self.pmac.run_motion_program(2)
-
-        self.assertEqual(expected_error_message, e.exception.message)
-        self.assertEqual(0, send_command_mock.call_count)
 
     def test_abort_command(self, send_command_mock):
 
