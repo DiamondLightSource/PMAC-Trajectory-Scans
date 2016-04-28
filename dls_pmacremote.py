@@ -84,7 +84,7 @@ class RemotePmacInterface(object):
 		(success, failure) = (True, False)
 		try:
 			response = self._sendCommand(command, shouldWait = shouldWait, doubleTimeout = doubleTimeout)
-                except IOPmacSentNullError, e:
+                except IOPmacSentNullError, (e, responseError):
                         # On the Ethernet interface the SAVE command responds
                         # with '\x00' if it has changes to write, so in this 
                         # case we suppress the error on the SAVE command 
@@ -95,7 +95,7 @@ class RemotePmacInterface(object):
                                         print "The PMAC returned a NULL character, probably due to sending a SAVE command - command was %r" % command
                                 response = ""
                         else:
-                                return ('I/O error during comm with PMAC: %s' % str(e), failure)
+                                return ('I/O error during comm with PMAC: %s' % str(e), failure, responseError)
 		except IOError, e:
 			return ('I/O error during comm with PMAC: %s' % str(e), failure)
 		return (response, success)
@@ -514,7 +514,7 @@ class PmacEthernetInterface(RemotePmacInterface):
 					self.sock.sendall(getbufferRequest())
                                         tmp = self.sock.recv(2048)
                                         if len(tmp) < 1400 and tmp[len(tmp) - 1] == '\x00':
-						raise IOPmacSentNullError('Connection to PMAC lost')
+						raise IOPmacSentNullError('Connection to PMAC lost', returnStr)
 					returnStr = returnStr + tmp
 					enterLoop = (returnStr[len(returnStr) - 1] != '\x06')
                                         enterLoop = enterLoop and (returnStr[len(returnStr) - 1] != '\x0D')
