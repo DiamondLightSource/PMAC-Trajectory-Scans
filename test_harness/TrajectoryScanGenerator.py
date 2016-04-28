@@ -46,15 +46,15 @@ class TrajectoryScanGenerator(object):
             else:
                 vel_mode = 0
 
-            if i % width != 0:
+            if i % width == 0 or (i+1) % width == 0:
+                subroutine = 0
+            else:
                 if trigger == 1:
                     subroutine = 2
                     trigger = 0
                 else:
                     subroutine = 1
                     trigger = 1
-            else:
-                subroutine = 0
 
             self.point_set['time'].append({'time_val': move_time, 'vel_mode': vel_mode, 'subroutine': subroutine})
 
@@ -89,8 +89,8 @@ class TrajectoryScanGenerator(object):
             time_points.append({'time_val': move_time, 'vel_mode': 0, 'subroutine': 0})
 
         for angle in numpy.linspace(0.0, 2.0*numpy.pi, num_points):
-            x_points.append(round(numpy.sin(angle), 10))
-            y_points.append(round(numpy.cos(angle), 10) - 1.0)
+            x_points.append(round(numpy.cos(angle), 10) - 1.0)
+            y_points.append(round(numpy.sin(angle), 10))
 
         self.point_set = {'time': time_points,
                           'x': x_points,
