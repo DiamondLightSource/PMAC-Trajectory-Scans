@@ -82,32 +82,32 @@ class UpdateAddressesTest(unittest.TestCase):
         self.pmac = TesterPmacTestHarness()
 
     def test_given_buffer_A_then_update(self):
-        expected_address = {'a': '3015e',
-                            'b': '30190',
-                            'c': '301c2',
+        expected_address = {'a': '30032',
+                            'b': '30064',
+                            'c': '30096',
                             'time': '30000',
                             'u': '300c8',
                             'v': '300fa',
                             'w': '3012c',
-                            'x': '30032',
-                            'y': '30064',
-                            'z': '30096'}
+                            'x': '3015e',
+                            'y': '30190',
+                            'z': '301c2'}
 
         self.pmac.update_address_dict(self.pmac.buffer_address_a)
 
         self.assertEqual(expected_address, self.pmac.addresses)
 
     def test_given_buffer_B_then_update(self):
-        expected_address = {'a': '30384',
-                            'b': '303b6',
-                            'c': '303e8',
+        expected_address = {'a': '30258',
+                            'b': '3028a',
+                            'c': '302bc',
                             'time': '30226',
                             'u': '302ee',
                             'v': '30320',
                             'w': '30352',
-                            'x': '30258',
-                            'y': '3028a',
-                            'z': '302bc'}
+                            'x': '30384',
+                            'y': '303b6',
+                            'z': '303e8'}
 
         self.pmac.update_address_dict(self.pmac.buffer_address_b)
 
@@ -232,8 +232,8 @@ class SetCurrentCoordinatesTest(unittest.TestCase):
         self.pmac.set_initial_coordinates()
 
         call_list = [call[0] for call in set_variable_mock.call_args_list]
-        self.assertIn(("P4111", "500"), call_list)
-        self.assertIn(("P4112", "400"), call_list)
+        self.assertIn(("P4117", "500"), call_list)
+        self.assertIn(("P4118", "400"), call_list)
 
 
 class CheckProgramExistsTest(unittest.TestCase):
@@ -267,7 +267,7 @@ class SetAxesTest(unittest.TestCase):
     def test_axes_set(self, set_variable_mock):
         self.pmac.set_axes(['X', 'Y'])
 
-        set_variable_mock.assert_called_once_with("P4003", "384")
+        set_variable_mock.assert_called_once_with("P4003", "192")
 
 
 class SetAbortTest(unittest.TestCase):
