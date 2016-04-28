@@ -67,11 +67,14 @@ class PmacTestHarness(PmacEthernetInterface):
 
         """
 
-        self.status = int(self.read_variable("P4001"))
-        self.error = int(self.read_variable("P4015"))
-        self.total_points = int(self.read_variable("P4005"))
-        self.current_index = int(self.read_variable("P4006"))
-        self.current_buffer = int(self.read_variable("P4007"))
+        self.status, self.error, self.total_points, self.current_index, self.current_buffer = \
+            self.read_multiple_variables(["P4001", "P4015", "P4005", "P4006", "P4007"])
+
+        self.status = int(self.status)
+        self.error = int(self.error)
+        self.total_points = int(self.total_points)
+        self.current_index = int(self.current_index)
+        self.current_buffer = int(self.current_buffer)
 
     def update_address_dict(self, root_address):
         """
@@ -232,6 +235,7 @@ class PmacTestHarness(PmacEthernetInterface):
 
         Raises:
             IOError: Read failed
+
         """
 
         if buffer_num == 0:
@@ -295,6 +299,31 @@ class PmacTestHarness(PmacEthernetInterface):
         value, success = self.sendCommand(variable)
         if success:
             return value.split('\r')[0]
+        else:
+            raise IOError("Read failed")
+
+    def read_multiple_variables(self, variables):
+        """
+        Read a set of variables
+
+        Args:
+            variables(list(str)): The list of variables to read
+
+        Returns:
+            list(str): Values of variables
+
+        Raises:
+            IOError: Read failed
+
+        """
+
+        command = ""
+        for variable in variables:
+            command += variable
+
+        value, success = self.sendCommand(command)
+        if success:
+            return tuple(value.split('\r')[:-1])
         else:
             raise IOError("Read failed")
 
@@ -380,6 +409,7 @@ class PmacTestHarness(PmacEthernetInterface):
         as the start positions for the motion program
 
         """
+
         axis_assignments = {'A': 1, 'B': 2, 'C': 3,
                             'U': 4, 'V': 5, 'W': 6,
                             'X': 7, 'Y': 8, 'Z': 9}

@@ -38,42 +38,22 @@ class InitTest(unittest.TestCase):
         self.assertEqual(read_variable_mock.call_args_list[4][0][0], "P4009")
 
 
-@patch('PmacTestHarness_test.TesterPmacTestHarness.read_variable', return_value="0")
+@patch('PmacTestHarness_test.TesterPmacTestHarness.read_multiple_variables', return_value=("1", "0", "19", "20", "0"))
 class UpdateStatusVariablesTest(unittest.TestCase):
 
     def setUp(self):
         self.pmac = TesterPmacTestHarness()
 
-    def test_status_updated(self, read_variable_mock):
-        read_variable_mock.return_value = "1"
+    def test_status_variables_updated(self, read_variables_mock):
 
         self.pmac.update_status_variables()
         self.assertEqual(self.pmac.status, 1)
-        self.assertEqual(read_variable_mock.call_args_list[0][0][0], "P4001")
-
-    def test_error_updated(self, read_variable_mock):
-
-        self.pmac.update_status_variables()
-        self.assertEqual(self.pmac.total_points, 0)
-        self.assertEqual(read_variable_mock.call_args_list[1][0][0], "P4015")
-
-    def test_total_points_updated(self, read_variable_mock):
-
-        self.pmac.update_status_variables()
-        self.assertEqual(self.pmac.total_points, 0)
-        self.assertEqual(read_variable_mock.call_args_list[2][0][0], "P4005")
-
-    def test_current_index_updated(self, read_variable_mock):
-
-        self.pmac.update_status_variables()
-        self.assertEqual(self.pmac.current_index, 0)
-        self.assertEqual(read_variable_mock.call_args_list[3][0][0], "P4006")
-
-    def test_current_buffer_updated(self, read_variable_mock):
-
-        self.pmac.update_status_variables()
+        self.assertEqual(self.pmac.error, 0)
+        self.assertEqual(self.pmac.total_points, 19)
+        self.assertEqual(self.pmac.current_index, 20)
         self.assertEqual(self.pmac.current_buffer, 0)
-        self.assertEqual(read_variable_mock.call_args_list[4][0][0], "P4007")
+        read_variables_mock.assert_called_once_with(
+            ["P4001", "P4015", "P4005", "P4006", "P4007"])
 
 
 class UpdateAddressesTest(unittest.TestCase):
@@ -148,7 +128,7 @@ class CommandsTest(unittest.TestCase):
         send_command_mock.assert_called_once_with("&1 #1->100X #3->25Y")
 
     @patch('test_harness.PmacCoordinateSystem.PmacCoordinateSystem.add_motor_assignment')
-    def test_given_invalid_motor_then_error(self, _1, _2):
+    def test_given_invalid_motor_then_error(self, _, _2):
         axis_map = [(1, "X", 100), (100, "Y", 25)]
         expected_error_message = "Motor selection invalid"
 
@@ -158,7 +138,7 @@ class CommandsTest(unittest.TestCase):
         self.assertEqual(expected_error_message, error.exception.message)
 
     @patch('test_harness.PmacCoordinateSystem.PmacCoordinateSystem.add_motor_assignment')
-    def test_given_invalid_axis_then_error(self, _1, _2):
+    def test_given_invalid_axis_then_error(self, _, _2):
         axis_map = [(1, "1", 100), (2, "Y", 25)]
         expected_error_message = "Axis selection invalid"
 
@@ -320,6 +300,22 @@ class ReadWriteTest(unittest.TestCase):
 
         send_command_mock.assert_called_once_with("P10000")
         self.assertEqual(error.exception.message, "Read failed")
+
+    def test_read_multiple_variables_given_valid_args_return_value(self, send_command_mock):
+        send_command_mock.return_value = ("1\r0\r192\r", True)
+        values = self.pmac.read_multiple_variables(["P4001", "P4002", "P4003"])
+
+        send_command_mock.assert_called_once_with("P4001P4002P4003")
+        self.assertEqual(values, ("1", "0", "192"))
+
+    def test_read_multiple_variables_given_invalid_args_return_value(self, send_command_mock):
+        send_command_mock.return_value = ("\r", False)
+        expected_error_message = "Read failed"
+
+        with self.assertRaises(IOError) as error:
+            self.pmac.read_multiple_variables(["4001", "02", "03"])
+
+        self.assertEqual(expected_error_message, error.exception.message)
 
     def test_set_variable_given_valid_args_success(self, send_command_mock):
         send_command_mock.return_value = ("1\r", True)
