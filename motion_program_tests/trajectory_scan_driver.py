@@ -26,9 +26,9 @@ def make_status_message(pmac, start_time, sleep_time):
     status_message += (" - Status: " + str(pmac.status) +
                        " - Error: " + str(pmac.error) +
                        " - Index: " + str(pmac.current_index) +
-                       " - Total Points: " + str(pmac.total_points) +
                        " - VelMode: " + pmac.read_variable("M4011") +
                        " - Trigger State: " + pmac.read_variable("M32") +
+                       " - Total Points: " + str(pmac.total_points) +
                        " - Scan Time: " + scan_time)
 
     return status_message
@@ -45,7 +45,7 @@ def snake_trajectory_scan():
     pmac.set_axes(['X', 'Y'])
 
     width = 10
-    length = 10
+    length = 5
     trajectory = {'move_time': 4000,
                   'width': width,
                   'length': length,
@@ -53,7 +53,7 @@ def snake_trajectory_scan():
                   'direction': 0}
 
     snake_scan = ScanGen()
-    snake_scan.generate_snake_scan_w_vel(trajectory)
+    snake_scan.generate_snake_scan(trajectory)
     for axis in snake_scan.point_set.iteritems():
         print(axis)
 
@@ -77,7 +77,7 @@ def snake_trajectory_scan():
     print("Status: " + str(pmac.status))
 
     while int(pmac.status) == 1:
-        status_message = make_status_message(pmac, start_time, 0.1)
+        status_message = make_status_message(pmac, start_time, 1)
         print(status_message)
 
 
@@ -94,9 +94,6 @@ def circle_trajectory_scan():
     circle_scan = ScanGen()
     circle_scan.generate_circle_points(400, 3600)
     print(circle_scan.point_set)
-    print(len(circle_scan.point_set['time']))
-    print(len(circle_scan.point_set['x']))
-    print(len(circle_scan.point_set['y']))
     circle_scan.format_point_set()
 
     buffer_length = pmac.buffer_length
@@ -133,7 +130,7 @@ def circle_trajectory_scan():
             pmac.set_idle_buffer_fill(buffer_length)
             pmac.prev_buffer_write = 1
 
-        status_message = make_status_message(pmac, start_time, 0.5)
+        status_message = make_status_message(pmac, start_time, 0.1)
         print(status_message)
 
 
