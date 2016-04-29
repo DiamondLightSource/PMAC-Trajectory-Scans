@@ -39,11 +39,13 @@ class PmacTestHarness(PmacEthernetInterface):
                             'buffer_fill_B': "P4012",
                             'error': "P4015",
                             'version': "P4020"}
+
         self.status = int(self.read_variable(self.P_variables['status']))
         self.error = int(self.read_variable(self.P_variables['error']))
         self.total_points = 0
         self.current_index = 0
         self.current_buffer = 0
+
         # Fixed values
         self.buffer_length = int(
             self.read_variable(self.P_variables['buffer_length']))
@@ -53,20 +55,32 @@ class PmacTestHarness(PmacEthernetInterface):
             self.read_variable(self.P_variables['buffer_address_B'])))[2:])
 
         # Other PMAC information
-        self.addresses = {}
+        self.addresses = {}  # Addresses for each sub-buffer, set based on current buffer
         self.prev_buffer_write = 1
 
         # PMAC CS Set Up
-        self.coordinate_system = PmacCS(1)
-        self.read_cs_max_velocities()
+        self.coordinate_system = {'1': PmacCS(1)}
+        self.read_cs_max_velocities(1)
 
-    def add_coordinate_system(self, cs_instance):
-
-        self.coordinate_system = cs_instance
-
-    def read_cs_max_velocities(self):
+    def add_coordinate_system(self, cs_instance, cs_number):
         """
-        Read the maximum allowed velocities from variables ix16 on the PMAC
+        Add a coordinate system instance
+
+        Args:
+            cs_instance(PmacCoordinateSystem): Coordinate system to add
+            cs_number(int): Number of coordinate system
+
+        """
+
+        self.coordinate_system[str(cs_number)] = cs_instance
+
+    def read_cs_max_velocities(self, cs_number):
+        """
+        Read the maximum allowed velocities from variables ix16 on the PMAC for
+        given coordinate system
+
+        Args:
+            cs_number: Coordinate system to read for
 
         """
 
@@ -74,7 +88,7 @@ class PmacTestHarness(PmacEthernetInterface):
         for i in range(1, 10):
             velocities.append(self.read_variable("i{axis}16".format(axis=i)))
 
-        self.coordinate_system.set_max_velocities(velocities)
+        self.coordinate_system[str(cs_number)].set_max_velocities(velocities)
 
     def update_status_variables(self):
         """
@@ -115,59 +129,60 @@ class PmacTestHarness(PmacEthernetInterface):
                           'y': self.add_dechex(root_address, 8*int(self.buffer_length)),
                           'z': self.add_dechex(root_address, 9*int(self.buffer_length))}
 
-    def assign_motors(self, axis_map):
+    def assign_cs_motors(self, axis_map, cs_number):
         """
         Send command to assign motors to the required axes
 
         Args:
             axis_map(list(int, str, int)): List of axes to assign to motor, with scaling
             e.g. [(1, "X", 100), (3, "Y", 25)] => &1 #1->100X #3->25Y
+            cs_number(int): Coordinate system to assign motors for
 
         """
 
-        command = "&1"
+        command = "&" + str(cs_number)
         for motor, axis, scaling in axis_map:
             if int(motor) not in range(1, 16):
                 raise ValueError("Motor selection invalid")
             if axis.upper() not in ["X", "Y", "Z", "U", "V", "W", "A", "B", "C"]:
                 raise ValueError("Axis selection invalid")
 
-            self.coordinate_system.add_motor_assignment(motor, axis, scaling)
+            self.coordinate_system[str(cs_number)].add_motor_assignment(motor, axis, scaling)
             command += \
                 " #{motor_num}->{scaling}{axis}".format(
                     motor_num=motor, scaling=scaling, axis=axis)
 
         self.sendCommand(command)
 
-    def home_motors(self):
+    def home_cs_motors(self, cs_number):
         """
-        Send command to home motors
+        Send command to home motors in given coordinate system
+
+        Args:
+            cs_number(int): Coordinate system to assign motors for
 
         """
 
         command = ""
-        for motor in self.coordinate_system.motor_map.iterkeys():
+        for motor in self.coordinate_system[str(cs_number)].motor_map.iterkeys():
             command += "#{motor}HMZ".format(motor=motor)
 
         self.sendCommand(command)
 
-    def run_motion_program(self, program_num):
+    def run_motion_program(self, program_num, cs_number):
         """
         Send command to run motion program
 
         Args:
             program_num(int): Number of motion program to run
-
-        Raises:
-            [If program doesn't exist]: Pmac does not have a program
-            `program_num`
+            cs_number(int): Coordinate system to run motion program in
 
         """
 
         command = ""
-        for motor in self.coordinate_system.motor_map.iterkeys():
+        for motor in self.coordinate_system[str(cs_number)].motor_map.iterkeys():
             command += "#{motor}J/".format(motor=motor)
-        command += "&" + str(self.coordinate_system.cs_number)
+        command += "&" + str(self.coordinate_system[str(cs_number)].cs_number)
         command += "B" + str(program_num) + "R"
 
         self.sendCommand(command)
@@ -422,10 +437,13 @@ class PmacTestHarness(PmacEthernetInterface):
 
         return position
 
-    def set_initial_coordinates(self):
+    def set_cs_initial_coordinates(self, cs_number):
         """
         Set Current_* values for required axes to be the actual motor positions; these act
         as the start positions for the motion program
+
+        Args:
+            cs_number(int): Coordinate system to set coordinates for
 
         """
 
@@ -433,7 +451,7 @@ class PmacTestHarness(PmacEthernetInterface):
                             'U': 4, 'V': 5, 'W': 6,
                             'X': 7, 'Y': 8, 'Z': 9}
 
-        for axis, egu_scaling in self.coordinate_system.motor_map.itervalues():
+        for axis, egu_scaling in self.coordinate_system[str(cs_number)].motor_map.itervalues():
             current_position = str(int(self.read_motor_position(axis_assignments[axis])) * egu_scaling)
 
             self.set_variable("P411" + str(axis_assignments[axis]), current_position)
