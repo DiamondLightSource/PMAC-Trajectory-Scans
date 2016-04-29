@@ -137,11 +137,83 @@ def circle_trajectory_scan():
         print(status_message)
 
 
+def blade_slit_scan():
+
+    pmac = PmacTestHarness(IP_ADDRESS)
+    cs_number = 1
+
+    pmac.force_abort()
+    pmac.assign_cs_kinematics([1, 2], cs_number)
+    pmac.home_cs_motors(cs_number)
+    pmac.reset_buffers()
+    pmac.set_axes(['A', 'B'])
+
+    num_points = 5
+    step = 100
+    move_time = 2000
+
+    blade_scan = ScanGen()
+    blade_scan.generate_linear_points(move_time, step, num_points)
+    blade_scan.point_set['b'] = [0]*num_points
+    print(blade_scan.point_set)
+    blade_scan.format_point_set()
+    print(blade_scan.point_set)
+
+    buffer_fill = num_points
+
+    pmac.set_cs_initial_kinematic_coordinates(1)
+    pmac.fill_current_buffer(blade_scan.point_set)
+    pmac.set_current_buffer_fill(buffer_fill)
+    pmac.set_idle_buffer_fill(0)
+    pmac.prev_buffer_write = 0
+
+    start_time = time.time()
+    pmac.run_motion_program(PROG_NUM, cs_number)
+    time.sleep(0.01)
+
+    pmac.update_status_variables()
+    print("Status: " + str(pmac.status))
+
+    a_pos = []
+    b_pos = []
+    a_vel = []
+    b_vel = []
+    kinematics = []
+    while int(pmac.status) == 1:
+
+        status_message = make_status_message(pmac, start_time, 1)
+        print(status_message)
+
+        a_pos.append((pmac.read_variable("P4101"),
+                      pmac.read_variable("P4111"),
+                      pmac.read_variable("M4001")))
+        b_pos.append((pmac.read_variable("P4102"),
+                      pmac.read_variable("P4112"),
+                      pmac.read_variable("M4002")))
+        a_vel.append(pmac.read_variable("P4131"))
+        b_vel.append(pmac.read_variable("P4132"))
+        kinematics.append((pmac.read_variable("P1"),
+                          pmac.read_variable("P101"),
+                          pmac.read_variable("P2"),
+                          pmac.read_variable("P102"),
+                          pmac.read_variable("Q1"),
+                          pmac.read_variable("Q11"),
+                          pmac.read_variable("Q2"),
+                          pmac.read_variable("Q12")))
+
+    print("A Position", a_pos)
+    print("B Position", b_pos)
+    print("A Velocity", a_vel)
+    print("B Velocity", b_vel)
+    print("Kinematic values", kinematics)
+
+
 def main():
 
     # trajectory_scan()
-    snake_trajectory_scan()
+    # snake_trajectory_scan()
     # circle_trajectory_scan()
+    blade_slit_scan()
 
 if __name__ == "__main__":
     main()
