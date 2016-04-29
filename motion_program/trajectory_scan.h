@@ -8,6 +8,7 @@
 #define BufferAdr           30010           ; BlankAdr + 10
 #define BuffLen             1000
 #define ProgramNum          1
+#define VersionNum          1.0
 
 #define RootVar     4000
 
@@ -34,7 +35,7 @@
 #define Error               P(RootVar + 15)         ; Error code  0: No error, 1: Invalid axes value,
                                                     ; 2: Move time of 0, 3: Following error/ Run-time error
 #define Version             P(RootVar + 20)         ; Version number for motion program
-Version = 1.0
+Version = VersionNum
 
 ; Motion Program Variables
 ; ************************
