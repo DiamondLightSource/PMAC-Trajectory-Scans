@@ -46,6 +46,32 @@ class WriteTest(unittest.TestCase):
         print("Time to fill buffers: " + str(time.time() - start_time))
         print("Messages sent: " + str(self.pmac.sendCommand.called))
 
+    def test_buffer_fill_time_one_axis_repeats(self):
+
+        scan = ScanGen()
+        repeats = 10
+
+        times = []
+        i = 0
+        while i < repeats:
+
+            scan.generate_sine_points_one_axis(400, self.pmac.buffer_length)
+            scan.format_point_set()
+
+            start_time = time.time()
+            self.pmac.fill_current_buffer(scan.point_set)
+            self.pmac.set_current_buffer_fill(self.pmac.buffer_length)
+            times.append(time.time() - start_time)
+            i += 1
+
+        average_time = 0
+        for time_ in times:
+            average_time += time_
+
+        average_time /= repeats
+
+        print("Average time to fill buffers: " + str(average_time))
+
     def test_buffer_fill_time_two_axes(self):
 
         scan = ScanGen()
