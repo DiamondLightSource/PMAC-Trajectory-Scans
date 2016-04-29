@@ -150,20 +150,18 @@ def blade_slit_scan():
 
     num_points = 5
     step = 100
-    move_time = 2000
+    slit_gap = 0
+    move_time = 4000
 
     blade_scan = ScanGen()
     blade_scan.generate_linear_points(move_time, step, num_points)
-    blade_scan.point_set['b'] = [0]*num_points
+    blade_scan.point_set['b'] = [slit_gap]*num_points
     print(blade_scan.point_set)
     blade_scan.format_point_set()
-    print(blade_scan.point_set)
-
-    buffer_fill = num_points
 
     pmac.set_cs_initial_kinematic_coordinates(1)
     pmac.fill_current_buffer(blade_scan.point_set)
-    pmac.set_current_buffer_fill(buffer_fill)
+    pmac.set_current_buffer_fill(num_points)
     pmac.set_idle_buffer_fill(0)
     pmac.prev_buffer_write = 0
 
@@ -181,30 +179,22 @@ def blade_slit_scan():
     kinematics = []
     while int(pmac.status) == 1:
 
-        status_message = make_status_message(pmac, start_time, 1)
+        status_message = make_status_message(pmac, start_time, move_time/4000)
         print(status_message)
 
-        a_pos.append((pmac.read_variable("P4101"),
-                      pmac.read_variable("P4111"),
-                      pmac.read_variable("M4001")))
-        b_pos.append((pmac.read_variable("P4102"),
-                      pmac.read_variable("P4112"),
-                      pmac.read_variable("M4002")))
+        a_pos.append(pmac.read_multiple_variables(
+            ["P4101", "P4111", "M4001"]))
+        b_pos.append(pmac.read_multiple_variables(
+            ["P4102", "P4112", "M4002"]))
         a_vel.append(pmac.read_variable("P4131"))
         b_vel.append(pmac.read_variable("P4132"))
-        kinematics.append((pmac.read_variable("P1"),
-                          pmac.read_variable("P101"),
-                          pmac.read_variable("P2"),
-                          pmac.read_variable("P102"),
-                          pmac.read_variable("Q1"),
-                          pmac.read_variable("Q11"),
-                          pmac.read_variable("Q2"),
-                          pmac.read_variable("Q12")))
+        kinematics.append((pmac.read_multiple_variables(
+            ["P1", "P101", "P2", "P102", "Q1", "Q11", "Q2", "Q12"])))
 
-    print("A Position", a_pos)
-    print("B Position", b_pos)
-    print("A Velocity", a_vel)
-    print("B Velocity", b_vel)
+    print("A Positions", a_pos)
+    print("B Positions", b_pos)
+    print("A Velocities", a_vel)
+    print("B Velocities", b_vel)
     print("Kinematic values", kinematics)
 
 
