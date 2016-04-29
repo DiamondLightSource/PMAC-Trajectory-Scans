@@ -17,6 +17,19 @@ class TrajectoryScanGenerator(object):
 
         self.point_set = {'time': []}
 
+    def generate_linear_points(self, move_time, step_size, num_points):
+
+        self.point_set['a'] = []
+
+        position = step_size
+        while position < (num_points + 1)*step_size:
+            self.point_set['time'].append({'time_val': move_time,
+                                           'vel_mode': 0,
+                                           'subroutine': 0})
+            self.point_set['a'].append(position)
+
+            position += step_size
+
     def generate_snake_scan(self, trajectory):
         """
         Generate a snake trajectory scan with dynamic velocity for turnarounds and

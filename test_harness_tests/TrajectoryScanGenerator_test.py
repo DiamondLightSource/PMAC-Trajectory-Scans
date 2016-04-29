@@ -205,6 +205,14 @@ class ScanGeneratorTest(unittest.TestCase):
     def setUp(self):
         self.ScanGen = TrajectoryScanGenerator()
 
+    def test_linear_points(self):
+        self.ScanGen.generate_linear_points(100, 1, 10)
+
+        expected_points = {'time': [{'subroutine': 0, 'time_val': 100, 'vel_mode': 0}]*10,
+                           'x': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+
+        self.assertEqual(expected_points, self.ScanGen.point_set)
+
     def test_snake_scan(self):
         self.maxDiff = None
         trajectory = {'move_time': 100, 'width': 3, 'length': 3, 'step': 10, 'direction': 0}
