@@ -26,15 +26,31 @@ class PmacTestHarness(PmacEthernetInterface):
         self.connect()
 
         # Variables read directly from PMAC
-        self.status = int(self.read_variable("P4001"))
-        self.error = int(self.read_variable("P4015"))
+        self.P_variables = {'status': "P4001",
+                            'abort': "P4002",
+                            'axes': "P4003",
+                            'buffer_length': "P4004",
+                            'total_points': "P4005",
+                            'current_index': "P4006",
+                            'current_buffer': "P4007",
+                            'buffer_address_A': "P4008",
+                            'buffer_address_B': "P4009",
+                            'buffer_fill_A': "P4011",
+                            'buffer_fill_B': "P4012",
+                            'error': "P4015",
+                            'version': "P4020"}
+        self.status = int(self.read_variable(self.P_variables['status']))
+        self.error = int(self.read_variable(self.P_variables['error']))
         self.total_points = 0
         self.current_index = 0
         self.current_buffer = 0
         # Fixed values
-        self.buffer_length = int(self.read_variable("P4004"))
-        self.buffer_address_a = str(hex(int(self.read_variable("P4008")))[2:])
-        self.buffer_address_b = str(hex(int(self.read_variable("P4009")))[2:])
+        self.buffer_length = int(
+            self.read_variable(self.P_variables['buffer_length']))
+        self.buffer_address_A = str(hex(int(
+            self.read_variable(self.P_variables['buffer_address_A'])))[2:])
+        self.buffer_address_B = str(hex(int(
+            self.read_variable(self.P_variables['buffer_address_B'])))[2:])
 
         # Other PMAC information
         self.addresses = {}
@@ -68,7 +84,10 @@ class PmacTestHarness(PmacEthernetInterface):
         """
 
         self.status, self.error, self.total_points, self.current_index, self.current_buffer = \
-            self.read_multiple_variables(["P4001", "P4015", "P4005", "P4006", "P4007"])
+            self.read_multiple_variables([self.P_variables['status'], self.P_variables['error'],
+                                          self.P_variables['total_points'],
+                                          self.P_variables['current_index'],
+                                          self.P_variables['current_buffer']])
 
         self.status = int(self.status)
         self.error = int(self.error)
@@ -155,11 +174,11 @@ class PmacTestHarness(PmacEthernetInterface):
 
     def check_program_exists(self, program_number):
 
-        response = self.sendCommand("List Prog " + str(program_number))
+        response = self.sendCommand("List Program " + str(program_number))
 
         # If the program exists, PmacEthernetInterface will return a third
         # entry with the program, if not it will be empty - the PMAC will
-        # return an ERR003 which PEI raises an IOError for
+        # return an ERR003 for which PEI raises an IOError
         if len(response) == 3:
             return True
         else:
@@ -179,7 +198,7 @@ class PmacTestHarness(PmacEthernetInterface):
 
         """
 
-        self.set_variable("P4002", "1")
+        self.set_variable(self.P_variables['abort'], "1")
 
     def set_axes(self, axes):
         """
@@ -197,7 +216,7 @@ class PmacTestHarness(PmacEthernetInterface):
         for axis in axes:
             axes_val += axis_definitions[axis.upper()]
 
-        self.set_variable("P4003", str(axes_val))
+        self.set_variable(self.P_variables['axes'], str(axes_val))
 
     def read_address(self, mode, address):
         """
@@ -429,9 +448,9 @@ class PmacTestHarness(PmacEthernetInterface):
         """
 
         if self.current_buffer == 0:
-            self.update_address_dict(self.buffer_address_b)
+            self.update_address_dict(self.buffer_address_B)
         else:
-            self.update_address_dict(self.buffer_address_a)
+            self.update_address_dict(self.buffer_address_A)
 
         self._fill_buffer(points)
 
@@ -445,9 +464,9 @@ class PmacTestHarness(PmacEthernetInterface):
         """
 
         if self.current_buffer == 0:
-            self.update_address_dict(self.buffer_address_a)
+            self.update_address_dict(self.buffer_address_A)
         else:
-            self.update_address_dict(self.buffer_address_b)
+            self.update_address_dict(self.buffer_address_B)
 
         self._fill_buffer(points)
 
@@ -514,9 +533,9 @@ class PmacTestHarness(PmacEthernetInterface):
         """
 
         if self.current_buffer == 0:
-            self.set_variable("P4012", str(fill_level))
+            self.set_variable(self.P_variables['buffer_fill_B'], str(fill_level))
         else:
-            self.set_variable("P4011", str(fill_level))
+            self.set_variable(self.P_variables['buffer_fill_A'], str(fill_level))
 
     def set_current_buffer_fill(self, fill_level):
         """
@@ -528,9 +547,9 @@ class PmacTestHarness(PmacEthernetInterface):
         """
 
         if self.current_buffer == 0:
-            self.set_variable("P4011", str(fill_level))
+            self.set_variable(self.P_variables['buffer_fill_A'], str(fill_level))
         else:
-            self.set_variable("P4012", str(fill_level))
+            self.set_variable(self.P_variables['buffer_fill_B'], str(fill_level))
 
     @staticmethod
     def add_hex(hex1, hex2):

@@ -11,14 +11,27 @@ class TesterPmacTestHarness(PmacTestHarness):
 
     def __init__(self):
 
+        self.P_variables = {'status': "P4001",
+                            'abort': "P4002",
+                            'axes': "P4003",
+                            'buffer_length': "P4004",
+                            'total_points': "P4005",
+                            'current_index': "P4006",
+                            'current_buffer': "P4007",
+                            'buffer_address_A': "P4008",
+                            'buffer_address_B': "P4009",
+                            'buffer_fill_A': "P4011",
+                            'buffer_fill_B': "P4012",
+                            'error': "P4015",
+                            'version': "P4020"}
         self.status = "1"
         self.status = "1"
         self.total_points = 0
         self.current_index = 0
         self.current_buffer = 0
         self.buffer_length = "50"
-        self.buffer_address_a = "30000"
-        self.buffer_address_b = "30226"
+        self.buffer_address_A = "30000"
+        self.buffer_address_B = "30226"
         self.addresses = {}
         self.coordinate_system = PmacCoordinateSystem(1)
 
@@ -31,11 +44,16 @@ class InitTest(unittest.TestCase):
     def test_default_attributes_set(self, read_variable_mock):
         self.pmac = PmacTestHarness("test")
 
-        self.assertEqual(read_variable_mock.call_args_list[0][0][0], "P4001")
-        self.assertEqual(read_variable_mock.call_args_list[1][0][0], "P4015")
-        self.assertEqual(read_variable_mock.call_args_list[2][0][0], "P4004")
-        self.assertEqual(read_variable_mock.call_args_list[3][0][0], "P4008")
-        self.assertEqual(read_variable_mock.call_args_list[4][0][0], "P4009")
+        self.assertEqual(read_variable_mock.call_args_list[0][0][0],
+                         self.pmac.P_variables['status'])
+        self.assertEqual(read_variable_mock.call_args_list[1][0][0],
+                         self.pmac.P_variables['error'])
+        self.assertEqual(read_variable_mock.call_args_list[2][0][0],
+                         self.pmac.P_variables['buffer_length'])
+        self.assertEqual(read_variable_mock.call_args_list[3][0][0],
+                         self.pmac.P_variables['buffer_address_A'])
+        self.assertEqual(read_variable_mock.call_args_list[4][0][0],
+                         self.pmac.P_variables['buffer_address_B'])
 
 
 @patch('PmacTestHarness_test.TesterPmacTestHarness.read_multiple_variables', return_value=("1", "0", "19", "20", "0"))
@@ -53,7 +71,9 @@ class UpdateStatusVariablesTest(unittest.TestCase):
         self.assertEqual(self.pmac.current_index, 20)
         self.assertEqual(self.pmac.current_buffer, 0)
         read_variables_mock.assert_called_once_with(
-            ["P4001", "P4015", "P4005", "P4006", "P4007"])
+            [self.pmac.P_variables['status'], self.pmac.P_variables['error'],
+             self.pmac.P_variables['total_points'], self.pmac.P_variables['current_index'],
+             self.pmac.P_variables['current_buffer']])
 
 
 class UpdateAddressesTest(unittest.TestCase):
@@ -73,7 +93,7 @@ class UpdateAddressesTest(unittest.TestCase):
                             'y': '30190',
                             'z': '301c2'}
 
-        self.pmac.update_address_dict(self.pmac.buffer_address_a)
+        self.pmac.update_address_dict(self.pmac.buffer_address_A)
 
         self.assertEqual(expected_address, self.pmac.addresses)
 
@@ -89,7 +109,7 @@ class UpdateAddressesTest(unittest.TestCase):
                             'y': '303b6',
                             'z': '303e8'}
 
-        self.pmac.update_address_dict(self.pmac.buffer_address_b)
+        self.pmac.update_address_dict(self.pmac.buffer_address_B)
 
         self.assertEqual(expected_address, self.pmac.addresses)
 
@@ -232,7 +252,7 @@ class SetAxesTest(unittest.TestCase):
     def test_axes_set(self, set_variable_mock):
         self.pmac.set_axes(['X', 'Y'])
 
-        set_variable_mock.assert_called_once_with("P4003", "192")
+        set_variable_mock.assert_called_once_with(self.pmac.P_variables['axes'], "192")
 
 
 class SetAbortTest(unittest.TestCase):
@@ -244,7 +264,7 @@ class SetAbortTest(unittest.TestCase):
     def test_abort_set(self, set_variable_mock):
         self.pmac.set_abort()
 
-        set_variable_mock.assert_called_once_with("P4002", "1")
+        set_variable_mock.assert_called_once_with(self.pmac.P_variables['abort'], "1")
 
 
 @patch('PmacTestHarness_test.TesterPmacTestHarness.sendCommand')
@@ -396,7 +416,7 @@ class FillIdleBufferTest(unittest.TestCase):
 
         self.pmac.fill_idle_buffer(self.points)
 
-        update_mock.assert_called_once_with(self.pmac.buffer_address_b)
+        update_mock.assert_called_once_with(self.pmac.buffer_address_B)
         fill_mock.assert_called_once_with(self.points)
 
     def test_given_b_then_update_a_and_fill_buffer(self, update_mock, fill_mock):
@@ -404,7 +424,7 @@ class FillIdleBufferTest(unittest.TestCase):
 
         self.pmac.fill_idle_buffer(self.points)
 
-        update_mock.assert_called_once_with(self.pmac.buffer_address_a)
+        update_mock.assert_called_once_with(self.pmac.buffer_address_A)
         fill_mock.assert_called_once_with(self.points)
 
 
@@ -422,7 +442,7 @@ class FillCurrentBufferTest(unittest.TestCase):
 
         self.pmac.fill_current_buffer(self.points)
 
-        update_mock.assert_called_once_with(self.pmac.buffer_address_a)
+        update_mock.assert_called_once_with(self.pmac.buffer_address_A)
         fill_mock.assert_called_once_with(self.points)
 
     def test_given_b_then_update_b_and_fill_buffer(self, update_mock, fill_mock):
@@ -430,7 +450,7 @@ class FillCurrentBufferTest(unittest.TestCase):
 
         self.pmac.fill_current_buffer(self.points)
 
-        update_mock.assert_called_once_with(self.pmac.buffer_address_b)
+        update_mock.assert_called_once_with(self.pmac.buffer_address_B)
         fill_mock.assert_called_once_with(self.points)
 
 
@@ -530,25 +550,29 @@ class SetBufferFillTest(unittest.TestCase):
         self.pmac.current_buffer = 0
         self.pmac.set_current_buffer_fill(50)
 
-        set_variable_mock.assert_called_once_with("P4011", "50")
+        set_variable_mock.assert_called_once_with(
+            self.pmac.P_variables['buffer_fill_A'], "50")
 
     def test_current_given_B_active_then_B_buffer_set(self, set_variable_mock):
         self.pmac.current_buffer = 1
         self.pmac.set_current_buffer_fill(50)
 
-        set_variable_mock.assert_called_once_with("P4012", "50")
+        set_variable_mock.assert_called_once_with(
+            self.pmac.P_variables['buffer_fill_B'], "50")
 
     def test_idle_given_A_active_then_B_buffer_set(self, set_variable_mock):
         self.pmac.current_buffer = 0
         self.pmac.set_idle_buffer_fill(50)
 
-        set_variable_mock.assert_called_once_with("P4012", "50")
+        set_variable_mock.assert_called_once_with(
+            self.pmac.P_variables['buffer_fill_B'], "50")
 
     def test_current_given_B_active_then_A_buffer_set(self, set_variable_mock):
         self.pmac.current_buffer = 1
         self.pmac.set_idle_buffer_fill(50)
 
-        set_variable_mock.assert_called_once_with("P4011", "50")
+        set_variable_mock.assert_called_once_with(
+            self.pmac.P_variables['buffer_fill_A'], "50")
 
 
 class DecHexConverterTest(unittest.TestCase):
