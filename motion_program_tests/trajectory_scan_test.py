@@ -171,8 +171,7 @@ class TrajectoryScanTest(unittest.TestCase):
         time.sleep(scan_time + 2)
 
         self.assertEqual("2", self.pmac.read_variable(self.pmac.P_variables['status']))
-        self.assertEqual("0", self.pmac.read_variable(
-            self.pmac.P_variables['buffer_address_B']))
+        self.assertEqual("0", self.pmac.read_variable(self.pmac.P_variables['abort']))
         self.assertEqual(str(buffer_fill), self.pmac.read_variable(
             self.pmac.P_variables['total_points']))
 
