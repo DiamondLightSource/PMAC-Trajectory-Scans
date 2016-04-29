@@ -7,6 +7,7 @@
 #define AxisAdr             30001           ; BlankAdr + 1
 #define BufferAdr           30010           ; BlankAdr + 10
 #define BuffLen             1000
+#define ProgramNum          1
 
 #define RootVar     4000
 
@@ -35,6 +36,7 @@
                                                     ; 2: Move time of 0, 3: Following error/ Run-time error
 
 ; Motion Program Variables
+; ************************
 
 #define Prev_A              P(RootVar + 101)        ; Specifiers for what axes are to be used
 #define Prev_B              P(RootVar + 102)
@@ -72,6 +74,7 @@
 #define Z_Vel               P(RootVar + 139)
 
 ; Address-Based Variables
+; ***********************
 
 #define BlankAddress        M4015                   ; Address storing a zero for unused axes to point to
 BlankAddress->D:$BlankAdr,0,48

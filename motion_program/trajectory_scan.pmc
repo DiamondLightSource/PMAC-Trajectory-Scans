@@ -7,8 +7,8 @@
 Del Gat
 
 ; Set Initial Values
-BufferLength = BuffLen                          ; Set in header file (Default = 1000)
-BufferAdr_A = $BufferAdr                        ; Set in header file (Default = 30000)
+BufferLength = BuffLen                          ; BuffLen defined in header file
+BufferAdr_A = $BufferAdr                        ; BufferAdr defined in header file
 BufferAdr_B = BufferAdr_A + 10*BufferLength
 BlankAddress = 0
 Status = 0
@@ -22,7 +22,7 @@ Close
 ; Program
 ; *****************************************************************************************
 
-Open Prog 1
+Open Program ProgramNum
 Clear
 
 Abs
@@ -54,7 +54,7 @@ While(Abort = 0 and Error = 0 and CurrentBufferFill > 0 and PrevBufferFill = Buf
     ; This loop ends when Current_* is at N-1 because then Next_* is at N
     While(Abort = 0 and Error = 0 and CurrentIndex < CurrentBufferFill)
 
-        P4201 = P4201 + 1
+        P4201 = P4201 + 1                   ; For debugging
 
         Next_Time = Next_Time_N/4           ; Convert 1/4s of a ms into ms
 
@@ -100,7 +100,7 @@ While(Abort = 0 and Error = 0 and CurrentBufferFill > 0 and PrevBufferFill = Buf
     ; Move to final point of buffer if next buffer has points
     If(Abort = 0 and CurrentBufferFill > 0)     ; Do move with previous buffer N-1 and N and current buffer 1
 
-        P4202 = P4202 + 1
+        P4202 = P4202 + 1                   ; For debugging
 
         CurrentIndex = 0                    ; Reset to start of next buffer
         GoSub103                            ; Update Next_* addresses to 0th point of next buffer
@@ -118,7 +118,7 @@ End While
 If(Status = 1)
     If(Abort = 0)
 
-        P4203 = P4203 + 1
+        P4203 = P4203 + 1       ; For debugging
 
         PVT (Time)              ; Set move time
         GoSub105                ; Prev->Current velocity calculation
@@ -149,7 +149,7 @@ N101
 Return
 
 ; Subroutine 2 ************************************************************************************
-; Shift coordinate buffer through Next -> Current -> Prev
+; Shift coordinate buffer through; Current -> Prev and then Next -> Current
 ; *************************************************************************************************
 
 N102
@@ -178,9 +178,10 @@ N102
 Return
 
 ; Subroutine 3 ************************************************************************************
-; Assign coordinate pointers based on CurrentBufferAdr, CurrentIndex and BufferLength
+; Assign coordinate pointers based on CurrentBufferAdr (The start address of Buffer A/B),
+; BufferLength (length of the sub-buffers) and CurrentIndex (position within the sub-buffers).
 ; If the axis is not activated, it won't be incremented and will remain pointing to the BlankAdr
-; CurrentIndex corresponds to Current_*, so CurrentIndex + 1 is used to point to the Next_* values
+; CurrentIndex corresponds to Current_*, so CurrentIndex + 1 is used to point to the Next_* values.
 ; *************************************************************************************************
 
 N103
@@ -219,8 +220,8 @@ Return
 
 ; Subroutines 4-7 *********************************************************************************
 ; Calculate velocities for next move - 4: Master, 5: Prev->Current, 6: Prev->Next, 7: Current->Next
-; Velocities are multiplied by 1000 because the units of Time is milliseconds and the units
-; of velocity is user_units/second in the PVT move definition
+; Velocities are multiplied by 1000 because the units of Time are milliseconds and the units
+; of velocity are EGUs/second in the PVT move definition
 ; *************************************************************************************************
 
 N104
@@ -308,18 +309,6 @@ N108
 
     A(Q71):(Q91) B(Q72):(Q92) C(Q73):(Q93) U(Q74):(Q94) V(Q75):(Q95) W(Q76):(Q96) X(Q77):(Q97) Y(Q78):(Q98) Z(Q79):(Q99)
     TotalPoints = TotalPoints + 1
-Return
-
-; User Subroutines ********************************************************************************
-; Subroutines to be used via the user buffer - 10: Set Trigger High, 11: Set Trigger Low
-; *************************************************************************************************
-
-N1
-    Trigger = 1
-Return
-
-N2
-    Trigger = 0
 Return
 
 Close
