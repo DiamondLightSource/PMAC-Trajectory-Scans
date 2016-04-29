@@ -1,4 +1,8 @@
-#include "./trajectory_scan.h"
+; This file is #included in trajectory_scan.pmc and will be downloaded automatically
+; It cannot be downloaded on its own, as it doesn't have the ProgramNum definition
+; If this needs to be downloaded separately, just include the trajectory_scan.h head file below
+
+; #include "./trajectory_scan.h"
 
 Open Program ProgramNum
 
