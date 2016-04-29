@@ -7,6 +7,7 @@ import random
 # PMAC_IP = "172.23.243.169"
 PMAC_IP = "172.23.253.15"
 PROG_NUM = 1
+CS_NUM = 1
 
 
 def length_str_in_list(string_list):
@@ -21,7 +22,7 @@ class WriteTest(unittest.TestCase):
 
     def setUp(self):
         self.pmac = PmacTestHarness(PMAC_IP)
-        self.pmac.home_motors()
+        self.pmac.home_cs_motors(CS_NUM)
         self.pmac.set_axes(['X', 'Y'])
 
     def tearDown(self):
@@ -81,11 +82,12 @@ class WriteTest(unittest.TestCase):
         print("Messages sent: " + str(self.pmac.sendCommand.called))
 
     def test_read_max_velocities(self):
-        self.pmac.assign_motors([(1, "X", 50)])
-        self.pmac.read_cs_max_velocities()
+        self.pmac.assign_cs_motors([(1, "X", 50)], CS_NUM)
+        self.pmac.read_cs_max_velocities(CS_NUM)
 
         print("Max Axis Velocities:")
-        for axis, velocity in self.pmac.coordinate_system.max_velocities.iteritems():
+        velocities = self.pmac.coordinate_system['1'].max_velocities
+        for axis, velocity in velocities.iteritems():
             print(axis + ": " + str(velocity) + "cts/ms")
 
     def test_float_parsing(self):

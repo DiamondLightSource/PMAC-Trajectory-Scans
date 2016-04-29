@@ -8,6 +8,7 @@ import numpy
 
 # IP_ADDRESS = "172.23.243.169"
 IP_ADDRESS = "172.23.253.15"
+PROG_NUM = 1
 
 
 def make_status_message(pmac, start_time, sleep_time):
@@ -37,10 +38,11 @@ def make_status_message(pmac, start_time, sleep_time):
 def snake_trajectory_scan():
 
     pmac = PmacTestHarness(IP_ADDRESS)
+    cs_number = 1
 
     pmac.force_abort()
-    pmac.assign_motors([(1, "X", 1), (2, "Y", 1)])
-    pmac.home_motors()
+    pmac.assign_cs_motors([(1, "X", 1), (2, "Y", 1)], cs_number)
+    pmac.home_cs_motors(cs_number)
     pmac.reset_buffers()
     pmac.set_axes(['X', 'Y'])
 
@@ -57,8 +59,8 @@ def snake_trajectory_scan():
     for axis in snake_scan.point_set.iteritems():
         print(axis)
 
-    pmac.read_cs_max_velocities()
-    snake_scan.check_max_velocity_of_points(pmac.coordinate_system)
+    pmac.read_cs_max_velocities(cs_number)
+    snake_scan.check_max_velocity_of_points(pmac.coordinate_system['1'])
 
     snake_scan.format_point_set()
     for axis in snake_scan.point_set.iteritems():
@@ -69,7 +71,7 @@ def snake_trajectory_scan():
     pmac.set_current_buffer_fill(buffer_fill)
 
     start_time = time.time()
-    pmac.run_motion_program(1)
+    pmac.run_motion_program(PROG_NUM, cs_number)
 
     time.sleep(3)
 
@@ -84,10 +86,11 @@ def snake_trajectory_scan():
 def circle_trajectory_scan():
 
     pmac = PmacTestHarness(IP_ADDRESS)
+    cs_number = 1
 
     pmac.force_abort()
-    pmac.assign_motors([(1, "X", 100), (2, "Y", 100)])
-    pmac.home_motors()
+    pmac.assign_cs_motors([(1, "X", 100), (2, "Y", 100)], cs_number)
+    pmac.home_cs_motors(cs_number)
     pmac.reset_buffers()
     pmac.set_axes(['X', 'Y'])
 
@@ -106,7 +109,7 @@ def circle_trajectory_scan():
     pmac.prev_buffer_write = 0
 
     start_time = time.time()
-    pmac.run_motion_program(1)
+    pmac.run_motion_program(PROG_NUM, cs_number)
     time.sleep(1)
 
     pmac.update_status_variables()
