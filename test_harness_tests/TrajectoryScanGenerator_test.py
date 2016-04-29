@@ -209,7 +209,7 @@ class ScanGeneratorTest(unittest.TestCase):
         self.ScanGen.generate_linear_points(100, 1, 10)
 
         expected_points = {'time': [{'subroutine': 0, 'time_val': 100, 'vel_mode': 0}]*10,
-                           'x': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+                           'a': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
 
         self.assertEqual(expected_points, self.ScanGen.point_set)
 
