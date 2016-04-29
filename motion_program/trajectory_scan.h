@@ -31,8 +31,7 @@
 #define BufferFill_B        P(RootVar + 12)         ; Fill level of buffer B
 #define CurrentBufferFill   P(RootVar + 13)         ; A or B buffer fill level
 #define PrevBufferFill      P(RootVar + 14)         ; Fill level of previous buffer
-#define Error               P(RootVar + 15)         ; Error code
-                                                    ; 0: No error, 1: Invalid axes value,
+#define Error               P(RootVar + 15)         ; Error code  0: No error, 1: Invalid axes value,
                                                     ; 2: Move time of 0, 3: Following error/ Run-time error
 #define Version             P(RootVar + 20)         ; Version number for motion program
 Version = 1.0

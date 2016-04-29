@@ -136,8 +136,8 @@ While(1=1)                      ; Infinite While loop to make sure
 End While
 
 ; Subroutine 1 ************************************************************************************
-; Check that axes value is valid and assign required axes
-; The *_Axis values point to the bits of AxesParser and therefore represent the required axes
+; Check that axes value is valid and activate required axes. The *_Axis values point to the bits of
+; AxesParser and therefore represent axis activation
 ; *************************************************************************************************
 N101
     If(Axes > 511 or Axes < 1)
@@ -179,9 +179,9 @@ Return
 
 ; Subroutine 3 ************************************************************************************
 ; Assign coordinate pointers based on CurrentBufferAdr (The start address of Buffer A/B),
-; BufferLength (length of the sub-buffers) and CurrentIndex (position within the sub-buffers).
-; If the axis is not activated, it won't be incremented and will remain pointing to the BlankAdr
-; CurrentIndex corresponds to Current_*, so CurrentIndex + 1 is used to point to the Next_* values.
+; BufferLength (length of the sub-buffers) and CurrentIndex (position of Next_* pointer within the
+; sub-buffers) If the axis is not activated (see Subroutine 1), it won't be incremented and will
+; remain pointing to the BlankAdr
 ; *************************************************************************************************
 
 N103
