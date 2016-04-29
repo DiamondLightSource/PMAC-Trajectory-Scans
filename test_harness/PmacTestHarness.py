@@ -62,6 +62,45 @@ class PmacTestHarness(PmacEthernetInterface):
         self.coordinate_system = {'1': PmacCS(1)}
         self.read_cs_max_velocities(1)
 
+    def update_status_variables(self):
+        """
+        Update status, error, total points scanned, current index and current buffer
+        specifier from the pmac
+
+        """
+
+        status, error, total_points, current_index, current_buffer = \
+            self.read_multiple_variables([self.P_variables['status'], self.P_variables['error'],
+                                          self.P_variables['total_points'],
+                                          self.P_variables['current_index'],
+                                          self.P_variables['current_buffer']])
+
+        self.status = int(status)
+        self.error = int(error)
+        self.total_points = int(total_points)
+        self.current_index = int(current_index)
+        self.current_buffer = int(current_buffer)
+
+    def update_address_dict(self, root_address):
+        """
+        Update the addresses of each sub-buffer based on the current half buffer
+
+        Args:
+            root_address(str): Root address of current half-buffer
+
+        """
+
+        self.addresses = {'time': root_address,
+                          'a': self.add_dechex(root_address, int(self.buffer_length)),
+                          'b': self.add_dechex(root_address, 2*int(self.buffer_length)),
+                          'c': self.add_dechex(root_address, 3*int(self.buffer_length)),
+                          'u': self.add_dechex(root_address, 4*int(self.buffer_length)),
+                          'v': self.add_dechex(root_address, 5*int(self.buffer_length)),
+                          'w': self.add_dechex(root_address, 6*int(self.buffer_length)),
+                          'x': self.add_dechex(root_address, 7*int(self.buffer_length)),
+                          'y': self.add_dechex(root_address, 8*int(self.buffer_length)),
+                          'z': self.add_dechex(root_address, 9*int(self.buffer_length))}
+
     def add_coordinate_system(self, cs_instance, cs_number):
         """
         Add a coordinate system instance
@@ -90,44 +129,24 @@ class PmacTestHarness(PmacEthernetInterface):
 
         self.coordinate_system[str(cs_number)].set_max_velocities(velocities)
 
-    def update_status_variables(self):
+    def set_cs_initial_coordinates(self, cs_number):
         """
-        Update status, error, total points scanned, current index and current buffer
-        specifier from the pmac
-
-        """
-
-        self.status, self.error, self.total_points, self.current_index, self.current_buffer = \
-            self.read_multiple_variables([self.P_variables['status'], self.P_variables['error'],
-                                          self.P_variables['total_points'],
-                                          self.P_variables['current_index'],
-                                          self.P_variables['current_buffer']])
-
-        self.status = int(self.status)
-        self.error = int(self.error)
-        self.total_points = int(self.total_points)
-        self.current_index = int(self.current_index)
-        self.current_buffer = int(self.current_buffer)
-
-    def update_address_dict(self, root_address):
-        """
-        Update the addresses of each sub-buffer based on the current half buffer
+        Set Current_* values for required axes to be the actual motor positions; these act
+        as the start positions for the motion program
 
         Args:
-            root_address(str): Root address of current half-buffer
+            cs_number(int): Coordinate system to set coordinates for
 
         """
 
-        self.addresses = {'time': root_address,
-                          'a': self.add_dechex(root_address, int(self.buffer_length)),
-                          'b': self.add_dechex(root_address, 2*int(self.buffer_length)),
-                          'c': self.add_dechex(root_address, 3*int(self.buffer_length)),
-                          'u': self.add_dechex(root_address, 4*int(self.buffer_length)),
-                          'v': self.add_dechex(root_address, 5*int(self.buffer_length)),
-                          'w': self.add_dechex(root_address, 6*int(self.buffer_length)),
-                          'x': self.add_dechex(root_address, 7*int(self.buffer_length)),
-                          'y': self.add_dechex(root_address, 8*int(self.buffer_length)),
-                          'z': self.add_dechex(root_address, 9*int(self.buffer_length))}
+        axis_assignments = {'A': 1, 'B': 2, 'C': 3,
+                            'U': 4, 'V': 5, 'W': 6,
+                            'X': 7, 'Y': 8, 'Z': 9}
+
+        for axis, egu_scaling in self.coordinate_system[str(cs_number)].motor_map.itervalues():
+            current_position = str(int(self.read_motor_position(axis_assignments[axis])) * egu_scaling)
+
+            self.set_variable("P411" + str(axis_assignments[axis]), current_position)
 
     def assign_cs_motors(self, axis_map, cs_number):
         """
@@ -436,25 +455,6 @@ class PmacTestHarness(PmacEthernetInterface):
         position = self.sendCommand("#{motor}V".format(motor=motor_num))[0].split('\r')[0]
 
         return position
-
-    def set_cs_initial_coordinates(self, cs_number):
-        """
-        Set Current_* values for required axes to be the actual motor positions; these act
-        as the start positions for the motion program
-
-        Args:
-            cs_number(int): Coordinate system to set coordinates for
-
-        """
-
-        axis_assignments = {'A': 1, 'B': 2, 'C': 3,
-                            'U': 4, 'V': 5, 'W': 6,
-                            'X': 7, 'Y': 8, 'Z': 9}
-
-        for axis, egu_scaling in self.coordinate_system[str(cs_number)].motor_map.itervalues():
-            current_position = str(int(self.read_motor_position(axis_assignments[axis])) * egu_scaling)
-
-            self.set_variable("P411" + str(axis_assignments[axis]), current_position)
 
     def fill_idle_buffer(self, points):
         """
