@@ -1,0 +1,14 @@
+
+Open Program 1 Clear
+
+Abs
+Frax(A,B)
+PVT 1000
+
+A100:1000 B 0
+A200:1000 B 0
+A300:1000 B 0
+A400:1000 B 0
+A500:1000 B 0
+
+Close
