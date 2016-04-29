@@ -143,7 +143,7 @@ def blade_slit_scan():
     cs_number = 1
 
     pmac.force_abort()
-    pmac.assign_cs_kinematics([1, 2], cs_number)
+    pmac.assign_cs_motors_to_kinematics([1, 2], cs_number)
     pmac.home_cs_motors(cs_number)
     pmac.reset_buffers()
     pmac.set_axes(['A', 'B'])

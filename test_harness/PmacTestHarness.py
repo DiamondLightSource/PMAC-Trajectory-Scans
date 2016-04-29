@@ -187,7 +187,7 @@ class PmacTestHarness(PmacEthernetInterface):
 
         self.sendCommand(command)
 
-    def assign_cs_kinematics(self, motors, cs_number):
+    def assign_cs_motors_to_kinematics(self, motors, cs_number):
         """
         Send command to set up coordinate system in a kinematic
 

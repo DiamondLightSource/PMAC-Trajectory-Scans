@@ -161,7 +161,7 @@ class CommandsTest(unittest.TestCase):
     def test_given_valid_motors_then_assign_kinematic(self, add_motor_mock, send_command_mock):
         motors = [1, 2]
 
-        self.pmac.assign_cs_kinematics(motors, 1)
+        self.pmac.assign_cs_motors_to_kinematics(motors, 1)
 
         call_list = [call[0] for call in add_motor_mock.call_args_list]
         self.assertIn((motors[0], 'I', 1), call_list)
@@ -174,7 +174,7 @@ class CommandsTest(unittest.TestCase):
         expected_error_message = "Motor selection invalid"
 
         with self.assertRaises(ValueError) as error:
-            self.pmac.assign_cs_kinematics(motors, 1)
+            self.pmac.assign_cs_motors_to_kinematics(motors, 1)
 
         self.assertEqual(expected_error_message, error.exception.message)
 
