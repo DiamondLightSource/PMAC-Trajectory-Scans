@@ -144,9 +144,23 @@ class PmacTestHarness(PmacEthernetInterface):
                             'X': 7, 'Y': 8, 'Z': 9}
 
         for axis, egu_scaling in self.coordinate_system[str(cs_number)].motor_map.itervalues():
-            current_position = str(int(self.read_motor_position(axis_assignments[axis])) * egu_scaling)
+            current_position = str(float(self.read_motor_position(axis_assignments[axis])) * egu_scaling)
 
             self.set_variable("P411" + str(axis_assignments[axis]), current_position)
+
+    def set_cs_initial_kinematic_coordinates(self, cs_number):
+        """
+        Set Current_* values for required kinematic axes to be the actual axis positions; these act
+        as the start positions for the motion program
+
+        Args:
+            cs_number(int): Coordinate system to set coordinates for
+
+        """
+
+        for motor in self.coordinate_system[str(cs_number)].axis_map['I']:
+            current_position = str(float(self.read_motor_position(motor)))
+            self.set_variable("P411" + str(motor), current_position)
 
     def assign_cs_motors(self, axis_map, cs_number):
         """
@@ -170,6 +184,26 @@ class PmacTestHarness(PmacEthernetInterface):
             command += \
                 " #{motor_num}->{scaling}{axis}".format(
                     motor_num=motor, scaling=scaling, axis=axis)
+
+        self.sendCommand(command)
+
+    def assign_cs_kinematics(self, motors, cs_number):
+        """
+        Send command to set up coordinate system in a kinematic
+
+        Args:
+            motors(list(str)): Motors to use in kinematic
+            cs_number(int): Coordinate system to assign motors for
+
+        """
+
+        command = "&" + str(cs_number)
+        for motor in motors:
+            if int(motor) not in range(1, 16):
+                raise ValueError("Motor selection invalid")
+
+            self.coordinate_system[str(cs_number)].add_motor_assignment(motor, "I", 1)
+            command += " #{motor_num}->I".format(motor_num=motor)
 
         self.sendCommand(command)
 
@@ -201,7 +235,7 @@ class PmacTestHarness(PmacEthernetInterface):
         command = ""
         for motor in self.coordinate_system[str(cs_number)].motor_map.iterkeys():
             command += "#{motor}J/".format(motor=motor)
-        command += "&" + str(self.coordinate_system[str(cs_number)].cs_number)
+        command += "&" + str(cs_number)
         command += "B" + str(program_num) + "R"
 
         self.sendCommand(command)

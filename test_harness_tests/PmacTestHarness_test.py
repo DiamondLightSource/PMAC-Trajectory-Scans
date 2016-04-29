@@ -158,6 +158,27 @@ class CommandsTest(unittest.TestCase):
         self.assertEqual(expected_error_message, error.exception.message)
 
     @patch('test_harness.PmacCoordinateSystem.PmacCoordinateSystem.add_motor_assignment')
+    def test_given_valid_motors_then_assign_kinematic(self, add_motor_mock, send_command_mock):
+        motors = [1, 2]
+
+        self.pmac.assign_cs_kinematics(motors, 1)
+
+        call_list = [call[0] for call in add_motor_mock.call_args_list]
+        self.assertIn((motors[0], 'I', 1), call_list)
+        self.assertIn((motors[1], 'I', 1), call_list)
+        send_command_mock.assert_called_once_with("&1 #1->I #2->I")
+
+    @patch('test_harness.PmacCoordinateSystem.PmacCoordinateSystem.add_motor_assignment')
+    def test_given_invalid_motor_then_error(self, _, _2):
+        motors = [1, 20]
+        expected_error_message = "Motor selection invalid"
+
+        with self.assertRaises(ValueError) as error:
+            self.pmac.assign_cs_kinematics(motors, 1)
+
+        self.assertEqual(expected_error_message, error.exception.message)
+
+    @patch('test_harness.PmacCoordinateSystem.PmacCoordinateSystem.add_motor_assignment')
     def test_given_invalid_axis_then_error(self, _, _2):
         axis_map = [(1, "1", 100), (2, "Y", 25)]
         expected_error_message = "Axis selection invalid"
@@ -219,6 +240,18 @@ class SetCurrentCoordinatesTest(unittest.TestCase):
         call_list = [call[0] for call in set_variable_mock.call_args_list]
         self.assertIn(("P4117", "500"), call_list)
         self.assertIn(("P4118", "400"), call_list)
+
+    @patch('PmacTestHarness_test.TesterPmacTestHarness.read_motor_position',
+           side_effect=["10", "20"])
+    @patch('PmacTestHarness_test.TesterPmacTestHarness.set_variable')
+    def test_set_initial_kinematic_coordinates_makes_correct_calls(self, set_variable_mock, _):
+        self.pmac.coordinate_system['1'].axis_map = {"I": (1, 2)}
+
+        self.pmac.set_cs_initial_kinematic_coordinates(1)
+
+        call_list = [call[0] for call in set_variable_mock.call_args_list]
+        self.assertIn(("P4111", "10"), call_list)
+        self.assertIn(("P4112", "20"), call_list)
 
 
 class CheckProgramExistsTest(unittest.TestCase):
