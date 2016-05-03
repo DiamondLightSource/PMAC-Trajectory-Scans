@@ -242,7 +242,7 @@ class SetCurrentCoordinatesTest(unittest.TestCase):
         self.assertIn(("P4118", "400.0"), call_list)
 
     @patch('PmacTestHarness_test.TesterPmacTestHarness.read_motor_position',
-           side_effect=["10", "20"])
+           side_effect=["10.0", "20.0"])
     @patch('PmacTestHarness_test.TesterPmacTestHarness.set_variable')
     def test_set_initial_kinematic_coordinates_makes_correct_calls(self, set_variable_mock, _):
         self.pmac.coordinate_system['1'].axis_map = {"I": (1, 2)}

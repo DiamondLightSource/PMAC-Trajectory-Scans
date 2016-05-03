@@ -56,7 +56,7 @@ class PmacTestHarness(PmacEthernetInterface):
 
         # Other PMAC information
         self.addresses = {}  # Addresses for each sub-buffer, set based on current buffer
-        self.prev_buffer_write = 1
+        self.prev_buffer_write = 1  # Specifier for the most recent buffer write
 
         # PMAC CS Set Up
         self.coordinate_system = {'1': PmacCS(1)}
@@ -159,7 +159,7 @@ class PmacTestHarness(PmacEthernetInterface):
         """
 
         for motor in self.coordinate_system[str(cs_number)].axis_map['I']:
-            current_position = str(float(self.read_motor_position(motor)))
+            current_position = self.read_motor_position(motor)
             self.set_variable("P411" + str(motor), current_position)
 
     def assign_cs_motors(self, axis_map, cs_number):
