@@ -251,17 +251,14 @@ class TrajectoryScanGenerator(object):
         points_grab = {'time': [], 'x': [], 'y': []}
 
         if end < num_points:
-            points_grab['time'] = self.point_set['time'][start:end]
-            points_grab['x'] = self.point_set['x'][start:end]
-            points_grab['y'] = self.point_set['y'][start:end]
+            for axis in self.point_set.iterkeys():
+                points_grab[axis] = self.point_set[axis][start:end]
         else:
             new_end = end - num_points
-            points_grab['time'] = self.point_set['time'][start:num_points] + \
-                self.point_set['time'][:new_end]
-            points_grab['x'] = self.point_set['x'][start:num_points] + \
-                self.point_set['x'][:new_end]
-            points_grab['y'] = self.point_set['y'][start:num_points] + \
-                self.point_set['y'][:new_end]
+            for axis in self.point_set.iterkeys():
+                points_grab[axis] = self.point_set[axis][start:num_points] + \
+                    self.point_set[axis][:new_end]
+
             end = new_end
 
         return points_grab, end
