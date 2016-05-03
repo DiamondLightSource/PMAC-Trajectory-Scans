@@ -105,26 +105,19 @@ class SetPointSpecifiersTest(unittest.TestCase):
         self.assertEqual(expected_error, error.exception.message)
 
 
-class GrabBufferOfPointsTest(unittest.TestCase):
+class BufferOfPointsTest(unittest.TestCase):
 
     def setUp(self):
         self.PointGen = TrajectoryScanGenerator()
         self.PointGen.point_set = {'y': [1.0, 0.99, 0.98, 0.95, 0.92],
                                    'x': [0.0, 0.10, 0.19, 0.29, 0.38],
-                                   'time': [{'time_val': 500, 'subroutine': 0, 'vel_mode': 0},
-                                            {'time_val': 500, 'subroutine': 0, 'vel_mode': 0},
-                                            {'time_val': 500, 'subroutine': 0, 'vel_mode': 0},
-                                            {'time_val': 500, 'subroutine': 0, 'vel_mode': 0},
-                                            {'time_val': 500, 'subroutine': 0, 'vel_mode': 0}]}
+                                   'time': [{'time_val': 500, 'subroutine': 0, 'vel_mode': 0}]*5}
 
     def test_given_no_overflow_then_return_points_grab(self):
         points, _ = self.PointGen.grab_buffer_of_points(0, 4)
         expected_points = {'y': [1.0, 0.99, 0.98, 0.95],
                            'x': [0.0, 0.10, 0.19, 0.29],
-                           'time': [{'time_val': 500, 'subroutine': 0, 'vel_mode': 0},
-                                    {'time_val': 500, 'subroutine': 0, 'vel_mode': 0},
-                                    {'time_val': 500, 'subroutine': 0, 'vel_mode': 0},
-                                    {'time_val': 500, 'subroutine': 0, 'vel_mode': 0}]}
+                           'time': [{'time_val': 500, 'subroutine': 0, 'vel_mode': 0}]*4}
 
         self.assertEqual(expected_points, points)
 
@@ -132,10 +125,18 @@ class GrabBufferOfPointsTest(unittest.TestCase):
         points, _ = self.PointGen.grab_buffer_of_points(3, 4)
         expected_points = {'y': [0.95, 0.92, 1.0, 0.99],
                            'x': [0.29, 0.38, 0.0, 0.10],
-                           'time': [{'time_val': 500, 'subroutine': 0, 'vel_mode': 0},
-                                    {'time_val': 500, 'subroutine': 0, 'vel_mode': 0},
-                                    {'time_val': 500, 'subroutine': 0, 'vel_mode': 0},
-                                    {'time_val': 500, 'subroutine': 0, 'vel_mode': 0}]}
+                           'time': [{'time_val': 500, 'subroutine': 0, 'vel_mode': 0}]*4}
+
+        self.assertEqual(expected_points, points)
+
+    def test_generate_points(self):
+        expected_points = {'y': [1.0, 0.99, 0.98, 0.95, 0.92,
+                                 1.0, 0.99, 0.98, 0.95, 0.92, 1.0, 0.99],
+                           'x': [0.0, 0.10, 0.19, 0.29, 0.38,
+                                 0.0, 0.10, 0.19, 0.29, 0.38, 0.0, 0.10],
+                           'time': [{'time_val': 500, 'subroutine': 0, 'vel_mode': 0}]*12}
+
+        points, _ = self.PointGen.generate_buffer_of_points(0, 12)
 
         self.assertEqual(expected_points, points)
 

@@ -204,6 +204,10 @@ class TrajectoryScanGenerator(object):
         return True
 
     def format_point_set(self):
+        """
+        Format readable point set into Pmac required format
+
+        """
 
         formatted_points = {'time': [],
                             'x': [], 'y': [], 'z': [],
@@ -229,6 +233,18 @@ class TrajectoryScanGenerator(object):
         self.point_set = formatted_points
 
     def grab_buffer_of_points(self, start, length):
+        """
+        Grab a buffer of points from a point set in self that is longer than the buffer
+
+        Args:
+            start(int): Point to start in buffer
+            length(int): Length of buffer to fill (number of points)
+
+        Returns:
+            dict: Grabbed point set
+            int: Last point grabbed from set
+
+        """
 
         end = start + length
         num_points = len(self.point_set['time'])
@@ -249,6 +265,36 @@ class TrajectoryScanGenerator(object):
             end = new_end
 
         return points_grab, end
+
+    def generate_buffer_of_points(self, start, length):
+        """
+        Loop through a short point set until we have a buffer full of points
+
+        Args:
+            start(int): Point to start in buffer
+            length(int): Length of buffer to fill (number of points)
+
+        Returns:
+            dict: Generated point set
+            int: Last point grabbed from set
+
+        """
+
+        num_points = len(self.point_set['time'])
+        points_gen = {}
+        for axis in self.point_set.iterkeys():
+            points_gen[axis] = []
+
+        while len(points_gen['time']) + num_points < length:
+            for axis in self.point_set.iterkeys():
+                points_gen[axis] += self.point_set[axis][start:]
+            start = 0
+
+        end = length - len(points_gen['time'])
+        for axis in self.point_set.iterkeys():
+            points_gen[axis] += self.point_set[axis][:end]
+
+        return points_gen, end
 
     def convert_points_to_pmac_float(self, points):
         """
