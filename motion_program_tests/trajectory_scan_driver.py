@@ -95,13 +95,13 @@ def circle_trajectory_scan():
     pmac.set_axes(['X', 'Y'])
 
     circle_scan = ScanGen()
-    circle_scan.generate_circle_points(400, 3600)
+    circle_scan.generate_circle_points(400, 360)
     print(circle_scan.point_set)
     circle_scan.format_point_set()
 
     buffer_length = pmac.buffer_length
     current_start = 0
-    current_points, end = circle_scan.grab_buffer_of_points(current_start, buffer_length)
+    current_points, end = circle_scan.generate_buffer_of_points(current_start, buffer_length)
     current_start = end + 1
 
     pmac.fill_current_buffer(current_points)
@@ -118,7 +118,7 @@ def circle_trajectory_scan():
     while int(pmac.status) == 1:
 
         if pmac.prev_buffer_write == 1 and int(pmac.current_buffer) == 1:
-            current_points, end = circle_scan.grab_buffer_of_points(current_start, buffer_length)
+            current_points, end = circle_scan.generate_buffer_of_points(current_start, buffer_length)
             current_start = end + 1
 
             pmac.fill_idle_buffer(current_points)
@@ -126,7 +126,7 @@ def circle_trajectory_scan():
             pmac.prev_buffer_write = 0
 
         elif pmac.prev_buffer_write == 0 and int(pmac.current_buffer) == 0:
-            current_points, end = circle_scan.grab_buffer_of_points(current_start, buffer_length)
+            current_points, end = circle_scan.generate_buffer_of_points(current_start, buffer_length)
             current_start = end + 1
 
             pmac.fill_idle_buffer(current_points)
@@ -202,8 +202,8 @@ def main():
 
     # trajectory_scan()
     # snake_trajectory_scan()
-    # circle_trajectory_scan()
-    blade_slit_scan()
+    circle_trajectory_scan()
+    # blade_slit_scan()
 
 if __name__ == "__main__":
     main()
