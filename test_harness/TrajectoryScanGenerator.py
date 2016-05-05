@@ -48,28 +48,6 @@ class TrajectoryScanGenerator(object):
         direction = trajectory['direction']
 
         self.point_set = {'time': [], 'x': [], 'y': []}
-        trigger = 0
-
-        for i in range(0, width*length):
-
-            if (i+1) % width == 0 and i > 0:
-                vel_mode = 1
-            elif i % width == 0 and i > 0:
-                vel_mode = 2
-            else:
-                vel_mode = 0
-
-            if i % width == 0 or (i+1) % width == 0:
-                subroutine = 0
-            else:
-                if trigger == 1:
-                    subroutine = 2
-                    trigger = 0
-                else:
-                    subroutine = 1
-                    trigger = 1
-
-            self.point_set['time'].append({'time_val': move_time, 'vel_mode': vel_mode, 'subroutine': subroutine})
 
         if direction == 0:
             xs = LineGenerator("x", "mm", 0, step, width)
@@ -82,6 +60,28 @@ class TrajectoryScanGenerator(object):
             self.point_set['x'].append(point.positions['x'])
         for point in gen.iterator():
             self.point_set['y'].append(point.positions['y'])
+
+        trigger = 0
+        for i, point in enumerate(self.point_set['x']):
+
+            if (i+1) % width == 0 and i > 0:
+                vel_mode = 1
+            elif i % width == 0 and i > 0:
+                vel_mode = 2
+            else:
+                vel_mode = 0
+
+            if i % width == 0:
+                subroutine = 0
+            else:
+                if (point/step) % 2 == 0 or (i+1) % width == 0:
+                    subroutine = 2
+                    trigger = 0
+                else:
+                    subroutine = 1
+                    trigger = 1
+
+            self.point_set['time'].append({'time_val': move_time, 'vel_mode': vel_mode, 'subroutine': subroutine})
 
     def generate_circle_points(self, move_time, num_points):
         """
