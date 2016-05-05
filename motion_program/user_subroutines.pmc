@@ -11,11 +11,11 @@ Open Program ProgramNum
 ; *************************************************************************************************
 
 N1
-    Trigger = 1
+    Trigger == 1
 Return
 
 N2
-    Trigger = 0
+    Trigger == 0
 Return
 
 Close
