@@ -221,13 +221,13 @@ class ScanGeneratorTest(unittest.TestCase):
 
         expected_points = {'time': [{'subroutine': 0, 'time_val': 100, 'vel_mode': 0},
                                     {'subroutine': 1, 'time_val': 100, 'vel_mode': 0},
-                                    {'subroutine': 0, 'time_val': 100, 'vel_mode': 1},
-                                    {'subroutine': 0, 'time_val': 100, 'vel_mode': 2},
-                                    {'subroutine': 2, 'time_val': 100, 'vel_mode': 0},
-                                    {'subroutine': 0, 'time_val': 100, 'vel_mode': 1},
+                                    {'subroutine': 2, 'time_val': 100, 'vel_mode': 1},
                                     {'subroutine': 0, 'time_val': 100, 'vel_mode': 2},
                                     {'subroutine': 1, 'time_val': 100, 'vel_mode': 0},
-                                    {'subroutine': 0, 'time_val': 100, 'vel_mode': 1}],
+                                    {'subroutine': 2, 'time_val': 100, 'vel_mode': 1},
+                                    {'subroutine': 0, 'time_val': 100, 'vel_mode': 2},
+                                    {'subroutine': 1, 'time_val': 100, 'vel_mode': 0},
+                                    {'subroutine': 2, 'time_val': 100, 'vel_mode': 1}],
                            'x': [0, 10, 20, 20, 10, 0, 0, 10, 20],
                            'y': [0, 0, 0, 10, 10, 10, 20, 20, 20]}
 
