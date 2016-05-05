@@ -46,7 +46,7 @@ def snake_trajectory_scan():
     pmac.reset_buffers()
     pmac.set_axes(['X', 'Y'])
 
-    width = 10
+    width = 11
     length = 5
     trajectory = {'move_time': 4000,
                   'width': width,
@@ -201,8 +201,8 @@ def blade_slit_scan():
 def main():
 
     # trajectory_scan()
-    # snake_trajectory_scan()
-    circle_trajectory_scan()
+    snake_trajectory_scan()
+    # circle_trajectory_scan()
     # blade_slit_scan()
 
 if __name__ == "__main__":
