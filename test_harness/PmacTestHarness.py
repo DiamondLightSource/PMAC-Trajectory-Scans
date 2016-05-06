@@ -49,10 +49,10 @@ class PmacTestHarness(PmacEthernetInterface):
         # Fixed values
         self.buffer_length = int(
             self.read_variable(self.P_variables['buffer_length']))
-        self.buffer_address_A = str(hex(int(
-            self.read_variable(self.P_variables['buffer_address_A'])))[2:])
-        self.buffer_address_B = str(hex(int(
-            self.read_variable(self.P_variables['buffer_address_B'])))[2:])
+        self.buffer_address_A = hex(int(
+            self.read_variable(self.P_variables['buffer_address_A'])))[2:]
+        self.buffer_address_B = hex(int(
+            self.read_variable(self.P_variables['buffer_address_B'])))[2:]
 
         # Other PMAC information
         self.addresses = {}  # Addresses for each sub-buffer, set based on current buffer
