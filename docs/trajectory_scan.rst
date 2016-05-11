@@ -16,6 +16,8 @@ PMAC Requirements
 Program Design
 --------------
 
+PMAC Trajectory Scans centres around a slave motion program that can be controlled by EPICS. It carries out axis movements in a generic way to allow different scans to be carried out by setting coordinate system allocations (including kinematics) and writing a corresponding point set to user memory addresses. The idea of this is that the the higher level software does most of the work. This system allows endless trajectory scans to be carried out, as the points can ge generated and sent to the PMAC on the fly.
+
 The motion program operates using two buffers, one of which can be scanned through by the PMAC while the other can be filled with points by EPICS. The idea is that a scan of any length can be sent from the data acquisition layer to the EPICS layer and can then be run continuously as if there is no limit to the PMAC memory. The buffer layout is shown in the diagram below:
 
 .. figure:: buffer_layout.png
