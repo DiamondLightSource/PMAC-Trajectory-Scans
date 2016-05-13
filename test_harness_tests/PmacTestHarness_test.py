@@ -40,9 +40,12 @@ class TesterPmacTestHarness(PmacTestHarness):
 
 class InitTest(unittest.TestCase):
 
+    @patch('dls_pmacremote.RemotePmacInterface.setConnectionParams')
     @patch('test_harness.PmacTestHarness.PmacTestHarness.read_variable')
-    def test_default_attributes_set(self, read_variable_mock):
+    def test_default_attributes_set(self, read_variable_mock, set_params_mock):
         self.pmac = PmacTestHarness("test")
+
+        set_params_mock.assert_called_once_with(host="test", port=1025)
 
         self.assertEqual(read_variable_mock.call_args_list[0][0][0],
                          self.pmac.P_variables['status'])
