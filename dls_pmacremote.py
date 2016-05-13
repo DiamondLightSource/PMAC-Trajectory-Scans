@@ -47,6 +47,13 @@ class RemotePmacInterface(object):
 		self.MACRO_STATION_LOOKUP_TABLE = [0,1,4,5,8,9,12,13,16,17,20,21,24,25,28,29,32,33,36,37,40,41,44,45,48,49,52,53,56,57,60,61,64,65]
 
 	def setConnectionParams(self, host = "localhost", port = None):
+
+		# Check if IP Address is valid
+		try:
+			socket.inet_aton(host)
+		except socket.error:
+			raise IOError("Invalid IP Address")
+
 		self.hostname = str(host)
 		if port:
 			self.port = int(str(port))
@@ -84,7 +91,7 @@ class RemotePmacInterface(object):
 		(success, failure) = (True, False)
 		try:
 			response = self._sendCommand(command, shouldWait = shouldWait, doubleTimeout = doubleTimeout)
-                except IOPmacSentNullError, e:
+                except IOPmacSentNullError, (e, responseError):
                         # On the Ethernet interface the SAVE command responds
                         # with '\x00' if it has changes to write, so in this 
                         # case we suppress the error on the SAVE command 
@@ -95,7 +102,7 @@ class RemotePmacInterface(object):
                                         print "The PMAC returned a NULL character, probably due to sending a SAVE command - command was %r" % command
                                 response = ""
                         else:
-                                return ('I/O error during comm with PMAC: %s' % str(e), failure)
+                                return ('I/O error during comm with PMAC: %s' % str(e), failure, responseError)
 		except IOError, e:
 			return ('I/O error during comm with PMAC: %s' % str(e), failure)
 		return (response, success)
@@ -514,7 +521,7 @@ class PmacEthernetInterface(RemotePmacInterface):
 					self.sock.sendall(getbufferRequest())
                                         tmp = self.sock.recv(2048)
                                         if len(tmp) < 1400 and tmp[len(tmp) - 1] == '\x00':
-						raise IOPmacSentNullError('Connection to PMAC lost')
+						raise IOPmacSentNullError('Connection to PMAC lost', returnStr)
 					returnStr = returnStr + tmp
 					enterLoop = (returnStr[len(returnStr) - 1] != '\x06')
                                         enterLoop = enterLoop and (returnStr[len(returnStr) - 1] != '\x0D')

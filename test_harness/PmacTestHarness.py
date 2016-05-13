@@ -26,39 +26,41 @@ class PmacTestHarness(PmacEthernetInterface):
         self.connect()
 
         # Variables read directly from PMAC
-        self.status = int(self.read_variable("P4001"))
-        self.error = int(self.read_variable("P4015"))
+        self.P_variables = {'status': "P4001",
+                            'abort': "P4002",
+                            'axes': "P4003",
+                            'buffer_length': "P4004",
+                            'total_points': "P4005",
+                            'current_index': "P4006",
+                            'current_buffer': "P4007",
+                            'buffer_address_A': "P4008",
+                            'buffer_address_B': "P4009",
+                            'buffer_fill_A': "P4011",
+                            'buffer_fill_B': "P4012",
+                            'error': "P4015",
+                            'version': "P4020"}
+
+        self.status = int(self.read_variable(self.P_variables['status']))
+        self.error = int(self.read_variable(self.P_variables['error']))
         self.total_points = 0
         self.current_index = 0
         self.current_buffer = 0
+
         # Fixed values
-        self.buffer_length = int(self.read_variable("P4004"))
-        self.buffer_address_a = str(hex(int(self.read_variable("P4008")))[2:])
-        self.buffer_address_b = str(hex(int(self.read_variable("P4009")))[2:])
+        self.buffer_length = int(
+            self.read_variable(self.P_variables['buffer_length']))
+        self.buffer_address_A = hex(int(
+            self.read_variable(self.P_variables['buffer_address_A'])))[2:]
+        self.buffer_address_B = hex(int(
+            self.read_variable(self.P_variables['buffer_address_B'])))[2:]
 
         # Other PMAC information
-        self.addresses = {}
-        self.prev_buffer_write = 1
+        self.addresses = {}  # Addresses for each sub-buffer, set based on current buffer
+        self.prev_buffer_write = 1  # Specifier for the most recent buffer write
 
         # PMAC CS Set Up
-        self.coordinate_system = PmacCS(1)
-        self.read_cs_max_velocities()
-
-    def add_coordinate_system(self, cs_instance):
-
-        self.coordinate_system = cs_instance
-
-    def read_cs_max_velocities(self):
-        """
-        Read the maximum allowed velocities from variables ix16 on the PMAC
-
-        """
-
-        velocities = []
-        for i in range(1, 10):
-            velocities.append(self.read_variable("i{axis}16".format(axis=i)))
-
-        self.coordinate_system.set_max_velocities(velocities)
+        self.coordinate_system = {'1': PmacCS(1)}
+        self.read_cs_max_velocities(1)
 
     def update_status_variables(self):
         """
@@ -67,11 +69,17 @@ class PmacTestHarness(PmacEthernetInterface):
 
         """
 
-        self.status = int(self.read_variable("P4001"))
-        self.error = int(self.read_variable("P4015"))
-        self.total_points = int(self.read_variable("P4005"))
-        self.current_index = int(self.read_variable("P4006"))
-        self.current_buffer = int(self.read_variable("P4007"))
+        status, error, total_points, current_index, current_buffer = \
+            self.read_multiple_variables([self.P_variables['status'], self.P_variables['error'],
+                                          self.P_variables['total_points'],
+                                          self.P_variables['current_index'],
+                                          self.P_variables['current_buffer']])
+
+        self.status = int(status)
+        self.error = int(error)
+        self.total_points = int(total_points)
+        self.current_index = int(current_index)
+        self.current_buffer = int(current_buffer)
 
     def update_address_dict(self, root_address):
         """
@@ -83,78 +91,166 @@ class PmacTestHarness(PmacEthernetInterface):
         """
 
         self.addresses = {'time': root_address,
-                          'x': self.add_dechex(root_address, int(self.buffer_length)),
-                          'y': self.add_dechex(root_address, 2*int(self.buffer_length)),
-                          'z': self.add_dechex(root_address, 3*int(self.buffer_length)),
+                          'a': self.add_dechex(root_address, int(self.buffer_length)),
+                          'b': self.add_dechex(root_address, 2*int(self.buffer_length)),
+                          'c': self.add_dechex(root_address, 3*int(self.buffer_length)),
                           'u': self.add_dechex(root_address, 4*int(self.buffer_length)),
                           'v': self.add_dechex(root_address, 5*int(self.buffer_length)),
                           'w': self.add_dechex(root_address, 6*int(self.buffer_length)),
-                          'a': self.add_dechex(root_address, 7*int(self.buffer_length)),
-                          'b': self.add_dechex(root_address, 8*int(self.buffer_length)),
-                          'c': self.add_dechex(root_address, 9*int(self.buffer_length))}
+                          'x': self.add_dechex(root_address, 7*int(self.buffer_length)),
+                          'y': self.add_dechex(root_address, 8*int(self.buffer_length)),
+                          'z': self.add_dechex(root_address, 9*int(self.buffer_length))}
 
-    def assign_motors(self, axis_map):
+    def add_coordinate_system(self, cs_instance, cs_number):
+        """
+        Add a coordinate system instance
+
+        Args:
+            cs_instance(PmacCoordinateSystem): Coordinate system to add
+            cs_number(int): Number of coordinate system
+
+        """
+
+        self.coordinate_system[str(cs_number)] = cs_instance
+
+    def read_cs_max_velocities(self, cs_number):
+        """
+        Read the maximum allowed velocities from variables ix16 on the PMAC for
+        given coordinate system
+
+        Args:
+            cs_number: Coordinate system to read for
+
+        """
+
+        velocities = []
+        for i in range(1, 10):
+            velocities.append(self.read_variable("i{axis}16".format(axis=i)))
+
+        self.coordinate_system[str(cs_number)].set_max_velocities(velocities)
+
+    def set_cs_initial_coordinates(self, cs_number):
+        """
+        Set Current_* values for required axes to be the actual motor positions; these act
+        as the start positions for the motion program
+
+        Args:
+            cs_number(int): Coordinate system to set coordinates for
+
+        """
+
+        axis_assignments = {'A': 1, 'B': 2, 'C': 3,
+                            'U': 4, 'V': 5, 'W': 6,
+                            'X': 7, 'Y': 8, 'Z': 9}
+
+        for axis, egu_scaling in self.coordinate_system[str(cs_number)].motor_map.itervalues():
+            current_position = str(float(self.read_motor_position(axis_assignments[axis])) * egu_scaling)
+
+            self.set_variable("P411" + str(axis_assignments[axis]), current_position)
+
+    def set_cs_initial_kinematic_coordinates(self, cs_number):
+        """
+        Set Current_* values for required kinematic axes to be the actual axis positions; these act
+        as the start positions for the motion program
+
+        Args:
+            cs_number(int): Coordinate system to set coordinates for
+
+        """
+
+        for motor in self.coordinate_system[str(cs_number)].axis_map['I']:
+            current_position = self.read_motor_position(motor)
+            self.set_variable("P411" + str(motor), current_position)
+
+    def assign_cs_motors(self, axis_map, cs_number):
         """
         Send command to assign motors to the required axes
 
         Args:
             axis_map(list(int, str, int)): List of axes to assign to motor, with scaling
             e.g. [(1, "X", 100), (3, "Y", 25)] => &1 #1->100X #3->25Y
+            cs_number(int): Coordinate system to assign motors for
 
         """
 
-        command = "&1"
+        command = "&" + str(cs_number)
         for motor, axis, scaling in axis_map:
             if int(motor) not in range(1, 16):
                 raise ValueError("Motor selection invalid")
             if axis.upper() not in ["X", "Y", "Z", "U", "V", "W", "A", "B", "C"]:
                 raise ValueError("Axis selection invalid")
 
-            self.coordinate_system.add_motor_assignment(motor, axis, scaling)
+            self.coordinate_system[str(cs_number)].add_motor_assignment(motor, axis, scaling)
             command += \
                 " #{motor_num}->{scaling}{axis}".format(
                     motor_num=motor, scaling=scaling, axis=axis)
 
         self.sendCommand(command)
 
-    def home_motors(self):
+    def assign_cs_motors_to_kinematics(self, motors, cs_number):
         """
-        Send command to home motors
+        Send command to set up coordinate system in a kinematic
+
+        Args:
+            motors(list(str)): Motors to use in kinematic
+            cs_number(int): Coordinate system to assign motors for
+
+        """
+
+        command = "&" + str(cs_number)
+        for motor in motors:
+            if int(motor) not in range(1, 16):
+                raise ValueError("Motor selection invalid")
+
+            self.coordinate_system[str(cs_number)].add_motor_assignment(motor, "I", 1)
+            command += " #{motor_num}->I".format(motor_num=motor)
+
+        self.sendCommand(command)
+
+    def home_cs_motors(self, cs_number):
+        """
+        Send command to home motors in given coordinate system
+
+        Args:
+            cs_number(int): Coordinate system to assign motors for
 
         """
 
         command = ""
-        for motor in self.coordinate_system.motor_map.iterkeys():
+        for motor in self.coordinate_system[str(cs_number)].motor_map.iterkeys():
             command += "#{motor}HMZ".format(motor=motor)
 
         self.sendCommand(command)
 
-    def run_motion_program(self, program_num):
+    def run_motion_program(self, program_num, cs_number):
         """
         Send command to run motion program
 
         Args:
             program_num(int): Number of motion program to run
+            cs_number(int): Coordinate system to run motion program in
 
         """
 
         command = ""
-        for motor in self.coordinate_system.motor_map.iterkeys():
+        for motor in self.coordinate_system[str(cs_number)].motor_map.iterkeys():
             command += "#{motor}J/".format(motor=motor)
-        command += "&" + str(self.coordinate_system.cs_number)
+        command += "&" + str(cs_number)
         command += "B" + str(program_num) + "R"
 
         self.sendCommand(command)
 
-    def check_program_exists(self):
-        raise NotImplementedError
+    def check_program_exists(self, program_number):
 
-        # response, _ = self.sendCommand("List Prog 1")
-        #
-        # if len(response) > 50:
-        #     return True
-        # else:
-        #     return False
+        response = self.sendCommand("List Program " + str(program_number))
+
+        # If the program exists, PmacEthernetInterface will return a third
+        # entry with the program, if not it will be empty - the PMAC will
+        # return an ERR003 for which PEI raises an IOError
+        if len(response) == 3:
+            return True
+        else:
+            return False
 
     def force_abort(self):
         """
@@ -170,20 +266,25 @@ class PmacTestHarness(PmacEthernetInterface):
 
         """
 
-        self.set_variable("P4002", "1")
+        self.set_variable(self.P_variables['abort'], "1")
 
     def set_axes(self, axes):
         """
         Send number of require axes
 
         Args:
-            axes(int): A number between 1 and 511 that will be split into 9 bits
-            specifying the required motors e.g. X, Y and Z = 256 + 128 + 64 = 448;
-            X, Y and U = 256 + 128 + 32 = 416
+            axes(list(str)): List of required axes
 
         """
+        axis_definitions = {'A': 1, 'B': 2, 'C': 4,
+                            'U': 8, 'V': 16, 'W': 32,
+                            'X': 64, 'Y': 128, 'Z': 256}
 
-        self.set_variable("P4003", str(axes))
+        axes_val = 0
+        for axis in axes:
+            axes_val += axis_definitions[axis.upper()]
+
+        self.set_variable(self.P_variables['axes'], str(axes_val))
 
     def read_address(self, mode, address):
         """
@@ -221,6 +322,7 @@ class PmacTestHarness(PmacEthernetInterface):
 
         Raises:
             IOError: Read failed
+
         """
 
         if buffer_num == 0:
@@ -287,6 +389,31 @@ class PmacTestHarness(PmacEthernetInterface):
         else:
             raise IOError("Read failed")
 
+    def read_multiple_variables(self, variables):
+        """
+        Read a set of variables
+
+        Args:
+            variables(list(str)): The list of variables to read
+
+        Returns:
+            list(str): Values of variables
+
+        Raises:
+            IOError: Read failed
+
+        """
+
+        command = ""
+        for variable in variables:
+            command += variable
+
+        value, success = self.sendCommand(command)
+        if success:
+            return tuple(value.split('\r')[:-1])
+        else:
+            raise IOError("Read failed")
+
     def set_variable(self, variable, value):
         """
         Set a given variable
@@ -320,11 +447,15 @@ class PmacTestHarness(PmacEthernetInterface):
 
         zeroes = ['$0']*int(self.buffer_length)
         reset_points = {'time': zeroes[:],
-                        'x': zeroes[:], 'y': zeroes[:], 'z': zeroes[:],
+                        'a': zeroes[:], 'b': zeroes[:], 'c': zeroes[:],
                         'u': zeroes[:], 'v': zeroes[:], 'w': zeroes[:],
-                        'a': zeroes[:], 'b': zeroes[:], 'c': zeroes[:]}
-
+                        'x': zeroes[:], 'y': zeroes[:], 'z': zeroes[:]}
         self.fill_current_buffer(reset_points)
+
+        reset_points = {'time': zeroes[:],
+                        'a': zeroes[:], 'b': zeroes[:], 'c': zeroes[:],
+                        'u': zeroes[:], 'v': zeroes[:], 'w': zeroes[:],
+                        'x': zeroes[:], 'y': zeroes[:], 'z': zeroes[:]}
         self.fill_idle_buffer(reset_points)
 
     def read_motor_position(self, motor_num):
@@ -359,19 +490,6 @@ class PmacTestHarness(PmacEthernetInterface):
 
         return position
 
-    def set_initial_coordinates(self):
-        """
-        Set Current_* values for required axes to be the actual motor positions; these act
-        as the start positions for the motion program
-
-        """
-
-        for motor_num, axis_assignment in self.coordinate_system.motor_map.iteritems():
-            egu_scaling = axis_assignment[1]
-            current_position = str(int(self.read_motor_position(motor_num)) * egu_scaling)
-
-            self.set_variable("P411" + motor_num, current_position)
-
     def fill_idle_buffer(self, points):
         """
         Update the address dictionary to fill idle buffer and then call _fill_buffer()
@@ -382,9 +500,9 @@ class PmacTestHarness(PmacEthernetInterface):
         """
 
         if self.current_buffer == 0:
-            self.update_address_dict(self.buffer_address_b)
+            self.update_address_dict(self.buffer_address_B)
         else:
-            self.update_address_dict(self.buffer_address_a)
+            self.update_address_dict(self.buffer_address_A)
 
         self._fill_buffer(points)
 
@@ -398,9 +516,9 @@ class PmacTestHarness(PmacEthernetInterface):
         """
 
         if self.current_buffer == 0:
-            self.update_address_dict(self.buffer_address_a)
+            self.update_address_dict(self.buffer_address_A)
         else:
-            self.update_address_dict(self.buffer_address_b)
+            self.update_address_dict(self.buffer_address_B)
 
         self._fill_buffer(points)
 
@@ -467,9 +585,9 @@ class PmacTestHarness(PmacEthernetInterface):
         """
 
         if self.current_buffer == 0:
-            self.set_variable("P4012", str(fill_level))
+            self.set_variable(self.P_variables['buffer_fill_B'], str(fill_level))
         else:
-            self.set_variable("P4011", str(fill_level))
+            self.set_variable(self.P_variables['buffer_fill_A'], str(fill_level))
 
     def set_current_buffer_fill(self, fill_level):
         """
@@ -481,9 +599,9 @@ class PmacTestHarness(PmacEthernetInterface):
         """
 
         if self.current_buffer == 0:
-            self.set_variable("P4011", str(fill_level))
+            self.set_variable(self.P_variables['buffer_fill_A'], str(fill_level))
         else:
-            self.set_variable("P4012", str(fill_level))
+            self.set_variable(self.P_variables['buffer_fill_B'], str(fill_level))
 
     @staticmethod
     def add_hex(hex1, hex2):

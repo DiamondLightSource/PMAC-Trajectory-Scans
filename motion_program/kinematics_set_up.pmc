@@ -1,0 +1,21 @@
+&1
+
+i5150 = 1           ; Enable CS1 Kinematics Calculations
+i5113 = 10          ; Set CS1 Segmentation Time (ms)
+Q10 = 1             ; Enable kinematic PVT mode
+
+Open Forward Clear
+    Q1 = (P1 + P2)/2          ; Centre is average of two motors
+    Q2 = P2 - P1              ; Gap is difference of two motors
+
+    Q11 = (P101 + P102)/2     ; Centre velocity is average of two motors
+    Q12 = P102 - P101         ; Gap velocity is average of two motors
+Close
+
+Open Inverse Clear
+    P1 = Q1 - Q2/2          ; Motor 1 position is centre minus half of gap
+    P2 = Q1 + Q2/2          ; Motor 2 position is centre plus half of gap
+
+    P101 = Q11 - Q12/2      ; Motor 1 velocity is centre velocity minus half gap velocity
+    P102 = Q11 + Q12/2      ; Motor 2 velocity is centre velocity plus half gap velocity
+Close

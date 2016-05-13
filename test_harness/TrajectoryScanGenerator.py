@@ -17,7 +17,20 @@ class TrajectoryScanGenerator(object):
 
         self.point_set = {'time': []}
 
-    def generate_snake_scan_w_vel(self, trajectory):
+    def generate_linear_points(self, move_time, step_size, num_points):
+
+        self.point_set['a'] = []
+
+        position = step_size
+        while position < (num_points + 1)*step_size:
+            self.point_set['time'].append({'time_val': move_time,
+                                           'vel_mode': 0,
+                                           'subroutine': 0})
+            self.point_set['a'].append(position)
+
+            position += step_size
+
+    def generate_snake_scan(self, trajectory):
         """
         Generate a snake trajectory scan with dynamic velocity for turnarounds and
         trigger setting
@@ -31,35 +44,14 @@ class TrajectoryScanGenerator(object):
         move_time = trajectory['move_time']
         width = trajectory['width']
         length = trajectory['length']
+        step = trajectory['step']
         direction = trajectory['direction']
 
         self.point_set = {'time': [], 'x': [], 'y': []}
-        trigger = 0
-
-        for i in range(0, width*length):
-
-            if (i+1) % width == 0 and i > 0:
-                vel_mode = 1
-            elif i % width == 0 and i > 0:
-                vel_mode = 2
-            else:
-                vel_mode = 0
-
-            if (i+1) % width == width/2:
-                if trigger == 0:
-                    subroutine = 1
-                    trigger = 1
-                else:
-                    subroutine = 2
-                    trigger = 0
-            else:
-                subroutine = 0
-
-            self.point_set['time'].append({'time_val': move_time, 'vel_mode': vel_mode, 'subroutine': subroutine})
 
         if direction == 0:
-            xs = LineGenerator("x", "mm", 0, 10, width)
-            ys = LineGenerator("y", "mm", 0, 10, length)
+            xs = LineGenerator("x", "mm", 0, step, width)
+            ys = LineGenerator("y", "mm", 0, step, length)
             gen = NestedGenerator(ys, xs, snake=True)
         else:
             raise NotImplementedError("Reverse not implemented")
@@ -68,6 +60,28 @@ class TrajectoryScanGenerator(object):
             self.point_set['x'].append(point.positions['x'])
         for point in gen.iterator():
             self.point_set['y'].append(point.positions['y'])
+
+        trigger = 0
+        for i, point in enumerate(self.point_set['x']):
+
+            if (i+1) % width == 0 and i > 0:
+                vel_mode = 1
+            elif i % width == 0 and i > 0:
+                vel_mode = 2
+            else:
+                vel_mode = 0
+
+            if i % width == 0:
+                subroutine = 0
+            else:
+                if (point/step) % 2 == 0 or (i+1) % width == 0:
+                    subroutine = 2
+                    trigger = 0
+                else:
+                    subroutine = 1
+                    trigger = 1
+
+            self.point_set['time'].append({'time_val': move_time, 'vel_mode': vel_mode, 'subroutine': subroutine})
 
     def generate_circle_points(self, move_time, num_points):
         """
@@ -88,8 +102,8 @@ class TrajectoryScanGenerator(object):
             time_points.append({'time_val': move_time, 'vel_mode': 0, 'subroutine': 0})
 
         for angle in numpy.linspace(0.0, 2.0*numpy.pi, num_points):
-            x_points.append(round(numpy.sin(angle), 10))
-            y_points.append(round(numpy.cos(angle), 10) - 1.0)
+            x_points.append(round(numpy.cos(angle), 10) - 1.0)
+            y_points.append(round(numpy.sin(angle), 10))
 
         self.point_set = {'time': time_points,
                           'x': x_points,
@@ -190,6 +204,10 @@ class TrajectoryScanGenerator(object):
         return True
 
     def format_point_set(self):
+        """
+        Format readable point set into Pmac required format
+
+        """
 
         formatted_points = {'time': [],
                             'x': [], 'y': [], 'z': [],
@@ -215,26 +233,65 @@ class TrajectoryScanGenerator(object):
         self.point_set = formatted_points
 
     def grab_buffer_of_points(self, start, length):
+        """
+        Grab a buffer of points from a point set in self that is longer than the buffer
+
+        Args:
+            start(int): Point to start in buffer
+            length(int): Length of buffer to fill (number of points)
+
+        Returns:
+            dict: Grabbed point set
+            int: Last point grabbed from set
+
+        """
 
         end = start + length
         num_points = len(self.point_set['time'])
         points_grab = {'time': [], 'x': [], 'y': []}
 
         if end < num_points:
-            points_grab['time'] = self.point_set['time'][start:end]
-            points_grab['x'] = self.point_set['x'][start:end]
-            points_grab['y'] = self.point_set['y'][start:end]
+            for axis in self.point_set.iterkeys():
+                points_grab[axis] = self.point_set[axis][start:end]
         else:
             new_end = end - num_points
-            points_grab['time'] = self.point_set['time'][start:num_points] + \
-                self.point_set['time'][:new_end]
-            points_grab['x'] = self.point_set['x'][start:num_points] + \
-                self.point_set['x'][:new_end]
-            points_grab['y'] = self.point_set['y'][start:num_points] + \
-                self.point_set['y'][:new_end]
+            for axis in self.point_set.iterkeys():
+                points_grab[axis] = self.point_set[axis][start:num_points] + \
+                    self.point_set[axis][:new_end]
+
             end = new_end
 
         return points_grab, end
+
+    def generate_buffer_of_points(self, start, length):
+        """
+        Loop through a short point set until we have a buffer full of points
+
+        Args:
+            start(int): Point to start in buffer
+            length(int): Length of buffer to fill (number of points)
+
+        Returns:
+            dict: Generated point set
+            int: Last point grabbed from set
+
+        """
+
+        num_points = len(self.point_set['time'])
+        points_gen = {}
+        for axis in self.point_set.iterkeys():
+            points_gen[axis] = []
+
+        while len(points_gen['time']) + num_points < length:
+            for axis in self.point_set.iterkeys():
+                points_gen[axis] += self.point_set[axis][start:]
+            start = 0
+
+        end = length - len(points_gen['time'])
+        for axis in self.point_set.iterkeys():
+            points_gen[axis] += self.point_set[axis][:end]
+
+        return points_gen, end
 
     def convert_points_to_pmac_float(self, points):
         """
@@ -347,10 +404,10 @@ class TrajectoryScanGenerator(object):
 
         """
 
-        if subroutine in range(10, 16):
+        if subroutine in range(1, 15):
             velocity_specifier = "{vel_mode}000000".format(vel_mode=hex(subroutine)[2:])
             new_coord = "$" + PmacTestHarness.add_hex(coord[1:], velocity_specifier)
         else:
-            raise ValueError("Subroutine must be in range 10 - 16")
+            raise ValueError("Subroutine must be in range 1 - 15")
 
         return new_coord

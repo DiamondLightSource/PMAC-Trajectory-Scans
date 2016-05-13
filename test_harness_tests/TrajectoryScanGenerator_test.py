@@ -95,9 +95,9 @@ class SetPointSpecifiersTest(unittest.TestCase):
         self.assertEqual(expected_new_time, new_time)
 
     def test_given_invalid_subroutine_then_error(self):
-        subroutine = 3
+        subroutine = 16
         time = "$10"
-        expected_error = "Subroutine must be in range 10 - 16"
+        expected_error = "Subroutine must be in range 1 - 15"
 
         with self.assertRaises(ValueError) as error:
             self.PointGen.set_point_subroutine(time, subroutine)
@@ -105,26 +105,19 @@ class SetPointSpecifiersTest(unittest.TestCase):
         self.assertEqual(expected_error, error.exception.message)
 
 
-class GrabBufferOfPointsTest(unittest.TestCase):
+class GetBufferOfPointsTest(unittest.TestCase):
 
     def setUp(self):
         self.PointGen = TrajectoryScanGenerator()
         self.PointGen.point_set = {'y': [1.0, 0.99, 0.98, 0.95, 0.92],
                                    'x': [0.0, 0.10, 0.19, 0.29, 0.38],
-                                   'time': [{'time_val': 500, 'subroutine': 0, 'vel_mode': 0},
-                                            {'time_val': 500, 'subroutine': 0, 'vel_mode': 0},
-                                            {'time_val': 500, 'subroutine': 0, 'vel_mode': 0},
-                                            {'time_val': 500, 'subroutine': 0, 'vel_mode': 0},
-                                            {'time_val': 500, 'subroutine': 0, 'vel_mode': 0}]}
+                                   'time': [{'time_val': 500, 'subroutine': 0, 'vel_mode': 0}]*5}
 
     def test_given_no_overflow_then_return_points_grab(self):
         points, _ = self.PointGen.grab_buffer_of_points(0, 4)
         expected_points = {'y': [1.0, 0.99, 0.98, 0.95],
                            'x': [0.0, 0.10, 0.19, 0.29],
-                           'time': [{'time_val': 500, 'subroutine': 0, 'vel_mode': 0},
-                                    {'time_val': 500, 'subroutine': 0, 'vel_mode': 0},
-                                    {'time_val': 500, 'subroutine': 0, 'vel_mode': 0},
-                                    {'time_val': 500, 'subroutine': 0, 'vel_mode': 0}]}
+                           'time': [{'time_val': 500, 'subroutine': 0, 'vel_mode': 0}]*4}
 
         self.assertEqual(expected_points, points)
 
@@ -132,10 +125,18 @@ class GrabBufferOfPointsTest(unittest.TestCase):
         points, _ = self.PointGen.grab_buffer_of_points(3, 4)
         expected_points = {'y': [0.95, 0.92, 1.0, 0.99],
                            'x': [0.29, 0.38, 0.0, 0.10],
-                           'time': [{'time_val': 500, 'subroutine': 0, 'vel_mode': 0},
-                                    {'time_val': 500, 'subroutine': 0, 'vel_mode': 0},
-                                    {'time_val': 500, 'subroutine': 0, 'vel_mode': 0},
-                                    {'time_val': 500, 'subroutine': 0, 'vel_mode': 0}]}
+                           'time': [{'time_val': 500, 'subroutine': 0, 'vel_mode': 0}]*4}
+
+        self.assertEqual(expected_points, points)
+
+    def test_generate_buffer_points(self):
+        expected_points = {'y': [0.95, 0.92, 1.0, 0.99, 0.98,
+                                 0.95, 0.92, 1.0, 0.99, 0.98, 0.95, 0.92],
+                           'x': [0.29, 0.38, 0.0, 0.10, 0.19,
+                                 0.29, 0.38, 0.0, 0.10, 0.19, 0.29, 0.38],
+                           'time': [{'time_val': 500, 'subroutine': 0, 'vel_mode': 0}]*12}
+
+        points, _ = self.PointGen.generate_buffer_of_points(3, 12)
 
         self.assertEqual(expected_points, points)
 
@@ -205,19 +206,28 @@ class ScanGeneratorTest(unittest.TestCase):
     def setUp(self):
         self.ScanGen = TrajectoryScanGenerator()
 
-    def test_snake_scan(self):
-        trajectory = {'move_time': 100, 'width': 3, 'length': 3, 'direction': 0}
-        self.ScanGen.generate_snake_scan_w_vel(trajectory)
+    def test_linear_points(self):
+        self.ScanGen.generate_linear_points(100, 1, 10)
 
-        expected_points = {'time': [{'subroutine': 1, 'time_val': 100, 'vel_mode': 0},
-                                    {'subroutine': 0, 'time_val': 100, 'vel_mode': 0},
-                                    {'subroutine': 0, 'time_val': 100, 'vel_mode': 1},
-                                    {'subroutine': 2, 'time_val': 100, 'vel_mode': 2},
-                                    {'subroutine': 0, 'time_val': 100, 'vel_mode': 0},
-                                    {'subroutine': 0, 'time_val': 100, 'vel_mode': 1},
-                                    {'subroutine': 1, 'time_val': 100, 'vel_mode': 2},
-                                    {'subroutine': 0, 'time_val': 100, 'vel_mode': 0},
-                                    {'subroutine': 0, 'time_val': 100, 'vel_mode': 1}],
+        expected_points = {'time': [{'subroutine': 0, 'time_val': 100, 'vel_mode': 0}]*10,
+                           'a': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+
+        self.assertEqual(expected_points, self.ScanGen.point_set)
+
+    def test_snake_scan(self):
+        self.maxDiff = None
+        trajectory = {'move_time': 100, 'width': 3, 'length': 3, 'step': 10, 'direction': 0}
+        self.ScanGen.generate_snake_scan(trajectory)
+
+        expected_points = {'time': [{'subroutine': 0, 'time_val': 100, 'vel_mode': 0},
+                                    {'subroutine': 1, 'time_val': 100, 'vel_mode': 0},
+                                    {'subroutine': 2, 'time_val': 100, 'vel_mode': 1},
+                                    {'subroutine': 0, 'time_val': 100, 'vel_mode': 2},
+                                    {'subroutine': 1, 'time_val': 100, 'vel_mode': 0},
+                                    {'subroutine': 2, 'time_val': 100, 'vel_mode': 1},
+                                    {'subroutine': 0, 'time_val': 100, 'vel_mode': 2},
+                                    {'subroutine': 1, 'time_val': 100, 'vel_mode': 0},
+                                    {'subroutine': 2, 'time_val': 100, 'vel_mode': 1}],
                            'x': [0, 10, 20, 20, 10, 0, 0, 10, 20],
                            'y': [0, 0, 0, 10, 10, 10, 20, 20, 20]}
 
@@ -225,18 +235,15 @@ class ScanGeneratorTest(unittest.TestCase):
 
     def test_circle_scan(self):
         self.maxDiff = None
-        self.ScanGen.generate_circle_points(100, 6)
+        self.ScanGen.generate_circle_points(100, 10)
 
-        expected_points = {'y': [0.0, -0.6909830055999999, -1.8090169943999999,
-                                 -1.8090169943999999, -0.6909830055999999, 0.0],
-                           'x': [0.0, 0.9510565163, 0.5877852523,
-                                 -0.5877852523, -0.9510565163, -0.0],
-                           'time': [{'time_val': 100, 'subroutine': 0, 'vel_mode': 0},
-                                    {'time_val': 100, 'subroutine': 0, 'vel_mode': 0},
-                                    {'time_val': 100, 'subroutine': 0, 'vel_mode': 0},
-                                    {'time_val': 100, 'subroutine': 0, 'vel_mode': 0},
-                                    {'time_val': 100, 'subroutine': 0, 'vel_mode': 0},
-                                    {'time_val': 100, 'subroutine': 0, 'vel_mode': 0}]}
+        expected_points = {'x': [0.0, -0.23395555690000003, -0.8263518223,
+                                 -1.5, -1.9396926208, -1.9396926208, -1.5,
+                                 -0.8263518223, -0.23395555690000003, 0.0],
+                           'y': [0.0, 0.6427876097, 0.984807753, 0.8660254038,
+                                 0.3420201433, -0.3420201433, -0.8660254038,
+                                 -0.984807753, -0.6427876097, 0.0],
+                           'time': [{'subroutine': 0, 'time_val': 100, 'vel_mode': 0}]*10}
 
         self.assertEqual(expected_points, self.ScanGen.point_set)
 

@@ -2,10 +2,14 @@ from test_harness.PmacTestHarness import PmacTestHarness
 from test_harness.TrajectoryScanGenerator import TrajectoryScanGenerator as ScanGen
 import unittest
 import time
+import random
 
-# PMAC_IP = "172.23.243.169"
-PMAC_IP = "172.23.253.15"
+# PMAC_IP = "172.23.253.15"  # Test Rig
+# PMAC_IP = "172.23.253.11"  # Lab Brick
+PMAC_IP = ""
+
 PROG_NUM = 1
+CS_NUM = 1
 
 
 def length_str_in_list(string_list):
@@ -20,8 +24,8 @@ class WriteTest(unittest.TestCase):
 
     def setUp(self):
         self.pmac = PmacTestHarness(PMAC_IP)
-        self.pmac.home_motors()
-        self.pmac.set_axes(384)
+        self.pmac.home_cs_motors(CS_NUM)
+        self.pmac.set_axes(['X', 'Y'])
 
     def tearDown(self):
         self.pmac.force_abort()
@@ -43,6 +47,32 @@ class WriteTest(unittest.TestCase):
         self.pmac.set_current_buffer_fill(self.pmac.buffer_length)
         print("Time to fill buffers: " + str(time.time() - start_time))
         print("Messages sent: " + str(self.pmac.sendCommand.called))
+
+    def test_buffer_fill_time_one_axis_repeats(self):
+
+        scan = ScanGen()
+        repeats = 10
+
+        times = []
+        i = 0
+        while i < repeats:
+
+            scan.generate_sine_points_one_axis(400, self.pmac.buffer_length)
+            scan.format_point_set()
+
+            start_time = time.time()
+            self.pmac.fill_current_buffer(scan.point_set)
+            self.pmac.set_current_buffer_fill(self.pmac.buffer_length)
+            times.append(time.time() - start_time)
+            i += 1
+
+        average_time = 0
+        for time_ in times:
+            average_time += time_
+
+        average_time /= repeats
+
+        print("Average time to fill buffers: " + str(average_time))
 
     def test_buffer_fill_time_two_axes(self):
 
@@ -80,19 +110,22 @@ class WriteTest(unittest.TestCase):
         print("Messages sent: " + str(self.pmac.sendCommand.called))
 
     def test_read_max_velocities(self):
-        self.pmac.assign_motors([(1, "X", 50)])
-        self.pmac.read_cs_max_velocities()
+        self.pmac.assign_cs_motors([(1, "X", 50)], CS_NUM)
+        self.pmac.read_cs_max_velocities(CS_NUM)
 
         print("Max Axis Velocities:")
-        for axis, velocity in self.pmac.coordinate_system.max_velocities.iteritems():
+        velocities = self.pmac.coordinate_system['1'].max_velocities
+        for axis, velocity in velocities.iteritems():
             print(axis + ": " + str(velocity) + "cts/ms")
 
     def test_float_parsing(self):
         self.pmac.sendCommand("M4500->L:$30000,0,48")
 
-        value = 10
-        pmac_float = ScanGen.double_to_pmac_float(value)
-        print(str(value) + ' : ' + str(pmac_float))
-        self.pmac.write_to_address("L", "30000", pmac_float)
-        self.assertAlmostEqual(value, float(self.pmac.read_variable("M4500")), places=5)
+        for _ in range(1000):
+            number = random.uniform(-10000000.0, 10000000)
+            pmac_float = ScanGen.double_to_pmac_float(number)
 
+            self.pmac.write_to_address("L", "30000", pmac_float)
+            read_back = float(self.pmac.read_variable("M4500"))
+            # print(number, read_back)
+            self.assertAlmostEqual(number, read_back, places=10-len(str(int(number)))-1)
