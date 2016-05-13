@@ -79,6 +79,19 @@ class UpdateStatusVariablesTest(unittest.TestCase):
              self.pmac.P_variables['current_buffer']])
 
 
+class AddCSTest(unittest.TestCase):
+
+    def setUp(self):
+        self.pmac = TesterPmacTestHarness()
+
+    def test_given_CS_then_add(self):
+        cs = PmacCoordinateSystem(1)
+
+        self.pmac.add_coordinate_system(cs, 1)
+
+        self.assertEqual(cs, self.pmac.coordinate_system['1'])
+
+
 class UpdateAddressesTest(unittest.TestCase):
 
     def setUp(self):
@@ -172,7 +185,7 @@ class CommandsTest(unittest.TestCase):
         send_command_mock.assert_called_once_with("&1 #1->I #2->I")
 
     @patch('test_harness.PmacCoordinateSystem.PmacCoordinateSystem.add_motor_assignment')
-    def test_given_invalid_motor_then_error(self, _, _2):
+    def test_kinematic_given_invalid_motor_then_error(self, _, _2):
         motors = [1, 20]
         expected_error_message = "Motor selection invalid"
 
@@ -272,7 +285,7 @@ class CheckProgramExistsTest(unittest.TestCase):
 
     @patch('PmacTestHarness_test.TesterPmacTestHarness.sendCommand',
            return_value=("Some error message", False))
-    def test_given_program_exists_then_return_True(self, _):
+    def test_given_program_doesnt_exist_then_return_False(self, _):
 
         exists = self.pmac.check_program_exists(1)
 
