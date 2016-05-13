@@ -47,6 +47,13 @@ class RemotePmacInterface(object):
 		self.MACRO_STATION_LOOKUP_TABLE = [0,1,4,5,8,9,12,13,16,17,20,21,24,25,28,29,32,33,36,37,40,41,44,45,48,49,52,53,56,57,60,61,64,65]
 
 	def setConnectionParams(self, host = "localhost", port = None):
+
+		# Check if IP Address is valid
+		try:
+			socket.inet_aton(host)
+		except socket.error:
+			raise IOError("Invalid IP Address")
+
 		self.hostname = str(host)
 		if port:
 			self.port = int(str(port))
