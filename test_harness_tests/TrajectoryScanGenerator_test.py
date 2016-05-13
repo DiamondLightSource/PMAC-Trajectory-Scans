@@ -95,9 +95,9 @@ class SetPointSpecifiersTest(unittest.TestCase):
         self.assertEqual(expected_new_time, new_time)
 
     def test_given_invalid_subroutine_then_error(self):
-        subroutine = 18
+        subroutine = 16
         time = "$10"
-        expected_error = "Subroutine must be in range 1 - 16"
+        expected_error = "Subroutine must be in range 1 - 15"
 
         with self.assertRaises(ValueError) as error:
             self.PointGen.set_point_subroutine(time, subroutine)

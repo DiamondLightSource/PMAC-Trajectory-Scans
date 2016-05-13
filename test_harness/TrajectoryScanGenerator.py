@@ -404,10 +404,10 @@ class TrajectoryScanGenerator(object):
 
         """
 
-        if subroutine in range(1, 16):
+        if subroutine in range(1, 15):
             velocity_specifier = "{vel_mode}000000".format(vel_mode=hex(subroutine)[2:])
             new_coord = "$" + PmacTestHarness.add_hex(coord[1:], velocity_specifier)
         else:
-            raise ValueError("Subroutine must be in range 1 - 16")
+            raise ValueError("Subroutine must be in range 1 - 15")
 
         return new_coord
