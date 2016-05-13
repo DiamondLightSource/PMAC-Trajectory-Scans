@@ -6,8 +6,10 @@ from pkg_resources import require
 require('numpy')
 import numpy
 
-# IP_ADDRESS = "172.23.243.169"
-IP_ADDRESS = "172.23.253.15"
+# PMAC_IP = "172.23.253.15"  # Test Rig
+# PMAC_IP = "172.23.253.11"  # Lab Brick
+PMAC_IP = ""
+
 PROG_NUM = 1
 
 
@@ -37,7 +39,7 @@ def make_status_message(pmac, start_time, sleep_time):
 
 def snake_trajectory_scan():
 
-    pmac = PmacTestHarness(IP_ADDRESS)
+    pmac = PmacTestHarness(PMAC_IP)
     cs_number = 1
 
     pmac.force_abort()
@@ -85,7 +87,7 @@ def snake_trajectory_scan():
 
 def circle_trajectory_scan():
 
-    pmac = PmacTestHarness(IP_ADDRESS)
+    pmac = PmacTestHarness(PMAC_IP)
     cs_number = 1
 
     pmac.force_abort()
@@ -139,7 +141,7 @@ def circle_trajectory_scan():
 
 def blade_slit_scan():
 
-    pmac = PmacTestHarness(IP_ADDRESS)
+    pmac = PmacTestHarness(PMAC_IP)
     cs_number = 1
 
     pmac.force_abort()
@@ -200,9 +202,8 @@ def blade_slit_scan():
 
 def main():
 
-    # trajectory_scan()
-    snake_trajectory_scan()
-    # circle_trajectory_scan()
+    # snake_trajectory_scan()
+    circle_trajectory_scan()
     # blade_slit_scan()
 
 if __name__ == "__main__":

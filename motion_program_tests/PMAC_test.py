@@ -4,8 +4,10 @@ import unittest
 import time
 import random
 
-# PMAC_IP = "172.23.243.169"
-PMAC_IP = "172.23.253.15"
+# PMAC_IP = "172.23.253.15"  # Test Rig
+# PMAC_IP = "172.23.253.11"  # Lab Brick
+PMAC_IP = ""
+
 PROG_NUM = 1
 CS_NUM = 1
 
