@@ -27,15 +27,15 @@ Clear
 Abs
 FRAX(A,B,C,U,V,W,X,Y,Z)
 
-A_Adr=$BlankAdrA                    ; Reset axes pointers to default positions
-B_Adr=$BlankAdrB
-C_Adr=$BlankAdrC
-U_Adr=$BlankAdrU
-V_Adr=$BlankAdrV
-W_Adr=$BlankAdrW
-X_Adr=$BlankAdrX
-Y_Adr=$BlankAdrY
-Z_Adr=$BlankAdrZ
+A_Adr = $BlankAdrA                    ; Reset axes pointers to default positions
+B_Adr = $BlankAdrB
+C_Adr = $BlankAdrC
+U_Adr = $BlankAdrU
+V_Adr = $BlankAdrV
+W_Adr = $BlankAdrW
+X_Adr = $BlankAdrX
+Y_Adr = $BlankAdrY
+Z_Adr = $BlankAdrZ
 
 Status = 1                          ; Reset values to defaults
 Abort = 0
