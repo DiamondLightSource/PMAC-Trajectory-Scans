@@ -71,7 +71,7 @@ While(Abort = 0 and Error = 0 and CurrentBufferFill > 0 and PrevBufferFill = Buf
         GoSub103                            ; Update Next_* addresses based on incremented `CurrentIndex`
         PVT (Time)                          ; Set move time
         GoSub104                            ; Calculate velocities
-        GoSub108                            ; Move axes
+        GoSub109                            ; Move axes
 
         If(User > 0)
             GoSub(User)                     ; Run any required subroutine
@@ -115,7 +115,7 @@ While(Abort = 0 and Error = 0 and CurrentBufferFill > 0 and PrevBufferFill = Buf
         GoSub103                            ; Update Next_* addresses to 0th point of next buffer
         PVT (Time)                          ; Set move time
         GoSub104                            ; Calculate velocities
-        GoSub108                            ; Move axes to final point of previous buffer
+        GoSub109                            ; Move axes to final point of previous buffer
         If(User > 0)
             GoSub(User)                     ; Run any required subroutine
         End If
@@ -130,8 +130,8 @@ If(Status = 1)
         P4203 = P4203 + 1       ; For debugging
 
         PVT (Time)              ; Set move time
-        GoSub105                ; Prev->Current velocity calculation
-        GoSub108                ; Move axes
+        GoSub108                ; Set velocity through final point to zero
+        GoSub109                ; Move axes
         If(User > 0)
             GoSub(User)         ; Run any required subroutine
         End If
@@ -227,8 +227,9 @@ N103
     End If
 Return
 
-; Subroutines 4-7 *********************************************************************************
+; Subroutines 4-8 *********************************************************************************
 ; Calculate velocities for next move - 4: Master, 5: Prev->Current, 6: Prev->Next, 7: Current->Next
+; 8: Zero velocity for final move
 ; Velocities are multiplied by 1000 because the units of Time are milliseconds and the units
 ; of velocity are EGUs/second in the PVT move definition
 ; *************************************************************************************************
@@ -244,13 +245,13 @@ N104
 
     ; Select velocity calculation based on VelMode value
     If(VelMode = 1)
-        GoSub105                          ; Prev -> Current
+        GoSub105                        ; Prev -> Current
     EndIf
     If(VelMode = 0 or VelMode > 2)
-        GoSub106                          ; Prev -> Next
+        GoSub106                        ; Prev -> Next
     EndIf
     If(VelMode = 2)
-        GoSub107                          ; Current -> Next
+        GoSub107                        ; Current -> Next
     EndIf
 Return
 
@@ -290,12 +291,24 @@ N107
     Z_Vel = 1000*(Next_Z - Current_Z)/Next_Time
 Return
 
-; Subroutine 8 ************************************************************************************
+N108
+    A_Vel = 0
+    B_Vel = 0
+    C_Vel = 0
+    U_Vel = 0
+    V_Vel = 0
+    W_Vel = 0
+    X_Vel = 0
+    Y_Vel = 0
+    Z_Vel = 0
+Return
+
+; Subroutine 9 ************************************************************************************
 ; Move axes
 ; Set to Q Variables before move call to shorten command - The PMAC can't process it otherwise
 ; *************************************************************************************************
 
-N108
+N109
     P4500 = P4500 + 1
     Q71 = Current_A
     Q91 = A_Vel
