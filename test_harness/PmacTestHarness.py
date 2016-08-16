@@ -131,8 +131,9 @@ class PmacTestHarness(PmacEthernetInterface):
 
     def set_cs_initial_coordinates(self, cs_number):
         """
-        Set Current_* values for required axes to be the actual motor positions; these act
-        as the start positions for the motion program
+        Set Current_* and Next_* values for required axes to be the actual
+        motor positions; these act as the start positions for the motion
+        program
 
         Args:
             cs_number(int): Coordinate system to set coordinates for
@@ -143,15 +144,23 @@ class PmacTestHarness(PmacEthernetInterface):
                             'U': 4, 'V': 5, 'W': 6,
                             'X': 7, 'Y': 8, 'Z': 9}
 
-        for axis, egu_scaling in self.coordinate_system[str(cs_number)].motor_map.itervalues():
-            current_position = str(float(self.read_motor_position(axis_assignments[axis])) * egu_scaling)
+        motor_map = self.coordinate_system[str(cs_number)].motor_map
 
-            self.set_variable("P411" + str(axis_assignments[axis]), current_position)
+        for axis, egu_scaling in motor_map.itervalues():
+            current_position = str(float(
+                self.read_motor_position(axis_assignments[axis])) *
+                                   egu_scaling)
+
+            self.set_variable("P411" + str(axis_assignments[axis]),
+                              current_position)
+            self.set_variable("M400" + str(axis_assignments[axis]),
+                              current_position)
 
     def set_cs_initial_kinematic_coordinates(self, cs_number):
         """
-        Set Current_* values for required kinematic axes to be the actual axis positions; these act
-        as the start positions for the motion program
+        Set Current_* and Next_* values for required kinematic axes to be the
+        actual axis positions; these act as the start positions for the motion
+        program
 
         Args:
             cs_number(int): Coordinate system to set coordinates for
@@ -161,6 +170,7 @@ class PmacTestHarness(PmacEthernetInterface):
         for motor in self.coordinate_system[str(cs_number)].axis_map['I']:
             current_position = self.read_motor_position(motor)
             self.set_variable("P411" + str(motor), current_position)
+            self.set_variable("M400" + str(motor), current_position)
 
     def assign_cs_motors(self, axis_map, cs_number):
         """
