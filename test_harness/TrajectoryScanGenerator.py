@@ -1,5 +1,5 @@
 from PmacTestHarness import PmacTestHarness
-from scanpointgenerator import NestedGenerator, LineGenerator
+from scanpointgenerator import CompoundGenerator, LineGenerator
 
 from pkg_resources import require
 require('numpy')
@@ -42,17 +42,21 @@ class TrajectoryScanGenerator(object):
         """
 
         move_time = trajectory['move_time']
-        width = trajectory['width']
-        length = trajectory['length']
-        step = trajectory['step']
+        start = trajectory['start']
+        stop = trajectory['stop']
+        num = trajectory['num']
         direction = trajectory['direction']
+
+        step = int(stop[0] - start[0]) / (num[0] - 1)
+        width = (int(stop[0] - start[0]) / step) + 1
 
         self.point_set = {'time': [], 'x': [], 'y': []}
 
         if direction == 0:
-            xs = LineGenerator("x", "mm", 0, step, width)
-            ys = LineGenerator("y", "mm", 0, step, length)
-            gen = NestedGenerator(ys, xs, snake=True)
+            xs = LineGenerator("x", "mm", start[0], stop[0], num[0],
+                               alternate_direction=True)
+            ys = LineGenerator("y", "mm", start[1], stop[1], num[1])
+            gen = CompoundGenerator([ys, xs], [], [])
         else:
             raise NotImplementedError("Reverse not implemented")
 

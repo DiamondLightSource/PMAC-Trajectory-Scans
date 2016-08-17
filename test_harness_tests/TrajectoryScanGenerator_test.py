@@ -216,7 +216,7 @@ class ScanGeneratorTest(unittest.TestCase):
 
     def test_snake_scan(self):
         self.maxDiff = None
-        trajectory = {'move_time': 100, 'width': 3, 'length': 3, 'step': 10, 'direction': 0}
+        trajectory = {'move_time': 100, 'start': [0.0, 0.0], 'stop': [20.0, 20.0], 'num': [3, 3], 'direction': 0}
         self.ScanGen.generate_snake_scan(trajectory)
 
         expected_points = {'time': [{'subroutine': 0, 'time_val': 100, 'vel_mode': 0},
@@ -228,8 +228,8 @@ class ScanGeneratorTest(unittest.TestCase):
                                     {'subroutine': 0, 'time_val': 100, 'vel_mode': 2},
                                     {'subroutine': 1, 'time_val': 100, 'vel_mode': 0},
                                     {'subroutine': 2, 'time_val': 100, 'vel_mode': 1}],
-                           'x': [0, 10, 20, 20, 10, 0, 0, 10, 20],
-                           'y': [0, 0, 0, 10, 10, 10, 20, 20, 20]}
+                           'x': [0.0, 10.0, 20.0, 20.0, 10.0, 0.0, 0.0, 10.0, 20.0],
+                           'y': [0.0, 0.0, 0.0, 10.0, 10.0, 10.0, 20.0, 20.0, 20.0]}
 
         self.assertEqual(expected_points, self.ScanGen.point_set)
 
