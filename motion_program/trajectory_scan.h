@@ -17,7 +17,7 @@
 #define BufferAdr           30020           ; BlankAdr + 20 - Start of points buffers
 #define BuffLen             1000
 #define ProgramNum          1
-#define VersionNum          1.0
+#define VersionNum          1.1
 
 #define RootVar     4000
 
