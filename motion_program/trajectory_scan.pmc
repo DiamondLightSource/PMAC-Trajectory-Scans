@@ -43,7 +43,8 @@ Error = 0
 Trigger = 0
 CurrentIndex = 0
 TotalPoints = 0
-P4201 = 0
+
+P4201 = 0                           ; For debugging
 P4202 = 0
 P4203 = 0
 P4500 = 0
@@ -189,7 +190,7 @@ Return
 ; Subroutine 3 ************************************************************************************
 ; Assign coordinate pointers based on CurrentBufferAdr (The start address of Buffer A/B),
 ; BufferLength (length of the sub-buffers) and CurrentIndex (position of Next_* pointer within the
-; sub-buffers) If the axis is not activated (see Subroutine 1), it won't be incremented and will
+; sub-buffers). If the axis is not activated (see Subroutine 1), it won't be incremented and will
 ; remain pointing to the BlankAdr
 ; *************************************************************************************************
 
@@ -309,7 +310,7 @@ Return
 ; *************************************************************************************************
 
 N109
-    P4500 = P4500 + 1
+    P4500 = P4500 + 1           ; For debugging
     Q71 = Current_A
     Q91 = A_Vel
     Q72 = Current_B

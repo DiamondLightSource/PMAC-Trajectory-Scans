@@ -49,7 +49,7 @@ Version = VersionNum
 ; Motion Program Variables
 ; ************************
 
-#define Prev_A              P(RootVar + 101)        ; Specifiers for what axes are to be used
+#define Prev_A              P(RootVar + 101)        ; Previous coordinates for velocity calculations
 #define Prev_B              P(RootVar + 102)
 #define Prev_C              P(RootVar + 103)
 #define Prev_U              P(RootVar + 104)
@@ -92,8 +92,8 @@ Version = VersionNum
 #define RTE                 M4017
 RTE->Y:$203F,22
 
-#define Next_Time_N         M4000                   ; Next coordinate values
-#define Next_A              M4001
+#define Next_Time_N         M4000                   ; Next coordinate for velocity calculations
+#define Next_A              M4001                   ; These are incremented by changing *_Adr
 #define Next_B              M4002
 #define Next_C              M4003
 #define Next_U              M4004
@@ -144,7 +144,7 @@ Z_Adr->Y:$4FA9,0,24
 User_Adr->Y:$4FAA,0,24
 VelMode_Adr->Y:$4FAB,0,24
 
-#define AxesParser          M4040                   ; Specifiers for what axes are to be used
+#define AxesParser          M4040                   ; Specifiers for what axes are activated
 #define A_Axis              M4041
 #define B_Axis              M4042
 #define C_Axis              M4043
