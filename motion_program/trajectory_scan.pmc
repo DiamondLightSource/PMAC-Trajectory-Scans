@@ -10,7 +10,6 @@ Del Gat
 BufferLength = BuffLen                          ; BuffLen defined in header file
 BufferAdr_A = $BufferAdr                        ; BufferAdr defined in header file
 BufferAdr_B = BufferAdr_A + 10*BufferLength
-BlankAddress = 0
 Status = 0
 Abort = 0
 Error = 0
@@ -27,6 +26,16 @@ Clear
 
 Abs
 FRAX(A,B,C,U,V,W,X,Y,Z)
+
+A_Adr = $BlankAdrA                    ; Reset axes pointers to default positions
+B_Adr = $BlankAdrB
+C_Adr = $BlankAdrC
+U_Adr = $BlankAdrU
+V_Adr = $BlankAdrV
+W_Adr = $BlankAdrW
+X_Adr = $BlankAdrX
+Y_Adr = $BlankAdrY
+Z_Adr = $BlankAdrZ
 
 Status = 1                          ; Reset values to defaults
 Abort = 0

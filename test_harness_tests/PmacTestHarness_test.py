@@ -256,6 +256,8 @@ class SetCurrentCoordinatesTest(unittest.TestCase):
         call_list = [call[0] for call in set_variable_mock.call_args_list]
         self.assertIn(("P4117", "500.0"), call_list)
         self.assertIn(("P4118", "400.0"), call_list)
+        self.assertIn(("M4007", "500.0"), call_list)
+        self.assertIn(("M4008", "400.0"), call_list)
 
     @patch('PmacTestHarness_test.TesterPmacTestHarness.read_motor_position',
            side_effect=["10.0", "20.0"])
@@ -268,6 +270,8 @@ class SetCurrentCoordinatesTest(unittest.TestCase):
         call_list = [call[0] for call in set_variable_mock.call_args_list]
         self.assertIn(("P4111", "10.0"), call_list)
         self.assertIn(("P4112", "20.0"), call_list)
+        self.assertIn(("M4001", "10.0"), call_list)
+        self.assertIn(("M4002", "20.0"), call_list)
 
 
 class CheckProgramExistsTest(unittest.TestCase):
