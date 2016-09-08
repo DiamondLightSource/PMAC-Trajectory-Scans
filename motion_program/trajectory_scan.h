@@ -103,9 +103,9 @@ RTE->Y:$203F,22
 #define Next_User           M4010
 #define NextVelMode         M4011
 
-NextVelMode->X:$BlankAdr,4,4                        ; Set initial pointers and type
-Next_User->X:$BlankAdr,0,4
-Next_Time->Y:$BlankAdr,0,24
+NextVelMode->X:$BlankAdr0,4,4                        ; Set initial pointers and type
+Next_User->X:$BlankAdr0,0,4
+Next_Time->Y:$BlankAdr0,0,24
 Next_A->L:$BlankAdrA,0,48
 Next_B->L:$BlankAdrB,0,48
 Next_C->L:$BlankAdrC,0,48
