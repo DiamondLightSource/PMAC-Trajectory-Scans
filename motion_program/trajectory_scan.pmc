@@ -44,11 +44,6 @@ Trigger = 0
 CurrentIndex = 0
 TotalPoints = 0
 
-P4201 = 0                           ; For debugging
-P4202 = 0
-P4203 = 0
-P4500 = 0
-
 CurrentBufferAdr = BufferAdr_A      ; Set CurrentBuffer values to buffer A
 CurrentBufferFill = BufferFill_A
 CurrentBuffer = 0
@@ -64,17 +59,9 @@ While(Abort = 0 and Error = 0 and CurrentBufferFill > 0 and PrevBufferFill = Buf
     ; This loop ends when Current_* is at N-1 because then Next_* is at N
     While(Abort = 0 and Error = 0 and CurrentIndex < CurrentBufferFill)
 
-        P4201 = P4201 + 1                   ; For debugging
-
         GoSub102                            ; Shift values through Next_* -> Current_* -> Prev_*
-        GoSub103                            ; Update Next_* addresses based on incremented `CurrentIndex`
-        PVT (Time/4)                        ; Set move time
         GoSub104                            ; Calculate velocities
         GoSub109                            ; Move axes
-        If(User > 0)
-            GoSub(User)                     ; Run any required subroutine
-        End If
-
         CurrentIndex = CurrentIndex + 1
 
     End While
@@ -100,17 +87,10 @@ While(Abort = 0 and Error = 0 and CurrentBufferFill > 0 and PrevBufferFill = Buf
     ; Move to final point of buffer if next buffer has points
     If(Abort = 0 and CurrentBufferFill > 0)     ; Do move with previous buffer N-1 and N and current buffer 1
 
-        P4202 = P4202 + 1                   ; For debugging
-
         CurrentIndex = 0                    ; Reset to start of next buffer
-
         GoSub103                            ; Update Next_* addresses to 0th point of next buffer
-        PVT (Time/4)                        ; Set move time
         GoSub104                            ; Calculate velocities
         GoSub109                            ; Move axes to final point of previous buffer
-        If(User > 0)
-            GoSub(User)                     ; Run any required subroutine
-        End If
     End If
 
 End While
@@ -118,15 +98,8 @@ End While
 ; Set finished Idle Status if no error occurred - also move to final point if scan wasn't aborted
 If(Status = 1)
     If(Abort = 0)
-
-        P4203 = P4203 + 1       ; For debugging
-
-        PVT (Time/4)            ; Set move time
         GoSub108                ; Set velocity through final point to zero
         GoSub109                ; Move axes
-        If(User > 0)
-            GoSub(User)         ; Run any required subroutine
-        End If
     End If
     Status = 2                  ; Set program finished (Idle status)
 End If
@@ -157,25 +130,57 @@ N102
     Time = Next_Time
     User = Next_User
     VelMode = NextVelMode
+    CalculatedBase = CurrentBufferAdr + CurrentIndex
+    Time_Adr = CalculatedBase
+    User_Adr = CalculatedBase
+    VelMode_Adr = CalculatedBase
 
-    Prev_A = Current_A
-    Current_A = Next_A
-    Prev_B = Current_B
-    Current_B = Next_B
-    Prev_C = Current_C
-    Current_C = Next_C
-    Prev_U = Current_U
-    Current_U = Next_U
-    Prev_V = Current_V
-    Current_V = Next_V
-    Prev_W = Current_W
-    Current_W = Next_W
-    Prev_X = Current_X
-    Current_X = Next_X
-    Prev_Y = Current_Y
-    Current_Y = Next_Y
-    Prev_Z = Current_Z
-    Current_Z = Next_Z
+
+    If(A_Axis = 1)
+        Prev_A = Current_A
+        Current_A = Next_A
+        A_Adr = CalculatedBase + BufferLength
+    End If
+    If(B_Axis = 1)
+        Prev_B = Current_B
+        Current_B = Next_B
+        B_Adr = A_Adr + BufferLength
+    End If
+    If (C_Axis = 1)
+        Prev_C = Current_C
+        Current_C = Next_C
+        C_Adr = B_Adr + BufferLength
+    End If
+    If (U_Axis = 1)
+        Prev_U = Current_U
+        Current_U = Next_U
+        U_Adr = C_Adr + BufferLength
+    End If
+    If (V_Axis = 1)
+        Prev_V = Current_V
+        Current_V = Next_V
+        V_Adr = U_Adr + BufferLength
+    End If
+    If (W_Axis = 1)
+        Prev_W = Current_W
+        Current_W = Next_W
+        W_Adr = V_Adr + BufferLength
+    End If
+    If (X_Axis = 1)
+        Prev_X = Current_X
+        Current_X = Next_X
+        X_Adr = W_Adr + BufferLength
+    End If
+    If (Y_Axis = 1)
+        Prev_Y = Current_Y
+        Current_Y = Next_Y
+        Y_Adr = X_Adr + BufferLength
+    End If
+    If (Z_Axis = 1)
+        Prev_Z = Current_Z
+        Current_Z = Next_Z
+        Z_Adr = Y_Adr + BufferLength
+    End If
 Return
 
 ; Subroutine 3 ************************************************************************************
@@ -186,37 +191,19 @@ Return
 ; *************************************************************************************************
 
 N103
-    Time_Adr = CurrentBufferAdr + CurrentIndex
-    User_Adr = CurrentBufferAdr + CurrentIndex
-    VelMode_Adr = CurrentBufferAdr + CurrentIndex
-
-    If(A_Axis = 1)
-        A_Adr = CurrentBufferAdr + CurrentIndex + BufferLength
-    End If
-    If(B_Axis = 1)
-        B_Adr = CurrentBufferAdr + CurrentIndex + 2*BufferLength
-    End If
-    If(C_Axis = 1)
-        C_Adr = CurrentBufferAdr + CurrentIndex + 3*BufferLength
-    End If
-    If(U_Axis = 1)
-        U_Adr = CurrentBufferAdr + CurrentIndex + 4*BufferLength
-    End If
-    If(V_Axis = 1)
-        V_Adr = CurrentBufferAdr + CurrentIndex + 5*BufferLength
-    End If
-    If(W_Axis = 1)
-        W_Adr = CurrentBufferAdr + CurrentIndex + 6*BufferLength
-    End If
-    If(X_Axis = 1)
-        X_Adr = CurrentBufferAdr + CurrentIndex + 7*BufferLength
-    End If
-    If(Y_Axis = 1)
-        Y_Adr = CurrentBufferAdr + CurrentIndex + 8*BufferLength
-    End If
-    If(Z_Axis = 1)
-        Z_Adr = CurrentBufferAdr + CurrentIndex + 9*BufferLength
-    End If
+    CalculatedBase = CurrentBufferAdr + CurrentIndex
+    Time_Adr = CalculatedBase
+    User_Adr = CalculatedBase
+    VelMode_Adr = CalculatedBase
+    A_Adr = CalculatedBase + BufferLength
+    B_Adr = A_Adr + BufferLength
+    C_Adr = B_Adr + BufferLength
+    U_Adr = C_Adr + BufferLength
+    V_Adr = U_Adr + BufferLength
+    W_Adr = V_Adr + BufferLength
+    X_Adr = W_Adr + BufferLength
+    Y_Adr = X_Adr + BufferLength
+    Z_Adr = Y_Adr + BufferLength
 Return
 
 ; Subroutines 4-8 *********************************************************************************
@@ -251,39 +238,42 @@ N104
 Return
 
 N105
-    A_Vel = 4000*(Current_A - Prev_A)/Time
-    B_Vel = 4000*(Current_B - Prev_B)/Time
-    C_Vel = 4000*(Current_C - Prev_C)/Time
-    U_Vel = 4000*(Current_U - Prev_U)/Time
-    V_Vel = 4000*(Current_V - Prev_V)/Time
-    W_Vel = 4000*(Current_W - Prev_W)/Time
-    X_Vel = 4000*(Current_X - Prev_X)/Time
-    Y_Vel = 4000*(Current_Y - Prev_Y)/Time
-    Z_Vel = 4000*(Current_Z - Prev_Z)/Time
+    TmpTime = 4000/Time
+    A_Vel = TmpTime*(Current_A - Prev_A)
+    B_Vel = TmpTime*(Current_B - Prev_B)
+    C_Vel = TmpTime*(Current_C - Prev_C)
+    U_Vel = TmpTime*(Current_U - Prev_U)
+    V_Vel = TmpTime*(Current_V - Prev_V)
+    W_Vel = TmpTime*(Current_W - Prev_W)
+    X_Vel = TmpTime*(Current_X - Prev_X)
+    Y_Vel = TmpTime*(Current_Y - Prev_Y)
+    Z_Vel = TmpTime*(Current_Z - Prev_Z)
 Return
 
 N106
-    A_Vel = 4000*(Next_A - Prev_A)/(Time + Next_Time)
-    B_Vel = 4000*(Next_B - Prev_B)/(Time + Next_Time)
-    C_Vel = 4000*(Next_C - Prev_C)/(Time + Next_Time)
-    U_Vel = 4000*(Next_U - Prev_U)/(Time + Next_Time)
-    V_Vel = 4000*(Next_V - Prev_V)/(Time + Next_Time)
-    W_Vel = 4000*(Next_W - Prev_W)/(Time + Next_Time)
-    X_Vel = 4000*(Next_X - Prev_X)/(Time + Next_Time)
-    Y_Vel = 4000*(Next_Y - Prev_Y)/(Time + Next_Time)
-    Z_Vel = 4000*(Next_Z - Prev_Z)/(Time + Next_Time)
+    TmpTime = 4000/(Time + Next_Time) 
+    A_Vel = TmpTime*(Next_A - Prev_A)
+    B_Vel = TmpTime*(Next_B - Prev_B)
+    C_Vel = TmpTime*(Next_C - Prev_C)
+    U_Vel = TmpTime*(Next_U - Prev_U)
+    V_Vel = TmpTime*(Next_V - Prev_V)
+    W_Vel = TmpTime*(Next_W - Prev_W)
+    X_Vel = TmpTime*(Next_X - Prev_X)
+    Y_Vel = TmpTime*(Next_Y - Prev_Y)
+    Z_Vel = TmpTime*(Next_Z - Prev_Z)
 Return
 
 N107
-    A_Vel = 4000*(Next_A - Current_A)/Next_Time
-    B_Vel = 4000*(Next_B - Current_B)/Next_Time
-    C_Vel = 4000*(Next_C - Current_C)/Next_Time
-    U_Vel = 4000*(Next_U - Current_U)/Next_Time
-    V_Vel = 4000*(Next_V - Current_V)/Next_Time
-    W_Vel = 4000*(Next_W - Current_W)/Next_Time
-    X_Vel = 4000*(Next_X - Current_X)/Next_Time
-    Y_Vel = 4000*(Next_Y - Current_Y)/Next_Time
-    Z_Vel = 4000*(Next_Z - Current_Z)/Next_Time
+    TmpTime = 4000/Next_Time 
+    A_Vel = TmpTime*(Next_A - Current_A)
+    B_Vel = TmpTime*(Next_B - Current_B)
+    C_Vel = TmpTime*(Next_C - Current_C)
+    U_Vel = TmpTime*(Next_U - Current_U)
+    V_Vel = TmpTime*(Next_V - Current_V)
+    W_Vel = TmpTime*(Next_W - Current_W)
+    X_Vel = TmpTime*(Next_X - Current_X)
+    Y_Vel = TmpTime*(Next_Y - Current_Y)
+    Z_Vel = TmpTime*(Next_Z - Current_Z)
 Return
 
 N108
@@ -300,32 +290,15 @@ Return
 
 ; Subroutine 9 ************************************************************************************
 ; Move axes
-; Set to Q Variables before move call to shorten command - The PMAC can't process it otherwise
 ; *************************************************************************************************
 
 N109
-    P4500 = P4500 + 1           ; For debugging
-    Q71 = Current_A
-    Q91 = A_Vel
-    Q72 = Current_B
-    Q92 = B_Vel
-    Q73 = Current_C
-    Q93 = C_Vel
-    Q74 = Current_U
-    Q94 = U_Vel
-    Q75 = Current_V
-    Q95 = V_Vel
-    Q76 = Current_W
-    Q96 = W_Vel
-    Q77 = Current_X
-    Q97 = X_Vel
-    Q78 = Current_Y
-    Q98 = Y_Vel
-    Q79 = Current_Z
-    Q99 = Z_Vel
-
-    A(Q71):(Q91) B(Q72):(Q92) C(Q73):(Q93) U(Q74):(Q94) V(Q75):(Q95) W(Q76):(Q96) X(Q77):(Q97) Y(Q78):(Q98) Z(Q79):(Q99)
+    PVT (Time * 0.25)                        ; Set move time
+    A(Current_A):(A_Vel) B(Current_B):(B_Vel) C(Current_C):(C_Vel) U(Current_U):(U_Vel) V(Current_V):(V_Vel) W(Current_W):(W_Vel) X(Current_X):(X_Vel) Y(Current_Y):(Y_Vel) Z(Current_Z):(Z_Vel)
     TotalPoints = TotalPoints + 1
+    If(User > 0)
+        GoSub(User)                     ; Run any required subroutine
+    End If
 Return
 
 Close

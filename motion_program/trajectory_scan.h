@@ -19,76 +19,74 @@
 #define ProgramNum          1
 #define VersionNum          1.1
 
-#define RootVar     4000
-
 ; EPICS Required Variables
 
-#define Status              P(RootVar + 1)          ; Status of motion program for EPICS
+#define Status              P4001           ; Status of motion program for EPICS
                                                     ; 0: Initialised, 1: Active, 2: Idle, 3: Error
-#define Abort               P(RootVar + 2)          ; Abort trigger for EPICS
-#define Axes                P(RootVar + 3)          ; An int between 1 and 511 specifying which axes to use
-#define BufferLength        P(RootVar + 4)          ; Length of a single buffer e.g. AX, AY...
-#define TotalPoints         P(RootVar + 5)          ; Total number of points scanned through
+#define Abort               P4002           ; Abort trigger for EPICS
+#define Axes                P4003           ; An int between 1 and 511 specifying which axes to use
+#define BufferLength        P4004           ; Length of a single buffer e.g. AX, AY...
+#define TotalPoints         P4005           ; Total number of points scanned through
 
-#define CurrentIndex        P(RootVar + 6)          ; Current index position in buffer
-#define CurrentBuffer       P(RootVar + 7)          ; Current buffer specifier - 0: A, 1: B
+#define CurrentIndex        P4006           ; Current index position in buffer
+#define CurrentBuffer       P4007           ; Current buffer specifier - 0: A, 1: B
 
-#define BufferAdr_A         P(RootVar + 8)          ; Start index of buffer A
-#define BufferAdr_B         P(RootVar + 9)          ; Start index of buffer B
-#define CurrentBufferAdr    P(RootVar + 10)         ; A or B buffer address
-
-#define BufferFill_A        P(RootVar + 11)         ; Fill level of buffer A
-#define BufferFill_B        P(RootVar + 12)         ; Fill level of buffer B
-#define CurrentBufferFill   P(RootVar + 13)         ; A or B buffer fill level
-#define PrevBufferFill      P(RootVar + 14)         ; Fill level of previous buffer
-#define Error               P(RootVar + 15)         ; Error code  0: No error, 1: Invalid axes value,
-                                                    ; 2: Move time of 0, 3: Following error/ Run-time error
-#define Version             P(RootVar + 20)         ; Version number for motion program
+#define BufferAdr_A         P4008           ; Start index of buffer A
+#define BufferAdr_B         P4009           ; Start index of buffer B
+#define CurrentBufferAdr    P4010           ; A or B buffer address
+ 
+#define BufferFill_A        P4011           ; Fill level of buffer A
+#define BufferFill_B        P4012           ; Fill level of buffer B
+#define CurrentBufferFill   P4013           ; A or B buffer fill level
+#define PrevBufferFill      P4014           ; Fill level of previous buffer
+#define Error               P4015           ; Error code  0: No error, 1: Invalid axes value,
+                                            ; 2: Move time of 0, 3: Following error/ Run-time error
+#define Version             P4020           ; Version number for motion program
 Version = VersionNum
 
 ; Motion Program Variables
 ; ************************
 
-#define Prev_A              P(RootVar + 101)        ; Previous coordinates for velocity calculations
-#define Prev_B              P(RootVar + 102)
-#define Prev_C              P(RootVar + 103)
-#define Prev_U              P(RootVar + 104)
-#define Prev_V              P(RootVar + 105)
-#define Prev_W              P(RootVar + 106)
-#define Prev_X              P(RootVar + 107)
-#define Prev_Y              P(RootVar + 108)
-#define Prev_Z              P(RootVar + 109)
+#define Prev_A              P4101           ; Previous coordinates for velocity calculations
+#define Prev_B              P4102  
+#define Prev_C              P4103  
+#define Prev_U              P4104  
+#define Prev_V              P4105  
+#define Prev_W              P4106  
+#define Prev_X              P4107  
+#define Prev_Y              P4108  
+#define Prev_Z              P4109  
 
-#define Time                P(RootVar + 110)        ; Current coordinate values
-#define Current_A           P(RootVar + 111)
-#define Current_B           P(RootVar + 112)
-#define Current_C           P(RootVar + 113)
-#define Current_U           P(RootVar + 114)
-#define Current_V           P(RootVar + 115)
-#define Current_W           P(RootVar + 116)
-#define Current_X           P(RootVar + 117)
-#define Current_Y           P(RootVar + 118)
-#define Current_Z           P(RootVar + 119)
-#define User                P(RootVar + 120)
-#define VelMode             P(RootVar + 121)
+#define Time                P4110           ; Current coordinate values
+#define Current_A           Q71
+#define Current_B           Q72
+#define Current_C           Q73
+#define Current_U           Q74
+#define Current_V           Q75
+#define Current_W           Q76
+#define Current_X           Q77
+#define Current_Y           Q78
+#define Current_Z           Q79
+#define User                P4120
+#define VelMode             P4121
 
-#define A_Vel               P(RootVar + 131)        ; Previous coordinate values
-#define B_Vel               P(RootVar + 132)
-#define C_Vel               P(RootVar + 133)
-#define U_Vel               P(RootVar + 134)
-#define V_Vel               P(RootVar + 135)
-#define W_Vel               P(RootVar + 136)
-#define X_Vel               P(RootVar + 137)
-#define Y_Vel               P(RootVar + 138)
-#define Z_Vel               P(RootVar + 139)
+#define A_Vel               P4131          ; Previous coordinate values
+#define B_Vel               P4132
+#define C_Vel               P4133
+#define U_Vel               P4134
+#define V_Vel               P4135
+#define W_Vel               P4136
+#define X_Vel               P4137
+#define Y_Vel               P4138
+#define Z_Vel               P4139
+
+#define CalculatedBase      P4140           ; Calculated temporary variable for Current base address
+#define TmpTime             P4141           ; Calculated temporary variable for time in velocity calcs
 
 ; Address-Based Variables
 ; ***********************
 
 #define Trigger             M32
-
-#define RTE                 M4017
-RTE->Y:$203F,22
 
 #define Next_Time           M4000                   ; Next coordinate for velocity calculations
 #define Next_A              M4001                   ; These are incremented by changing *_Adr
