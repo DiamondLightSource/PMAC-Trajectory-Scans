@@ -66,29 +66,19 @@ While(Abort = 0 and Error = 0 and CurrentBufferFill > 0 and PrevBufferFill = Buf
 
         P4201 = P4201 + 1                   ; For debugging
 
-        Next_Time = Next_Time_N/4           ; Convert 1/4s of a ms into ms
-
         GoSub102                            ; Shift values through Next_* -> Current_* -> Prev_*
         GoSub103                            ; Update Next_* addresses based on incremented `CurrentIndex`
-        PVT (Time)                          ; Set move time
+        PVT (Time/4)                        ; Set move time
         GoSub104                            ; Calculate velocities
         GoSub109                            ; Move axes
-
         If(User > 0)
             GoSub(User)                     ; Run any required subroutine
         End If
 
         CurrentIndex = CurrentIndex + 1
 
-        ; Check for following error and run-time error
-        If(M141 = 1 or M241 = 1 or RTE = 1)
-            Error = 3
-            Status = 3
-        End If
-
     End While
 
-    Next_Time = Next_Time_N/4               ; Convert time for last point of buffer
     GoSub102                                ; Shift previous/current coordinates to N-1th/Nth points in buffer
 
     ; Toggle buffer - Change address & specifier, set new buffer fill, reset previous buffer fill
@@ -113,8 +103,9 @@ While(Abort = 0 and Error = 0 and CurrentBufferFill > 0 and PrevBufferFill = Buf
         P4202 = P4202 + 1                   ; For debugging
 
         CurrentIndex = 0                    ; Reset to start of next buffer
+
         GoSub103                            ; Update Next_* addresses to 0th point of next buffer
-        PVT (Time)                          ; Set move time
+        PVT (Time/4)                        ; Set move time
         GoSub104                            ; Calculate velocities
         GoSub109                            ; Move axes to final point of previous buffer
         If(User > 0)
@@ -130,7 +121,7 @@ If(Status = 1)
 
         P4203 = P4203 + 1       ; For debugging
 
-        PVT (Time)              ; Set move time
+        PVT (Time/4)            ; Set move time
         GoSub108                ; Set velocity through final point to zero
         GoSub109                ; Move axes
         If(User > 0)
@@ -248,48 +239,51 @@ N104
     If(VelMode = 1)
         GoSub105                        ; Prev -> Current
     EndIf
-    If(VelMode = 0 or VelMode > 2)
+    If(VelMode = 0)
         GoSub106                        ; Prev -> Next
     EndIf
     If(VelMode = 2)
         GoSub107                        ; Current -> Next
     EndIf
+    If(VelMode = 3)
+        GoSub108			; Zero
+    EndIf	
 Return
 
 N105
-    A_Vel = 1000*(Current_A - Prev_A)/Time
-    B_Vel = 1000*(Current_B - Prev_B)/Time
-    C_Vel = 1000*(Current_C - Prev_C)/Time
-    U_Vel = 1000*(Current_U - Prev_U)/Time
-    V_Vel = 1000*(Current_V - Prev_V)/Time
-    W_Vel = 1000*(Current_W - Prev_W)/Time
-    X_Vel = 1000*(Current_X - Prev_X)/Time
-    Y_Vel = 1000*(Current_Y - Prev_Y)/Time
-    Z_Vel = 1000*(Current_Z - Prev_Z)/Time
+    A_Vel = 4000*(Current_A - Prev_A)/Time
+    B_Vel = 4000*(Current_B - Prev_B)/Time
+    C_Vel = 4000*(Current_C - Prev_C)/Time
+    U_Vel = 4000*(Current_U - Prev_U)/Time
+    V_Vel = 4000*(Current_V - Prev_V)/Time
+    W_Vel = 4000*(Current_W - Prev_W)/Time
+    X_Vel = 4000*(Current_X - Prev_X)/Time
+    Y_Vel = 4000*(Current_Y - Prev_Y)/Time
+    Z_Vel = 4000*(Current_Z - Prev_Z)/Time
 Return
 
 N106
-    A_Vel = 1000*(Next_A - Prev_A)/(Time + Next_Time)
-    B_Vel = 1000*(Next_B - Prev_B)/(Time + Next_Time)
-    C_Vel = 1000*(Next_C - Prev_C)/(Time + Next_Time)
-    U_Vel = 1000*(Next_U - Prev_U)/(Time + Next_Time)
-    V_Vel = 1000*(Next_V - Prev_V)/(Time + Next_Time)
-    W_Vel = 1000*(Next_W - Prev_W)/(Time + Next_Time)
-    X_Vel = 1000*(Next_X - Prev_X)/(Time + Next_Time)
-    Y_Vel = 1000*(Next_Y - Prev_Y)/(Time + Next_Time)
-    Z_Vel = 1000*(Next_Z - Prev_Z)/(Time + Next_Time)
+    A_Vel = 4000*(Next_A - Prev_A)/(Time + Next_Time)
+    B_Vel = 4000*(Next_B - Prev_B)/(Time + Next_Time)
+    C_Vel = 4000*(Next_C - Prev_C)/(Time + Next_Time)
+    U_Vel = 4000*(Next_U - Prev_U)/(Time + Next_Time)
+    V_Vel = 4000*(Next_V - Prev_V)/(Time + Next_Time)
+    W_Vel = 4000*(Next_W - Prev_W)/(Time + Next_Time)
+    X_Vel = 4000*(Next_X - Prev_X)/(Time + Next_Time)
+    Y_Vel = 4000*(Next_Y - Prev_Y)/(Time + Next_Time)
+    Z_Vel = 4000*(Next_Z - Prev_Z)/(Time + Next_Time)
 Return
 
 N107
-    A_Vel = 1000*(Next_A - Current_A)/Next_Time
-    B_Vel = 1000*(Next_B - Current_B)/Next_Time
-    C_Vel = 1000*(Next_C - Current_C)/Next_Time
-    U_Vel = 1000*(Next_U - Current_U)/Next_Time
-    V_Vel = 1000*(Next_V - Current_V)/Next_Time
-    W_Vel = 1000*(Next_W - Current_W)/Next_Time
-    X_Vel = 1000*(Next_X - Current_X)/Next_Time
-    Y_Vel = 1000*(Next_Y - Current_Y)/Next_Time
-    Z_Vel = 1000*(Next_Z - Current_Z)/Next_Time
+    A_Vel = 4000*(Next_A - Current_A)/Next_Time
+    B_Vel = 4000*(Next_B - Current_B)/Next_Time
+    C_Vel = 4000*(Next_C - Current_C)/Next_Time
+    U_Vel = 4000*(Next_U - Current_U)/Next_Time
+    V_Vel = 4000*(Next_V - Current_V)/Next_Time
+    W_Vel = 4000*(Next_W - Current_W)/Next_Time
+    X_Vel = 4000*(Next_X - Current_X)/Next_Time
+    Y_Vel = 4000*(Next_Y - Current_Y)/Next_Time
+    Z_Vel = 4000*(Next_Z - Current_Z)/Next_Time
 Return
 
 N108

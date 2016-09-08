@@ -72,8 +72,6 @@ Version = VersionNum
 #define User                P(RootVar + 120)
 #define VelMode             P(RootVar + 121)
 
-#define Next_Time           P(RootVar + 122)        ; Time converted from Next_Time_N in 1/4ms
-
 #define A_Vel               P(RootVar + 131)        ; Previous coordinate values
 #define B_Vel               P(RootVar + 132)
 #define C_Vel               P(RootVar + 133)
@@ -92,7 +90,7 @@ Version = VersionNum
 #define RTE                 M4017
 RTE->Y:$203F,22
 
-#define Next_Time_N         M4000                   ; Next coordinate for velocity calculations
+#define Next_Time           M4000                   ; Next coordinate for velocity calculations
 #define Next_A              M4001                   ; These are incremented by changing *_Adr
 #define Next_B              M4002
 #define Next_C              M4003
@@ -107,7 +105,7 @@ RTE->Y:$203F,22
 
 NextVelMode->X:$BlankAdr,4,4                        ; Set initial pointers and type
 Next_User->X:$BlankAdr,0,4
-Next_Time_N->Y:$BlankAdr,0,24
+Next_Time->Y:$BlankAdr,0,24
 Next_A->L:$BlankAdrA,0,48
 Next_B->L:$BlankAdrB,0,48
 Next_C->L:$BlankAdrC,0,48
