@@ -4,15 +4,6 @@
 
 ; Change these values for your PMAC
 #define BlankAdr0           30000           ; Start of user buffer defined on PMAC
-#define BlankAdrA           30001           ; Default positions for axes
-#define BlankAdrB           30002
-#define BlankAdrC           30003
-#define BlankAdrU           30004
-#define BlankAdrV           30005
-#define BlankAdrW           30006
-#define BlankAdrX           30007
-#define BlankAdrY           30008
-#define BlankAdrZ           30009
 #define AxisAdr             30010           ; BlankAdr + 10 - Location of axes bit mask
 #define BufferAdr           30020           ; BlankAdr + 20 - Start of points buffers
 #define BuffLen             1000
@@ -104,15 +95,6 @@ Version = VersionNum
 NextVelMode->X:$BlankAdr0,4,4                        ; Set initial pointers and type
 Next_User->X:$BlankAdr0,0,4
 Next_Time->Y:$BlankAdr0,0,24
-Next_A->L:$BlankAdrA,0,48
-Next_B->L:$BlankAdrB,0,48
-Next_C->L:$BlankAdrC,0,48
-Next_U->L:$BlankAdrU,0,48
-Next_V->L:$BlankAdrV,0,48
-Next_W->L:$BlankAdrW,0,48
-Next_X->L:$BlankAdrX,0,48
-Next_Y->L:$BlankAdrY,0,48
-Next_Z->L:$BlankAdrZ,0,48
 
 #define Time_Adr            M4020                   ; Pointers to Next_* coordinate addresses
 #define A_Adr               M4021
