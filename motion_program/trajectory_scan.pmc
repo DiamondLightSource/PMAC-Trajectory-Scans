@@ -70,7 +70,7 @@ While(Abort = 0 and Error = 0 and CurrentBufferFill > 0 and PrevBufferFill = Buf
 
     ; Toggle buffer - Change address & specifier, set new buffer fill, reset previous buffer fill
     PrevBufferFill = CurrentBufferFill      ; Update previous buffer fill - will exit while loop if it wasn't full
-    If(Abort = 0)
+    If(Abort = 0 and CurrentBufferFill = BufferLength)
         If(CurrentBuffer = 0)
             CurrentBufferAdr = BufferAdr_B
             CurrentBuffer = 1
@@ -82,29 +82,30 @@ While(Abort = 0 and Error = 0 and CurrentBufferFill > 0 and PrevBufferFill = Buf
             CurrentBufferFill = BufferFill_A
             BufferFill_B = 0
         End If
+        ; Move to final point of buffer if next buffer has points
+        If(Abort = 0 and CurrentBufferFill > 0)     ; Do move with previous buffer N-1 and N and current buffer 1
+
+            CurrentIndex = 0                    ; Reset to start of next buffer
+            GoSub103                            ; Update Next_* addresses to 0th point of next buffer
+            GoSub104                            ; Calculate velocities
+            GoSub109                            ; Move axes to final point of previous buffer
+        End If
+    Else
+        If(Status = 1)
+            ; Move to final point if the scan wasn't aborted
+            If(Abort = 0)
+                GoSub108                ; Set velocity through final point to zero
+                GoSub109                ; Move axes
+            End If
+        End If
     End If
-
-    ; Move to final point of buffer if next buffer has points
-    If(Abort = 0 and CurrentBufferFill > 0)     ; Do move with previous buffer N-1 and N and current buffer 1
-
-        CurrentIndex = 0                    ; Reset to start of next buffer
-        GoSub103                            ; Update Next_* addresses to 0th point of next buffer
-        GoSub104                            ; Calculate velocities
-        GoSub109                            ; Move axes to final point of previous buffer
-    End If
-
 End While
 
-; Set finished Idle Status if no error occurred - also move to final point if scan wasn't aborted
+Dwell 0                         ; Stop program aborting before above lines are complete
+; Set Idle Status if no error occurred
 If(Status = 1)
-    If(Abort = 0)
-        GoSub108                ; Set velocity through final point to zero
-        GoSub109                ; Move axes
-    End If
     Status = 2                  ; Set program finished (Idle status)
 End If
-
-Dwell 0                         ; Stop program aborting before above lines are complete
 CMD"A"                          ; Abort program so it doesn't run through Subroutines
 While(1=1)                      ; Infinite While loop to make sure
 End While
