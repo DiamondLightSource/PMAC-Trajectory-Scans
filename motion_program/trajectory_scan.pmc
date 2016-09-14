@@ -141,48 +141,48 @@ N102
     If(A_Axis = 1)
         Prev_A = Current_A
         Current_A = Next_A
-        A_Adr = CalculatedBase + BufferLength
     End If
+    A_Adr = CalculatedBase + BufferLength
     If(B_Axis = 1)
         Prev_B = Current_B
         Current_B = Next_B
-        B_Adr = A_Adr + BufferLength
     End If
+    B_Adr = A_Adr + BufferLength
     If (C_Axis = 1)
         Prev_C = Current_C
         Current_C = Next_C
-        C_Adr = B_Adr + BufferLength
     End If
+    C_Adr = B_Adr + BufferLength
     If (U_Axis = 1)
         Prev_U = Current_U
         Current_U = Next_U
-        U_Adr = C_Adr + BufferLength
     End If
+    U_Adr = C_Adr + BufferLength
     If (V_Axis = 1)
         Prev_V = Current_V
         Current_V = Next_V
-        V_Adr = U_Adr + BufferLength
     End If
+    V_Adr = U_Adr + BufferLength
     If (W_Axis = 1)
         Prev_W = Current_W
         Current_W = Next_W
-        W_Adr = V_Adr + BufferLength
     End If
+    W_Adr = V_Adr + BufferLength
     If (X_Axis = 1)
         Prev_X = Current_X
         Current_X = Next_X
-        X_Adr = W_Adr + BufferLength
     End If
+    X_Adr = W_Adr + BufferLength
     If (Y_Axis = 1)
         Prev_Y = Current_Y
         Current_Y = Next_Y
-        Y_Adr = X_Adr + BufferLength
     End If
+    Y_Adr = X_Adr + BufferLength
     If (Z_Axis = 1)
         Prev_Z = Current_Z
         Current_Z = Next_Z
-        Z_Adr = Y_Adr + BufferLength
     End If
+    Z_Adr = Y_Adr + BufferLength
 Return
 
 ; Subroutine 3 ************************************************************************************
