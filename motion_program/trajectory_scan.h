@@ -77,8 +77,6 @@ Version = VersionNum
 ; Address-Based Variables
 ; ***********************
 
-#define Trigger             M32
-
 #define Next_Time           M4000                   ; Next coordinate for velocity calculations
 #define Next_A              M4001                   ; These are incremented by changing *_Adr
 #define Next_B              M4002

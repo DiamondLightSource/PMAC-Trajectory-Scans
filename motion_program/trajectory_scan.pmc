@@ -30,7 +30,6 @@ FRAX(A,B,C,U,V,W,X,Y,Z)
 Status = 1                          ; Reset values to defaults
 Abort = 0
 Error = 0
-Trigger = 0
 CurrentIndex = 0
 TotalPoints = 0
 
