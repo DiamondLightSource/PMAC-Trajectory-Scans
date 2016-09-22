@@ -96,9 +96,7 @@ If(Status = 1)
     Status = 2                  ; Set program finished (Idle status)
 End If
 Dwell 200                       ; Ensure the driver receives an updated status before killing the program
-CMD"A"                          ; Abort program so it doesn't run through Subroutines
-While(1=1)                      ; Infinite While loop to make sure
-End While
+Return
 
 ; Subroutine 1 ************************************************************************************
 ; Check that axes value is valid and activate required axes. The *_Axis values point to the bits of
