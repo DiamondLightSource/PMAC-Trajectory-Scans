@@ -1,4 +1,4 @@
-#include "./trajectory_scan.h"
+#include "./trajectory_scan_definitions.pmc"
 
 ; *****************************************************************************************
 ; Set-Up
@@ -96,9 +96,7 @@ If(Status = 1)
     Status = 2                  ; Set program finished (Idle status)
 End If
 Dwell 200                       ; Ensure the driver receives an updated status before killing the program
-CMD"A"                          ; Abort program so it doesn't run through Subroutines
-While(1=1)                      ; Infinite While loop to make sure
-End While
+Return
 
 ; Subroutine 1 ************************************************************************************
 ; Check that axes value is valid and activate required axes. The *_Axis values point to the bits of
@@ -279,18 +277,8 @@ N108
     Z_Vel = 0
 Return
 
-; Subroutine 9 ************************************************************************************
-; Move axes
-; *************************************************************************************************
-
-N109
-    PVT (Time * 0.25)                        ; Set move time
-    A(Current_A):(A_Vel) B(Current_B):(B_Vel) C(Current_C):(C_Vel) U(Current_U):(U_Vel) V(Current_V):(V_Vel) W(Current_W):(W_Vel) X(Current_X):(X_Vel) Y(Current_Y):(Y_Vel) Z(Current_Z):(Z_Vel)
-    TotalPoints = TotalPoints + 1
-    If(User > 0)
-        GoSub(User)                     ; Run any required subroutine
-    End If
-Return
-
 Close
+
+#include "./motion_subroutine.pmc"
 #include "./user_subroutines.pmc"
+
