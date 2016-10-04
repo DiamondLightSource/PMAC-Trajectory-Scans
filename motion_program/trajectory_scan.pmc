@@ -78,6 +78,12 @@ While(Abort = 0 and Error = 0 and CurrentBufferFill > 0 and PrevBufferFill = Buf
             GoSub103                            ; Update Next_* addresses to 0th point of next buffer
             GoSub104                            ; Calculate velocities
             GoSub109                            ; Move axes to final point of previous buffer
+        Else
+            ; Move to final point if the scan wasn't aborted
+            If(Abort = 0)
+                GoSub108                ; Set velocity through final point to zero
+                GoSub109                ; Move axes
+            End If
         End If
     Else
         If(Status = 1)
