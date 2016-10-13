@@ -12,7 +12,7 @@ Open Program ProgramNum
 ; *************************************************************************************************
 
 N109
-    PVT (Time * 0.25)                        ; Set move time
+    PVT (Time * 0.001)                ; Set move time
     A(Current_A):(A_Vel) B(Current_B):(B_Vel) C(Current_C):(C_Vel) U(Current_U):(U_Vel) V(Current_V):(V_Vel) W(Current_W):(W_Vel) X(Current_X):(X_Vel) Y(Current_Y):(Y_Vel) Z(Current_Z):(Z_Vel)
     TotalPoints = TotalPoints + 1
     If(User > 0)

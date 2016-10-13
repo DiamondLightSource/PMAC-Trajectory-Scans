@@ -204,7 +204,7 @@ Return
 ; Subroutines 4-8 *********************************************************************************
 ; Calculate velocities for next move - 4: Master, 5: Prev->Current, 6: Prev->Next, 7: Current->Next
 ; 8: Zero velocity for final move
-; Velocities are multiplied by 1000 because the units of Time are milliseconds and the units
+; Velocities are multiplied by 1000000 because the units of Time are microseconds and the units
 ; of velocity are EGUs/second in the PVT move definition
 ; *************************************************************************************************
 
@@ -233,7 +233,7 @@ N104
 Return
 
 N105
-    TmpTime = 4000/Time
+    TmpTime = 1000000/Time
     A_Vel = TmpTime*(Current_A - Prev_A)
     B_Vel = TmpTime*(Current_B - Prev_B)
     C_Vel = TmpTime*(Current_C - Prev_C)
@@ -246,7 +246,7 @@ N105
 Return
 
 N106
-    TmpTime = 4000/(Time + Next_Time) 
+    TmpTime = 1000000/(Time + Next_Time) 
     A_Vel = TmpTime*(Next_A - Prev_A)
     B_Vel = TmpTime*(Next_B - Prev_B)
     C_Vel = TmpTime*(Next_C - Prev_C)
@@ -259,7 +259,7 @@ N106
 Return
 
 N107
-    TmpTime = 4000/Next_Time 
+    TmpTime = 1000000/Next_Time 
     A_Vel = TmpTime*(Next_A - Current_A)
     B_Vel = TmpTime*(Next_B - Current_B)
     C_Vel = TmpTime*(Next_C - Current_C)
